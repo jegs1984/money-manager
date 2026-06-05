@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Money Manager{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+    <nav class="bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-gray-900">Money Manager</h1>
+            <div class="flex gap-4 text-sm">
+                <a href="{% url 'dashboard' %}" class="text-gray-600 hover:text-gray-900">Dashboard</a>
+                <a href="{% url 'budget-month-list' %}" class="text-gray-600 hover:text-gray-900">Months</a>
+                <a href="{% url 'category-list' %}" class="text-gray-600 hover:text-gray-900">Categories</a>
+                <a href="{% url 'statement-upload' %}" class="text-gray-600 hover:text-gray-900">Upload</a>
+            </div>
+        </div>
+    </nav>
+
+    {% if messages %}
+    <div class="max-w-7xl mx-auto px-4 py-2">
+        {% for message in messages %}
+        <div class="p-3 rounded {% if message.tags %}bg-{{ message.tags }}-50 text-{{ message.tags }}-900{% else %}bg-blue-50 text-blue-900{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="text-center text-gray-500 text-xs py-8 mt-16">
+        <p>&copy; 2026 Money Manager</p>
+    </footer>
+</body>
+</html>

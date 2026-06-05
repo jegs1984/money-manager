@@ -1,0 +1,84 @@
+{% extends 'finance/base.html' %}
+
+{% block title %}Review Staged Transactions - Money Manager{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <h2 class="text-3xl font-bold text-gray-900">Review Staged Transactions</h2>
+
+    <form method="post" class="space-y-4">
+        {% csrf_token %}
+        
+        {% if formset.non_form_errors %}
+        <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+            <p class="text-red-900 font-medium">Form errors:</p>
+            <ul class="text-red-800 text-sm mt-2">
+                {% for error in formset.non_form_errors %}
+                <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {% if staging_transactions %}
+        <div class="bg-white rounded-lg shadow overflow-x-auto">
+            <table class="w-full border-collapse">
+                <thead>
+                    <tr class="bg-gray-50 border-b">
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y">
+                    {% for form in formset.forms %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ form.original_date.value|date:'M d, Y' }}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-900">
+                            {{ form.description.value }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            {% if form.type.value == 'IN' %}
+                            <span class="text-green-600">+${{ form.amount.value|floatformat:2 }}</span>
+                            {% else %}
+                            <span class="text-red-600">-${{ form.amount.value|floatformat:2 }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            <div class="space-y-1">
+                                {{ form.assigned_category }}
+                                {% if form.assigned_category.errors %}
+                                <p class="text-red-600 text-xs">{{ form.assigned_category.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="bg-gray-50 border-t px-6 py-4 flex justify-between items-center sticky bottom-0">
+            <p class="text-sm text-gray-600">
+                {{ formset|length }} transaction{% if formset|length != 1 %}s{% endif %} to process
+            </p>
+            <div class="flex gap-4">
+                <a href="{% url 'statement-upload' %}" class="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">Upload Another</a>
+                <button type="submit" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Process Selected Transactions</button>
+            </div>
+        </div>
+
+        {{ formset.management_form }}
+        
+        {% else %}
+        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+            <p class="text-yellow-900 mb-4">No pending transactions to review.</p>
+            <a href="{% url 'statement-upload' %}" class="text-blue-600 hover:underline">Upload a statement</a>
+        </div>
+        {% endif %}
+    </form>
+</div>
+{% endblock %}

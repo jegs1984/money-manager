@@ -1,0 +1,22 @@
+{% extends 'finance/base.html' %}
+
+{% block title %}Delete Category - Money Manager{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-3xl font-bold text-gray-900 mb-6">Delete Category</h2>
+        
+        <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <p class="text-red-900">Are you sure you want to delete <strong>{{ object.name }}</strong>?</p>
+            <p class="text-red-800 text-sm mt-2">This action cannot be undone.</p>
+        </div>
+
+        <form method="post" class="flex gap-4">
+            {% csrf_token %}
+            <button type="submit" class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Yes, Delete</button>
+            <a href="{% url 'category-list' %}" class="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

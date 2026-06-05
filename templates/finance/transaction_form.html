@@ -1,0 +1,58 @@
+{% extends 'finance/base.html' %}
+
+{% block title %}{% if form.instance.pk %}Edit{% else %}Create{% endif %} Transaction - Money Manager{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <h2 class="text-3xl font-bold text-gray-900 mb-6">{% if form.instance.pk %}Edit{% else %}Create{% endif %} Transaction</h2>
+
+    <form method="post" class="bg-white rounded-lg shadow p-6 space-y-6">
+        {% csrf_token %}
+        
+        <div>
+            <label for="{{ form.budget_item.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">{{ form.budget_item.label }}</label>
+            {{ form.budget_item }}
+            {% if form.budget_item.errors %}
+            <p class="text-red-600 text-sm mt-1">{{ form.budget_item.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <div>
+            <label for="{{ form.date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">{{ form.date.label }}</label>
+            {{ form.date }}
+            {% if form.date.errors %}
+            <p class="text-red-600 text-sm mt-1">{{ form.date.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <div>
+            <label for="{{ form.real_amount.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">{{ form.real_amount.label }}</label>
+            {{ form.real_amount }}
+            {% if form.real_amount.errors %}
+            <p class="text-red-600 text-sm mt-1">{{ form.real_amount.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <div>
+            <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">{{ form.description.label }}</label>
+            {{ form.description }}
+            {% if form.description.errors %}
+            <p class="text-red-600 text-sm mt-1">{{ form.description.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <div>
+            <label for="{{ form.notes.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">{{ form.notes.label }}</label>
+            {{ form.notes }}
+            {% if form.notes.errors %}
+            <p class="text-red-600 text-sm mt-1">{{ form.notes.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <div class="flex gap-4">
+            <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save</button>
+            <a href="{% url 'dashboard' %}" class="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,100 @@
+{% extends 'finance/base.html' %}
+
+{% block title %}Dashboard - Money Manager{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <div class="flex justify-between items-center">
+        <h2 class="text-3xl font-bold text-gray-900">Dashboard</h2>
+        <div class="flex gap-2">
+            <a href="{% url 'budget-item-create' %}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Add Budget Item</a>
+            <a href="{% url 'transaction-create' %}" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Log Transaction</a>
+            <a href="{% url 'statement-upload' %}" class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700">Upload Statement</a>
+        </div>
+    </div>
+
+    {% if active_month %}
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-gray-500 text-sm uppercase tracking-wide">Total Income</h3>
+            <p class="text-3xl font-bold text-green-600 mt-2">${{ total_income|floatformat:2 }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-gray-500 text-sm uppercase tracking-wide">Total Expenses</h3>
+            <p class="text-3xl font-bold text-red-600 mt-2">${{ total_expenses|floatformat:2 }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-gray-500 text-sm uppercase tracking-wide">Safe to Spend</h3>
+            <p class="text-3xl font-bold {% if safe_to_spend >= 0 %}text-blue-600{% else %}text-red-600{% endif %} mt-2">${{ safe_to_spend|floatformat:2 }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-gray-500 text-sm uppercase tracking-wide">Burn Rate</h3>
+            <p class="text-3xl font-bold text-purple-600 mt-2">{{ burn_rate|floatformat:1 }}%</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <div class="border-b px-6 py-4">
+                <h3 class="font-bold text-gray-900">Income Items</h3>
+            </div>
+            <div class="divide-y">
+                {% for item in budget_items|slice:":10" %}
+                    {% if item.type == 'IN' %}
+                    <div class="px-6 py-4 flex justify-between items-center">
+                        <div>
+                            <p class="font-medium text-gray-900">{{ item.category.name }}</p>
+                            <p class="text-sm text-gray-500">Projected: ${{ item.projected_amount|floatformat:2 }}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-medium text-green-600">${{ item.total_real|floatformat:2 }}</p>
+                            <p class="text-xs text-gray-500">Diff: ${{ item.diff|floatformat:2 }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <div class="border-b px-6 py-4">
+                <h3 class="font-bold text-gray-900">Expense Items</h3>
+            </div>
+            <div class="divide-y max-h-96 overflow-y-auto">
+                {% for item in budget_items|slice:":10" %}
+                    {% if item.type == 'OUT' %}
+                    <div class="px-6 py-4 flex justify-between items-center">
+                        <div>
+                            <p class="font-medium text-gray-900">{{ item.category.name }}</p>
+                            <p class="text-sm text-gray-500">Projected: ${{ item.projected_amount|floatformat:2 }}</p>
+                            <div class="mt-2 bg-gray-200 rounded-full h-2 w-48">
+                                {% if max_projected > 0 %}
+                                    <div class="bg-red-600 h-2 rounded-full" style="width: {{ item.total_real|floatformat:0|add:'0'|stringformat:'s' }}%"></div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-medium text-red-600">${{ item.total_real|floatformat:2 }}</p>
+                            <p class="text-xs text-gray-500">Diff: ${{ item.diff|floatformat:2 }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="border-b px-6 py-4 flex justify-between items-center">
+            <h3 class="font-bold text-gray-900">Active Month: {{ active_month.month_date|date:'F Y' }}</h3>
+            <a href="{% url 'budget-month-update' active_month.pk %}" class="text-blue-600 hover:text-blue-700 text-sm">Edit</a>
+        </div>
+    </div>
+
+    {% else %}
+    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+        <p class="text-yellow-900 mb-4">No active budget month. <a href="{% url 'budget-month-create' %}" class="underline font-bold">Create one</a></p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

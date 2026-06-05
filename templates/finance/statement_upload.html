@@ -1,0 +1,50 @@
+{% extends 'finance/base.html' %}
+
+{% block title %}Upload Bank Statement - Money Manager{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <h2 class="text-3xl font-bold text-gray-900 mb-6">Upload Bank Statement</h2>
+
+    <form method="post" enctype="multipart/form-data" class="bg-white rounded-lg shadow p-6 space-y-6">
+        {% csrf_token %}
+        
+        <div class="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center">
+            <div class="mb-4">
+                <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-12l-3.172-3.172a4 4 0 00-5.656 0L28 20m0 0l-4-4m0 0l-3.172-3.172a4 4 0 00-5.656 0L8 20" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <label for="{{ form.statement_file.id_for_label }}" class="cursor-pointer">
+                <p class="text-gray-600 font-medium">Drop file here or <span class="text-blue-600 hover:underline">browse</span></p>
+                <p class="text-gray-400 text-sm mt-1">Scotiabank CSV/TXT format (semicolon-separated)</p>
+            </label>
+            {{ form.statement_file }}
+            {% if form.statement_file.errors %}
+            <p class="text-red-600 text-sm mt-2">{{ form.statement_file.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h4 class="font-medium text-blue-900 text-sm mb-2">Expected format:</h4>
+            <ul class="text-xs text-blue-800 space-y-1">
+                <li>• Semicolon-separated values (.csv or .txt)</li>
+                <li>• Date column (Fecha) in DDMMYYYY format</li>
+                <li>• Amount columns: Cargos (debits) and Abonos (credits)</li>
+                <li>• Description column (Descripcion)</li>
+            </ul>
+        </div>
+
+        <div class="flex gap-4">
+            <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Upload & Parse</button>
+            <a href="{% url 'dashboard' %}" class="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<style>
+    input[type="file"] {
+        display: none;
+    }
+</style>
+{% endblock %}
