@@ -1,12 +1,22 @@
 from django import forms
 from django.forms import modelformset_factory
 from finance.models import (
+    Group,
     BudgetMonth,
     Category,
     BudgetItem,
     Transaction,
     StagingTransaction,
 )
+
+
+class GroupForm(forms.ModelForm):
+    class Meta:
+        model = Group
+        fields = ['name']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm'}),
+        }
 
 
 class BudgetMonthForm(forms.ModelForm):
@@ -62,6 +72,13 @@ class StatementUploadForm(forms.Form):
 
 
 class StagingTransactionForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # These fields are disabled in the UI and thus not sent in POST.
+        # We mark them as not required so validation doesn't fail.
+        for field in ['original_date', 'description', 'amount', 'type']:
+            self.fields[field].required = False
+
     class Meta:
         model = StagingTransaction
         fields = ['original_date', 'description', 'amount', 'type', 'assigned_category']

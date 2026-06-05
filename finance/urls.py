@@ -1,6 +1,10 @@
 from django.urls import path
 from finance.views import (
     DashboardView,
+    GroupListView,
+    GroupCreateView,
+    GroupUpdateView,
+    GroupDeleteView,
     BudgetMonthListView,
     BudgetMonthCreateView,
     BudgetMonthUpdateView,
@@ -21,6 +25,10 @@ from finance.views import (
 
 urlpatterns = [
     path('', DashboardView.as_view(), name='dashboard'),
+    path('groups/', GroupListView.as_view(), name='group-list'),
+    path('groups/create/', GroupCreateView.as_view(), name='group-create'),
+    path('groups/<int:pk>/update/', GroupUpdateView.as_view(), name='group-update'),
+    path('groups/<int:pk>/delete/', GroupDeleteView.as_view(), name='group-delete'),
     path('months/', BudgetMonthListView.as_view(), name='budget-month-list'),
     path('months/create/', BudgetMonthCreateView.as_view(), name='budget-month-create'),
     path('months/<int:pk>/update/', BudgetMonthUpdateView.as_view(), name='budget-month-update'),

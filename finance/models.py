@@ -3,6 +3,18 @@ from django.core.validators import MinValueValidator
 from decimal import Decimal
 
 
+class Group(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    name = models.CharField(max_length=100, unique=True, db_index=True)
+
+    class Meta:
+        db_table = 'finance_group'
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+
 class BudgetMonth(models.Model):
     id = models.BigAutoField(primary_key=True)
     month_date = models.DateField(unique=True, db_index=True)
@@ -17,16 +29,14 @@ class BudgetMonth(models.Model):
 
 
 class Category(models.Model):
-    GROUP_CHOICES = [
-        ('ESSENTIAL', 'Essential'),
-        ('LIFESTYLE', 'Lifestyle'),
-        ('SAVINGS', 'Savings'),
-        ('INCOME', 'Income'),
-    ]
-
     id = models.BigAutoField(primary_key=True)
     name = models.CharField(max_length=100, unique=True, db_index=True)
-    group = models.CharField(max_length=100, choices=GROUP_CHOICES)
+    group = models.ForeignKey(
+        Group,
+        on_delete=models.PROTECT,
+        db_column='group_id',
+        related_name='categories'
+    )
 
     class Meta:
         db_table = 'finance_category'

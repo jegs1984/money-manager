@@ -1,6 +1,7 @@
 import csv
 import io
 import re
+import logging
 from datetime import datetime
 from decimal import Decimal
 
@@ -16,6 +17,8 @@ from finance.models import (
     Transaction,
     StagingTransaction,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def parse_scotiabank_statement(file_obj):
@@ -44,7 +47,7 @@ def parse_scotiabank_statement(file_obj):
     lines = content.split('\n')
     reader = csv.DictReader(
         io.StringIO(content),
-        fieldnames=['Fecha', 'Descripcion', 'Cargos', 'Abonos'],
+        fieldnames=['Fecha', 'Descripcion', 'NroDoc.', 'Cargos', 'Abonos', 'Saldo'],
         delimiter=';'
     )
     
@@ -53,7 +56,6 @@ def parse_scotiabank_statement(file_obj):
     for row in reader:
         if not row or not row.get('Fecha'):
             continue
-        
         fecha = row.get('Fecha', '').strip()
         descripcion = row.get('Descripcion', '').strip()
         cargos = row.get('Cargos', '').strip()
@@ -123,7 +125,12 @@ def process_staging_batch(staging_ids_with_categories):
     4. Create Transaction
     5. Mark StagingTransaction as processed
     """
+    if not staging_ids_with_categories:
+        logger.warning("process_staging_batch called with empty list")
+        return
+
     with transaction.atomic():
+        logger.info(f"Processing batch of {len(staging_ids_with_categories)} items")
         for item in staging_ids_with_categories:
             staging_id = item.get('staging_id')
             category_id = item.get('category_id')
@@ -131,11 +138,13 @@ def process_staging_batch(staging_ids_with_categories):
             try:
                 staging = StagingTransaction.objects.get(id=staging_id)
             except StagingTransaction.DoesNotExist:
+                logger.error(f"StagingTransaction {staging_id} not found")
                 continue
             
             try:
                 category = Category.objects.get(id=category_id)
             except Category.DoesNotExist:
+                logger.warning(f"Category {category_id} not found for staging {staging_id}")
                 category = None
             
             if category is None:

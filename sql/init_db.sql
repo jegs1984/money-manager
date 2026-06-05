@@ -1,5 +1,13 @@
 -- Initialize finance database schema
 
+-- Group table
+CREATE TABLE finance_group (
+    id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE
+);
+
+CREATE INDEX idx_finance_group_name ON finance_group(name);
+
 -- BudgetMonth table
 CREATE TABLE finance_budget_month (
     id BIGSERIAL PRIMARY KEY,
@@ -13,10 +21,11 @@ CREATE INDEX idx_finance_budget_month_month_date ON finance_budget_month(month_d
 CREATE TABLE finance_category (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL UNIQUE,
-    "group" VARCHAR(100) NOT NULL
+    group_id BIGINT NOT NULL REFERENCES finance_group(id) ON DELETE RESTRICT
 );
 
 CREATE INDEX idx_finance_category_name ON finance_category(name);
+CREATE INDEX idx_finance_category_group_id ON finance_category(group_id);
 
 -- BudgetItem table
 CREATE TABLE finance_budget_item (
