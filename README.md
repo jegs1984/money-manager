@@ -16,7 +16,7 @@ A full-stack personal finance and bank reconciliation application designed to in
 ```
 Django 4.2.0
 psycopg2-binary 2.9.6
-python-decouple 3.8
+python-dotenv 1.0.0
 ```
 
 ## Installation & Setup
@@ -82,24 +82,27 @@ SESSION_COOKIE_SECURE=False
 CSRF_COOKIE_SECURE=False
 ```
 
-**Update `config/settings.py`** to load environment variables (if not already integrated):
+The `config/settings.py` automatically loads these variables using `python-dotenv`:
 
 ```python
 import os
-from decouple import config
+from dotenv import load_dotenv
 
-SECRET_KEY = config('SECRET_KEY', default='django-insecure-dev-key')
-DEBUG = config('DEBUG', default=True, cast=bool)
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
+BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / '.env')
+
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-development-key-change-in-production')
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
 
 DATABASES = {
     'default': {
-        'ENGINE': config('DATABASE_ENGINE', default='django.db.backends.postgresql'),
-        'NAME': config('DATABASE_NAME', default='money_manager'),
-        'USER': config('DATABASE_USER', default='postgres'),
-        'PASSWORD': config('DATABASE_PASSWORD', default='postgres'),
-        'HOST': config('DATABASE_HOST', default='localhost'),
-        'PORT': config('DATABASE_PORT', default='5432'),
+        'ENGINE': os.getenv('DATABASE_ENGINE', 'django.db.backends.postgresql'),
+        'NAME': os.getenv('DATABASE_NAME', 'money_manager'),
+        'USER': os.getenv('DATABASE_USER', 'postgres'),
+        'PASSWORD': os.getenv('DATABASE_PASSWORD', 'postgres'),
+        'HOST': os.getenv('DATABASE_HOST', 'localhost'),
+        'PORT': os.getenv('DATABASE_PORT', '5432'),
     }
 }
 ```
