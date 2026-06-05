@@ -28,6 +28,7 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
                     </tr>
                 </thead>
@@ -41,10 +42,13 @@
                             {{ form.description.value }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            {{ form.amount.value|floatformat:2 }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
                             {% if form.type.value == 'IN' %}
-                            <span class="text-green-600">+${{ form.amount.value|floatformat:2 }}</span>
+                            <span class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs font-semibold">IN</span>
                             {% else %}
-                            <span class="text-red-600">-${{ form.amount.value|floatformat:2 }}</span>
+                            <span class="px-2 py-1 bg-red-100 text-red-800 rounded text-xs font-semibold">OUT</span>
                             {% endif %}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm">
@@ -67,7 +71,7 @@
             </p>
             <div class="flex gap-4">
                 <a href="{% url 'statement-upload' %}" class="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">Upload Another</a>
-                <button type="submit" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Process Selected Transactions</button>
+                <button type="submit" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Save & Commit</button>
             </div>
         </div>
 

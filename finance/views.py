@@ -3,7 +3,8 @@ from django.views.generic import (
     ListView, CreateView, UpdateView, DeleteView, DetailView, FormView, TemplateView
 )
 from django.urls import reverse_lazy
-from django.db.models import Sum, F, Value, Coalesce
+from django.db.models import Sum, F, Value
+from django.db.models.functions import Coalesce
 from django.contrib import messages
 from django.http import HttpResponse
 from django.db import transaction as db_transaction

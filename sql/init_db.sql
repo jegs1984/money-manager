@@ -22,7 +22,7 @@ CREATE INDEX idx_finance_category_name ON finance_category(name);
 CREATE TABLE finance_budget_item (
     id BIGSERIAL PRIMARY KEY,
     budget_month_id BIGINT NOT NULL REFERENCES finance_budget_month(id) ON DELETE CASCADE,
-    category_id BIGINT NOT NULL REFERENCES finance_category(id) ON DELETE PROTECT,
+    category_id BIGINT NOT NULL REFERENCES finance_category(id) ON DELETE RESTRICT,
     type VARCHAR(3) NOT NULL,
     projected_amount NUMERIC(10, 2) DEFAULT 0.00 NOT NULL,
     CONSTRAINT finance_budget_item_projected_amount_non_negative CHECK (projected_amount >= 0.00),

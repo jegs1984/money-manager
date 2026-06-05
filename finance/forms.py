@@ -14,8 +14,8 @@ class BudgetMonthForm(forms.ModelForm):
         model = BudgetMonth
         fields = ['month_date', 'is_active']
         widgets = {
-            'month_date': forms.DateInput(attrs={'type': 'date'}),
-            'is_active': forms.CheckboxInput(),
+            'month_date': forms.DateInput(attrs={'type': 'date', 'class': 'block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded'}),
         }
 
 
@@ -24,8 +24,8 @@ class CategoryForm(forms.ModelForm):
         model = Category
         fields = ['name', 'group']
         widgets = {
-            'name': forms.TextInput(attrs={'class': 'form-control'}),
-            'group': forms.Select(attrs={'class': 'form-control'}),
+            'name': forms.TextInput(attrs={'class': 'block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm'}),
+            'group': forms.Select(attrs={'class': 'block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm'}),
         }
 
 
@@ -34,10 +34,10 @@ class BudgetItemForm(forms.ModelForm):
         model = BudgetItem
         fields = ['budget_month', 'category', 'type', 'projected_amount']
         widgets = {
-            'budget_month': forms.Select(attrs={'class': 'form-control'}),
-            'category': forms.Select(attrs={'class': 'form-control'}),
-            'type': forms.Select(attrs={'class': 'form-control'}),
-            'projected_amount': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'budget_month': forms.Select(attrs={'class': 'block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm'}),
+            'category': forms.Select(attrs={'class': 'block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm'}),
+            'type': forms.Select(attrs={'class': 'block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm'}),
+            'projected_amount': forms.NumberInput(attrs={'class': 'block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm', 'step': '0.01'}),
         }
 
 
@@ -46,17 +46,17 @@ class TransactionForm(forms.ModelForm):
         model = Transaction
         fields = ['budget_item', 'date', 'real_amount', 'description', 'notes']
         widgets = {
-            'budget_item': forms.Select(attrs={'class': 'form-control'}),
-            'date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'real_amount': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'description': forms.TextInput(attrs={'class': 'form-control'}),
-            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'budget_item': forms.Select(attrs={'class': 'block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm'}),
+            'date': forms.DateInput(attrs={'type': 'date', 'class': 'block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm'}),
+            'real_amount': forms.NumberInput(attrs={'class': 'block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm', 'step': '0.01'}),
+            'description': forms.TextInput(attrs={'class': 'block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm'}),
+            'notes': forms.Textarea(attrs={'class': 'block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm', 'rows': 3}),
         }
 
 
 class StatementUploadForm(forms.Form):
     statement_file = forms.FileField(
-        label='Upload Bank Statement',
+        label='Bank Statement File',
         widget=forms.FileInput(attrs={'accept': '.csv,.txt'})
     )
 
@@ -70,7 +70,7 @@ class StagingTransactionForm(forms.ModelForm):
             'description': forms.TextInput(attrs={'disabled': True}),
             'amount': forms.NumberInput(attrs={'disabled': True, 'step': '0.01'}),
             'type': forms.Select(attrs={'disabled': True}),
-            'assigned_category': forms.Select(attrs={'class': 'form-control'}),
+            'assigned_category': forms.Select(attrs={'class': 'block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm'}),
         }
 
 

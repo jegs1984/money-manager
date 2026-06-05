@@ -72,7 +72,7 @@ ALLOWED_HOSTS=localhost,127.0.0.1
 DATABASE_ENGINE=django.db.backends.postgresql
 DATABASE_NAME=money_manager
 DATABASE_USER=postgres
-DATABASE_PASSWORD=your_postgres_password
+DATABASE_PASSWORD=postgres
 DATABASE_HOST=localhost
 DATABASE_PORT=5432
 
@@ -81,6 +81,8 @@ SECURE_SSL_REDIRECT=False
 SESSION_COOKIE_SECURE=False
 CSRF_COOKIE_SECURE=False
 ```
+
+**Important:** Ensure `DATABASE_NAME` matches the PostgreSQL database you created earlier. If you used a different name (e.g., `myapp`), update it here.
 
 The `config/settings.py` automatically loads these variables using `python-dotenv`:
 
@@ -134,11 +136,18 @@ Or via `psql`:
 psql -U postgres -c "CREATE DATABASE money_manager;"
 ```
 
-### 3. Apply Raw SQL Schema (Optional, if migrations fail)
+### 3. Apply Raw SQL Schema
 
 ```bash
 psql -U postgres -d money_manager -f sql/init_db.sql
 ```
+
+This creates all finance tables with proper constraints:
+- `finance_budget_month` – Monthly budget containers
+- `finance_category` – Transaction categories
+- `finance_budget_item` – Budget projections per category
+- `finance_transaction` – Final reconciled transactions
+- `finance_staging_transaction` – Import staging table
 
 ### 4. Run Django Migrations
 
@@ -146,7 +155,7 @@ psql -U postgres -d money_manager -f sql/init_db.sql
 python manage.py migrate
 ```
 
-This will create any remaining Django tables (`auth_user`, `auth_group`, etc.) and apply any app-specific migrations.
+This creates Django system tables (`auth_*`, `django_*`, etc.) and applies any app-specific migrations.
 
 ### 5. Verify Schema
 
@@ -510,7 +519,71 @@ sudo systemctl start postgresql     # Linux
 psql -U postgres -h localhost
 ```
 
+### Django Import Errors
+
+#### "cannot import name 'Coalesce' from 'django.db.models'"
+
+```
+ImportError: cannot import name 'Coalesce' from 'django.db.models'
+```
+
+**Cause:** `Coalesce` is a function-level database expression, not a direct model import.
+
+**Solution:** Import from `django.db.models.functions`:
+
+```python
+# ❌ Wrong
+from django.db.models import Sum, F, Value, Coalesce
+
+# ✅ Correct
+from django.db.models import Sum, F, Value
+from django.db.models.functions import Coalesce
+```
+
+This has been corrected in [finance/views.py](finance/views.py#L6).
+
+### Django System Tables Not Appearing
+
+**Problem:** After running `python manage.py migrate`, Django system tables (`auth_*`, `django_*`) don't appear when you check `psql`.
+
+**Cause:** The `DATABASE_NAME` in `.env` doesn't match the PostgreSQL database being queried.
+
+**Solution:**
+```bash
+# When checking the database, ensure you use the correct database name:
+psql -U postgres -d money_manager -c "\dt"
+
+# Update .env to match your database:
+DATABASE_NAME=money_manager  # Must match your PostgreSQL database name
+```
+
+Then re-run migrations:
+```bash
+python manage.py migrate
+```
+
 ### Migration Errors
+
+#### "PROTECT" syntax error in init_db.sql
+
+```
+psql:sql/init_db.sql:30: ERROR:  syntax error at or near "PROTECT"
+```
+
+**Solution:**
+The `ON DELETE PROTECT` syntax is Django-specific and not valid in PostgreSQL. Use `ON DELETE RESTRICT` instead:
+
+```sql
+-- ❌ Wrong
+category_id BIGINT NOT NULL REFERENCES finance_category(id) ON DELETE PROTECT
+
+-- ✅ Correct
+category_id BIGINT NOT NULL REFERENCES finance_category(id) ON DELETE RESTRICT
+```
+
+The `sql/init_db.sql` file has been corrected. If you encounter this error, ensure you're using the latest version of the schema file.
+
+#### "relation ... does not exist"
 
 ```
 django.db.utils.ProgrammingError: relation "finance_staging_transaction" does not exist
@@ -518,7 +591,10 @@ django.db.utils.ProgrammingError: relation "finance_staging_transaction" does no
 
 **Solution:**
 ```bash
-# Re-apply raw SQL
+# Clear existing tables and re-apply schema
+psql -U postgres -d money_manager -c "DROP TABLE IF EXISTS finance_staging_transaction CASCADE; DROP TABLE IF EXISTS finance_transaction CASCADE; DROP TABLE IF EXISTS finance_budget_item CASCADE; DROP TABLE IF EXISTS finance_budget_month CASCADE; DROP TABLE IF EXISTS finance_category CASCADE;"
+
+# Re-run SQL initialization
 psql -U postgres -d money_manager -f sql/init_db.sql
 
 # Then run Django migrations
