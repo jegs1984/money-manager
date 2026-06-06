@@ -29,7 +29,7 @@ from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 
 from django.db import transaction as db_transaction
-from django.db.models import Sum, Value
+from django.db.models import Sum, Value, Q
 from django.db.models.functions import Coalesce
 
 from .models import BudgetItem, Category, Period, StagingCCTransaction, StagingTransaction, Transaction
@@ -655,29 +655,31 @@ def process_cc_staging_batch(staging_ids_with_categories: list[dict]) -> int:
 
 def calculate_safe_to_spend(period_id: int) -> dict:
     period = Period.objects.get(id=period_id)
-    items  = BudgetItem.objects.filter(period=period).annotate(
-        total_real=Coalesce(Sum('transactions__real_amount'), Value(Decimal('0.00')))
+    
+    # Let the database filter and sum everything in a single query
+    totals = BudgetItem.objects.filter(period=period).aggregate(
+        ti_proj=Coalesce(Sum('projected_amount', filter=Q(type='IN')), Value(Decimal('0.00'))),
+        ti_real=Coalesce(Sum('transactions__real_amount', filter=Q(type='IN')), Value(Decimal('0.00'))),
+        te_proj=Coalesce(Sum('projected_amount', filter=Q(type='OUT')), Value(Decimal('0.00'))),
+        te_real=Coalesce(Sum('transactions__real_amount', filter=Q(type='OUT')), Value(Decimal('0.00'))),
     )
 
-    ti_proj = te_proj = ti_real = te_real = Decimal('0.00')
+    ti_real = totals['ti_real']
+    te_real = totals['te_real']
 
-    for item in items:
-        if item.type == 'IN':
-            ti_proj += item.projected_amount
-            ti_real += item.total_real
-        else:
-            te_proj += item.projected_amount
-            te_real += item.total_real
-
-    safe_to_spend = ti_real - te_real
+    # Net remaining cash right now
+    safe_to_spend = ti_real - te_real 
+    total_projected = totals['ti_proj'] - totals['te_proj']
+    
     burn_rate = (te_real / ti_real * 100) if ti_real > Decimal('0.00') else Decimal('0.00')
 
     return {
         'period':                   period,
-        'total_income_projected':   ti_proj,
+        'total_income_projected':   totals['ti_proj'],
         'total_income_real':        ti_real,
-        'total_expense_projected':  te_proj,
+        'total_expense_projected':  totals['te_proj'],
         'total_expense_real':       te_real,
         'safe_to_spend':            safe_to_spend,
         'burn_rate':                burn_rate,
+        'projection':          total_projected,
     }

@@ -25,7 +25,6 @@ class CategoryForm(forms.ModelForm):
             'group': forms.Select(attrs={'class': 'form-select'}),
         }
 
-
 class BudgetItemForm(forms.ModelForm):
     class Meta:
         model  = BudgetItem
@@ -36,6 +35,16 @@ class BudgetItemForm(forms.ModelForm):
             'type':             forms.Select(attrs={'class': 'form-select'}),
             'projected_amount': forms.NumberInput(attrs={'class': 'form-input', 'step': '0.01', 'min': '0'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # 1. Sort the category dropdown by name
+        self.fields['category'].queryset = Category.objects.order_by('name')
+        
+        # 2. Concatenate name and group for the display label
+        # (Adjust 'obj.group' if your group field is a ForeignKey, e.g., 'obj.group.name')
+        self.fields['category'].label_from_instance = lambda obj: f"{obj.name} ({obj.group})"
 
 
 class TransactionForm(forms.ModelForm):
@@ -58,7 +67,18 @@ class StatementUploadForm(forms.Form):
     )
 
 
+class CategoryModelChoiceField(forms.ModelChoiceField):
+    def label_from_instance(self, obj):
+        # Assuming your Category model has 'code' and 'name' fields
+        # Change these to whatever fields you actually want to concatenate
+        return f"{obj.name} - {obj.group}"
+    
 class StagingTransactionReviewForm(forms.ModelForm):
+    assigned_category = CategoryModelChoiceField(
+        queryset=Category.objects.none(), # Will be populated in __init__
+        widget=forms.Select(attrs={'class': 'form-select text-xs'})
+    )
+        
     class Meta:
         model  = StagingTransaction
         fields = ['assigned_category']
@@ -69,7 +89,7 @@ class StagingTransactionReviewForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['assigned_category'].required  = False
-        self.fields['assigned_category'].queryset  = Category.objects.order_by('group', 'name')
+        self.fields['assigned_category'].queryset  = Category.objects.order_by('name')
         self.fields['assigned_category'].empty_label = '— Skip —'
 
 

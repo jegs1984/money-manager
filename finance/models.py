@@ -17,10 +17,19 @@ class Period(models.Model):
 
 class Category(models.Model):
     GROUP_CHOICES = [
-        ('ESSENTIAL', 'Essential'),
-        ('LIFESTYLE',  'Lifestyle'),
-        ('SAVINGS',    'Savings'),
-        ('INCOME',     'Income'),
+        ('AhorroeInversion', 'Ahorro e Inversión'),
+        ('Alimentación', 'Alimentación'),
+        ('Cuenta', 'Cuenta'),
+        ('Deuda', 'Deuda'),
+        ('Gastos', 'Gastos'),
+        ('GastosExtraordinarios', 'Gastos Extraordinarios'),
+        ('IngresoFijo', 'Ingreso Fijo'),
+        ('IngresoVariableExtra', 'Ingreso Variable / Extra'),
+        ('Lujo', 'Lujo'),
+        ('Pension', 'Pension'),
+        ('Personal', 'Personal'),
+        ('Transporte', 'Transporte'),
+        ('ViviendaHogar', 'Vivienda / Hogar')
     ]
     name  = models.CharField(max_length=100, unique=True, db_column='name')
     group = models.CharField(max_length=100, choices=GROUP_CHOICES, db_column='"group"')

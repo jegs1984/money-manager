@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from django.contrib import messages
-from django.db.models import F, Sum, Value
+from django.db.models import F, Sum, Value, Case, When
 from django.db.models.functions import Coalesce
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
@@ -40,12 +40,19 @@ class DashboardView(TemplateView):
 
         if active_period:
             stats = calculate_safe_to_spend(active_period.id)
+
+            total_real_expr = Coalesce(Sum('transactions__real_amount'), Value(Decimal('0.00')))
+            
             items = (
                 BudgetItem.objects.filter(period=active_period)
                 .select_related('category')
                 .annotate(
                     total_real=Coalesce(Sum('transactions__real_amount'), Value(Decimal('0.00'))),
-                    diff=F('projected_amount') - Coalesce(Sum('transactions__real_amount'), Value(Decimal('0.00'))),
+                    diff=Case(
+                        When(type='IN', then=total_real_expr - F('projected_amount')),
+                        When(type='OUT', then=F('projected_amount') - total_real_expr),
+                        default=Value(Decimal('0.00'))
+                    )
                 )
                 .order_by('type', 'category__group', 'category__name')
             )
@@ -215,7 +222,7 @@ class StagingReviewView(TemplateView):
     template_name = 'finance/staging_review.html'
 
     def _qs(self):
-        return StagingTransaction.objects.filter(is_processed=False).order_by('-original_date')
+        return StagingTransaction.objects.filter(is_processed=False).order_by('original_date')
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -287,7 +294,7 @@ class CCStagingReviewView(TemplateView):
     template_name = 'finance/cc_staging_review.html'
 
     def _qs(self):
-        return StagingCCTransaction.objects.filter(is_processed=False).order_by('-original_date')
+        return StagingCCTransaction.objects.filter(is_processed=False).order_by('original_date')
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
