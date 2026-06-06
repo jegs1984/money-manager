@@ -676,30 +676,44 @@ def process_cc_staging_batch(staging_ids_with_categories: list[dict]) -> int:
 def calculate_safe_to_spend(period_id: int) -> dict:
     period = Period.objects.get(id=period_id)
     
-    # Let the database filter and sum everything in a single query
-    totals = BudgetItem.objects.filter(period=period).aggregate(
-        ti_proj=Coalesce(Sum('projected_amount', filter=Q(type='IN')), Value(Decimal('0.00'))),
-        ti_real=Coalesce(Sum('transactions__real_amount', filter=Q(type='IN')), Value(Decimal('0.00'))),
-        te_proj=Coalesce(Sum('projected_amount', filter=Q(type='OUT')), Value(Decimal('0.00'))),
-        te_real=Coalesce(Sum('transactions__real_amount', filter=Q(type='OUT')), Value(Decimal('0.00'))),
+    # 1. Sum up projected amounts directly from BudgetItem (No joins = no duplication)
+    budget_totals = BudgetItem.objects.filter(period=period).aggregate(
+        proj_in=Coalesce(Sum('projected_amount', filter=Q(type='IN')), Value(Decimal('0.00'))),
+        proj_out=Coalesce(Sum('projected_amount', filter=Q(type='OUT')), Value(Decimal('0.00'))),
     )
 
-    ti_real = totals['ti_real']
-    te_real = totals['te_real']
+    # 2. Sum up real amounts directly from Transaction, filtering by the budget item's type
+    transaction_totals = Transaction.objects.filter(budget_item__period=period).aggregate(
+        real_in=Coalesce(Sum('real_amount', filter=Q(budget_item__type='IN')), Value(Decimal('0.00'))),
+        real_out=Coalesce(Sum('real_amount', filter=Q(budget_item__type='OUT')), Value(Decimal('0.00'))),
+    )
+
+    # 3. Combine your results cleanly
+    ti_proj = budget_totals['proj_in']
+    te_proj = budget_totals['proj_out']
+    
+    ti_real = transaction_totals['real_in']
+    te_real = transaction_totals['real_out']
+
+    # Your safe_to_spend logic remains clean
+    safe_to_spend = ti_real - te_real
+    burn_rate = (te_real / ti_real * 100) if ti_real > Decimal('0.00') else Decimal('0.00')
 
     # Net remaining cash right now
     safe_to_spend = ti_real - te_real 
-    total_projected = totals['ti_proj'] - totals['te_proj']
+    total_projected = ti_proj - te_proj
     
     burn_rate = (te_real / ti_real * 100) if ti_real > Decimal('0.00') else Decimal('0.00')
 
-    return {
+    out = {
         'period':                   period,
-        'total_income_projected':   totals['ti_proj'],
+        'total_income_projected':   ti_proj,
         'total_income_real':        ti_real,
-        'total_expense_projected':  totals['te_proj'],
+        'total_expense_projected':  te_proj,
         'total_expense_real':       te_real,
         'safe_to_spend':            safe_to_spend,
         'burn_rate':                burn_rate,
-        'projection':          total_projected,
+        'projection':               total_projected,
     }
+
+    return out
