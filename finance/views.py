@@ -65,6 +65,74 @@ class DashboardView(TemplateView):
 
 
 # ─────────────────────────────────────────────
+# Group Dashboard
+# ─────────────────────────────────────────────
+
+class GroupDashboardView(TemplateView):
+    template_name = 'finance/group_dashboard.html'
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        period_id   = self.request.GET.get('period')
+        all_periods = Period.objects.order_by('-start_date')
+
+        if period_id:
+            active_period = Period.objects.filter(pk=period_id).first()
+        else:
+            active_period = all_periods.filter(is_active=True).first() or all_periods.first()
+
+        if active_period:
+            stats = calculate_safe_to_spend(active_period.id)
+
+            total_real_expr = Coalesce(Sum('transactions__real_amount'), Value(Decimal('0.00')))
+
+            items = (
+                BudgetItem.objects.filter(period=active_period)
+                .select_related('category')
+                .annotate(
+                    total_real=Coalesce(Sum('transactions__real_amount'), Value(Decimal('0.00'))),
+                    diff=Case(
+                        When(type='IN',  then=total_real_expr - F('projected_amount')),
+                        When(type='OUT', then=F('projected_amount') - total_real_expr),
+                        default=Value(Decimal('0.00'))
+                    )
+                )
+                .order_by('type', 'category__group', 'category__name')
+            )
+
+            # Build group-level aggregation
+            from collections import defaultdict
+            groups = defaultdict(lambda: {
+                'group': '',
+                'type': '',
+                'projected': Decimal('0.00'),
+                'actual':    Decimal('0.00'),
+                'diff':      Decimal('0.00'),
+                'items':     [],
+            })
+
+            for item in items:
+                key = (item.type, item.category.group)
+                g   = groups[key]
+                g['group']     = item.category.group
+                g['type']      = item.type
+                g['projected'] += item.projected_amount
+                g['actual']    += item.total_real
+                g['diff']      += item.diff
+                g['items'].append(item)
+
+            # Sort: IN first, then OUT; alpha within each
+            sorted_groups = sorted(groups.values(), key=lambda g: (0 if g['type'] == 'IN' else 1, g['group']))
+
+            ctx.update(stats)
+            ctx['groups'] = sorted_groups
+
+        ctx['active_period'] = active_period
+        ctx['all_periods']   = all_periods
+        return ctx
+
+
+# ─────────────────────────────────────────────
 # Period CRUD
 # ─────────────────────────────────────────────
 

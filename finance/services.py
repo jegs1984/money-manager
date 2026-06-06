@@ -400,26 +400,33 @@ def _parse_clp_amount(raw: str) -> Decimal | None:
 def _parse_cc_header(rows: list[list[str]]) -> dict:
     """
     Extract cardholder metadata from the first ~10 rows of the CC XLS CSV.
-    Row 3, col 18 contains a multi-line cell:
+    The cell at col 18 (approx) contains a multi-line value:
       'JUAN GAETE STANGL\nVISA XXXX-XXXX-XXXX-7239\n22/05/2026'
+    LibreOffice preserves real newlines inside quoted cells.
     """
     meta = {}
     for row in rows[:10]:
-        if len(row) > 18:
-            cell = row[18].strip()
-            if cell and ('VISA' in cell.upper() or 'MASTER' in cell.upper() or 'XXXX' in cell):
-                parts = [p.strip() for p in re.split(r'[\n\\n]+', cell) if p.strip()]
-                if len(parts) >= 1:
-                    meta['card_holder'] = parts[0]
-                if len(parts) >= 2:
-                    # Extract card number pattern e.g. VISA XXXX-XXXX-XXXX-7239
-                    m = re.search(r'([A-Z]+\s+[\dX-]+)', parts[1])
-                    meta['card_number'] = m.group(1) if m else parts[1]
-                if len(parts) >= 3:
-                    try:
-                        meta['statement_date'] = datetime.strptime(parts[2], '%d/%m/%Y').date()
-                    except ValueError:
-                        pass
+        for cell_idx in range(len(row)):
+            cell = row[cell_idx].strip()
+            upper = cell.upper()
+            if not cell or ('VISA' not in upper and 'MASTER' not in upper and 'XXXX' not in upper):
+                continue
+            # Split on real newlines or the literal two-char sequence \n
+            parts = [p.strip() for p in re.split(r'\n|\\n', cell) if p.strip()]
+            if len(parts) >= 1:
+                meta['card_holder'] = parts[0]
+            if len(parts) >= 2:
+                m = re.search(r'([A-Z]+\s+[\dX-]+)', parts[1])
+                meta['card_number'] = m.group(1) if m else parts[1]
+            if len(parts) >= 3:
+                try:
+                    meta['statement_date'] = datetime.strptime(parts[2], '%d/%m/%Y').date()
+                except ValueError:
+                    pass
+            if meta:
+                break
+        if meta:
+            break
     return meta
 
 
@@ -483,23 +490,36 @@ def parse_scotiabank_cc_statement(file_obj, source_filename: str = '') -> dict:
     except Exception:
         pass
 
-    # Attempt 2: LibreOffice headless (server / dev environment)
+    # Attempt 2: LibreOffice / soffice headless
     if csv_text is None:
         try:
             with tempfile.NamedTemporaryFile(suffix='.xls', delete=False) as tmp:
                 tmp.write(raw_bytes)
                 tmp_path = tmp.name
             out_dir = tempfile.mkdtemp()
-            result = subprocess.run(
-                ['libreoffice', '--headless', '--convert-to', 'csv',
-                 '--outdir', out_dir, tmp_path],
-                capture_output=True, timeout=30,
-            )
+            # Try both binary names
+            for binary in ('soffice', 'libreoffice'):
+                result = subprocess.run(
+                    [binary, '--headless', '--convert-to', 'csv',
+                     '--outdir', out_dir, tmp_path],
+                    capture_output=True, timeout=60,
+                )
+                if result.returncode == 0:
+                    break
             csv_path = os.path.join(out_dir, os.path.basename(tmp_path).replace('.xls', '.csv'))
             if result.returncode == 0 and os.path.exists(csv_path):
-                with open(csv_path, encoding='utf-8', errors='replace') as f:
-                    csv_text = f.read()
-            os.unlink(tmp_path)
+                # LibreOffice writes latin-1 on many systems
+                for enc in ('utf-8', 'latin-1', 'cp1252'):
+                    try:
+                        with open(csv_path, encoding=enc) as f:
+                            csv_text = f.read()
+                        break
+                    except UnicodeDecodeError:
+                        continue
+            try:
+                os.unlink(tmp_path)
+            except OSError:
+                pass
         except Exception:
             pass
 
