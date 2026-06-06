@@ -1,0 +1,162 @@
+{% extends "finance/base.html" %}
+{% block title %}Dashboard — Money Manager{% endblock %}
+{% block page_title %}{% if active_period %}{{ active_period.name }}{% else %}Dashboard{% endif %}{% endblock %}
+{% block header_actions %}<a href="{% url 'finance:budgetitem_create' %}" class="btn-primary text-xs">+ Budget Item</a>{% endblock %}
+
+{% block content %}
+{% if not active_period %}
+<div class="flex flex-col items-center justify-center py-32 text-center">
+  <p class="font-mono text-zinc-600 text-sm mb-4">No active period found.</p>
+  <a href="{% url 'finance:period_create' %}" class="btn-primary">Create Period</a>
+</div>
+{% else %}
+
+<!-- Period selector + info bar -->
+<div class="mb-5 flex flex-wrap items-end gap-4">
+  <div>
+    <p class="font-mono text-xs text-zinc-600 uppercase tracking-widest">Period</p>
+    <p class="text-lg font-semibold text-zinc-100">{{ active_period.name }}</p>
+    <p class="font-mono text-xs text-zinc-500">{{ active_period.start_date|date:"Y-m-d" }} → {{ active_period.end_date|date:"Y-m-d" }}</p>
+  </div>
+  {% if all_periods|length > 1 %}
+  <div class="ml-auto">
+    <select onchange="window.location.href='?period='+this.value" class="form-select text-xs">
+      {% for p in all_periods %}
+        <option value="{{ p.id }}" {% if p.id == active_period.id %}selected{% endif %}>{{ p.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  {% endif %}
+</div>
+
+<!-- KPI row -->
+<div class="grid grid-cols-2 gap-4 lg:grid-cols-4 mb-6">
+  <div class="card">
+    <p class="font-mono text-xs text-zinc-500 uppercase tracking-widest mb-2">Projected Income</p>
+    <p class="font-mono text-2xl font-semibold text-emerald-400">
+      ${{ total_income_projected|floatformat:0 }}
+    </p>
+  </div>
+  <div class="card">
+    <p class="font-mono text-xs text-zinc-500 uppercase tracking-widest mb-2">Projected Expenses</p>
+    <p class="font-mono text-2xl font-semibold text-red-400">
+      ${{ total_expense_projected|floatformat:0 }}
+    </p>
+  </div>
+  <div class="card">
+    <p class="font-mono text-xs text-zinc-500 uppercase tracking-widest mb-2">Projection</p>
+    <p class="font-mono text-2xl font-semibold {% if projection >= 0 %}text-emerald-400{% else %}text-red-400{% endif %}">
+      ${{ projection|floatformat:0 }}
+    </p>
+  </div>
+</div>
+
+<!-- KPI row -->
+<div class="grid grid-cols-2 gap-4 lg:grid-cols-4 mb-6">
+  <div class="card">
+    <p class="font-mono text-xs text-zinc-500 uppercase tracking-widest mb-2">Income</p>
+    <p class="font-mono text-2xl font-semibold text-emerald-400">${{ total_income_real|floatformat:0 }}</p>
+    <p class="text-xs text-zinc-600 mt-1">of ${{ total_income_projected|floatformat:0 }} projected</p>
+  </div>
+  <div class="card">
+    <p class="font-mono text-xs text-zinc-500 uppercase tracking-widest mb-2">Expenses</p>
+    <p class="font-mono text-2xl font-semibold text-red-400">${{ total_expense_real|floatformat:0 }}</p>
+    <p class="text-xs text-zinc-600 mt-1">of ${{ total_expense_projected|floatformat:0 }} projected</p>
+  </div>  
+  <div class="card">
+    <p class="font-mono text-xs text-zinc-500 uppercase tracking-widest mb-2">Safe to Spend (Remaining)</p>
+    <p class="font-mono text-2xl font-semibold {% if safe_to_spend >= 0 %}text-emerald-400{% else %}text-red-400{% endif %}">
+      ${{ safe_to_spend|floatformat:0 }}
+    </p>
+  </div>
+  <div class="card">
+    <p class="font-mono text-xs text-zinc-500 uppercase tracking-widest mb-2">Used</p>
+    <p class="font-mono text-2xl font-semibold {% if burn_rate > 90 %}text-red-400{% elif burn_rate > 70 %}text-amber-400{% else %}text-zinc-100{% endif %}">
+      {{ burn_rate|floatformat:1 }}%
+    </p>
+  </div>
+</div>
+
+<!-- Burn capacity bar -->
+<div class="card mb-6">
+  <div class="flex items-center justify-between mb-2">
+    <span class="font-mono text-xs text-zinc-500 uppercase tracking-widest">Period Burn Capacity</span>
+    <span class="font-mono text-xs text-zinc-400">{{ burn_rate|floatformat:1 }}%</span>
+  </div>
+  <div class="progress-track">
+    <div class="progress-fill {% if burn_rate > 90 %}bg-red-500{% elif burn_rate > 70 %}bg-amber-500{% else %}bg-emerald-500{% endif %}"
+         style="width:{% if burn_rate > 100 %}100{% else %}{{ burn_rate|floatformat:0 }}{% endif %}%"></div>
+  </div>
+</div>
+
+<!-- Budget item analysis -->
+{% if budget_items %}
+<div class="card overflow-hidden p-0">
+  <div class="px-5 py-3 border-b border-zinc-800">
+    <span class="font-mono text-xs text-zinc-500 uppercase tracking-widest">Budget Analysis</span>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-zinc-800 bg-zinc-900/50">
+          <th class="px-4 py-2.5 text-left  font-mono text-xs text-zinc-600 uppercase tracking-widest">Category</th>
+          <th class="px-4 py-2.5 text-left  font-mono text-xs text-zinc-600 uppercase tracking-widest">Group</th>
+          <th class="px-4 py-2.5 text-left  font-mono text-xs text-zinc-600 uppercase tracking-widest">T</th>
+          <th class="px-4 py-2.5 text-right font-mono text-xs text-zinc-600 uppercase tracking-widest">Projected</th>
+          <th class="px-4 py-2.5 text-right font-mono text-xs text-zinc-600 uppercase tracking-widest">Actual</th>
+          <th class="px-4 py-2.5 text-right font-mono text-xs text-zinc-600 uppercase tracking-widest">Diff</th>
+          <th class="px-4 py-2.5 font-mono text-xs text-zinc-600 uppercase tracking-widest w-28">Cap.</th>
+          <th class="px-4 py-2.5 text-right font-mono text-xs text-zinc-600 uppercase tracking-widest">—</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-zinc-800/60">
+        {% for item in budget_items %}
+        <tr class="group hover:bg-zinc-800/30 transition-colors">
+          <td class="px-4 py-2.5 font-medium text-zinc-200">{{ item.category.name }}</td>
+          <td class="px-4 py-2.5">
+            <span class="rounded-full px-2 py-0.5 font-mono text-xs
+              {% if item.category.group == 'ESSENTIAL' %}bg-blue-900/50   text-blue-300
+              {% elif item.category.group == 'LIFESTYLE'  %}bg-purple-900/50 text-purple-300
+              {% elif item.category.group == 'SAVINGS'    %}bg-emerald-900/50 text-emerald-300
+              {% else %}bg-amber-900/50 text-amber-300{% endif %}">
+              {{ item.category.group }}
+            </span>
+          </td>
+          <td class="px-4 py-2.5">
+            <span class="font-mono text-xs {% if item.type == 'IN' %}text-emerald-400{% else %}text-red-400{% endif %}">{{ item.type }}</span>
+          </td>
+          <td class="px-4 py-2.5 text-right font-mono text-zinc-300">${{ item.projected_amount|floatformat:0 }}</td>
+          <td class="px-4 py-2.5 text-right font-mono {% if item.type == 'IN' %}text-emerald-400{% else %}text-zinc-100{% endif %}">${{ item.total_real|floatformat:0 }}</td>
+          <td class="px-4 py-2.5 text-right font-mono text-xs {% if item.diff >= 0 %}text-emerald-400{% else %}text-red-400{% endif %}">
+            {% if item.diff >= 0 %}+{% endif %}{{ item.diff|floatformat:0 }}
+          </td>
+          <td class="px-4 py-2.5">
+            {% if item.projected_amount > 0 %}
+              {% widthratio item.total_real item.projected_amount 100 as pct %}
+              <div class="progress-track">
+                <div class="progress-fill {% if pct > 100 %}bg-red-500{% elif pct > 80 %}bg-amber-500{% else %}bg-emerald-500{% endif %}"
+                     style="width:{% if pct > 100 %}100{% else %}{{ pct }}{% endif %}%"></div>
+              </div>
+            {% else %}<span class="font-mono text-xs text-zinc-700">—</span>{% endif %}
+          </td>
+          <td class="px-4 py-2.5 text-right">
+            <div class="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+              <a href="{% url 'finance:budgetitem_update' item.pk %}" class="text-xs text-zinc-500 hover:text-zinc-300">edit</a>
+              <a href="{% url 'finance:budgetitem_delete' item.pk %}" class="text-xs text-zinc-500 hover:text-red-400">del</a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="card flex flex-col items-center justify-center py-16 text-center">
+  <p class="font-mono text-zinc-600 text-sm mb-4">No budget items for this period.</p>
+  <a href="{% url 'finance:budgetitem_create' %}" class="btn-primary text-xs">Add First Item</a>
+</div>
+{% endif %}
+
+{% endif %}
+{% endblock %}

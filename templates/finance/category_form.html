@@ -1,0 +1,23 @@
+{% extends "finance/base.html" %}
+{% block title %}{% if object %}Edit{% else %}New{% endif %} Category — Money Manager{% endblock %}
+{% block page_title %}{% if object %}Edit{% else %}New{% endif %} Category{% endblock %}
+{% block content %}
+<div class="max-w-md">
+  <div class="card">
+    <form method="post">
+      {% csrf_token %}
+      {% for field in form %}
+        <div class="mb-4">
+          <label class="block font-mono text-xs text-zinc-400 uppercase tracking-widest mb-1.5">{{ field.label }}</label>
+          {{ field }}
+          {% if field.errors %}<p class="mt-1 font-mono text-xs text-red-400">{{ field.errors.0 }}</p>{% endif %}
+        </div>
+      {% endfor %}
+      <div class="flex gap-3 pt-2">
+        <button type="submit" class="btn-primary">Save</button>
+        <a href="{% url 'finance:category_list' %}" class="btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

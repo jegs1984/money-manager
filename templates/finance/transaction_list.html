@@ -1,0 +1,55 @@
+{% extends "finance/base.html" %}
+{% block title %}Transactions — Money Manager{% endblock %}
+{% block page_title %}Transactions{% endblock %}
+{% block header_actions %}<a href="{% url 'finance:transaction_create' %}" class="btn-primary text-xs">+ Log Transaction</a>{% endblock %}
+{% block content %}
+<div class="card overflow-hidden p-0">
+  <table class="w-full text-sm">
+    <thead>
+      <tr class="border-b border-zinc-800">
+        <th class="px-4 py-3 text-left  font-mono text-xs text-zinc-600 uppercase tracking-widest">Date</th>
+        <th class="px-4 py-3 text-left  font-mono text-xs text-zinc-600 uppercase tracking-widest">Description</th>
+        <th class="px-4 py-3 text-left  font-mono text-xs text-zinc-600 uppercase tracking-widest">Category</th>
+        <th class="px-4 py-3 text-left  font-mono text-xs text-zinc-600 uppercase tracking-widest">Period</th>
+        <th class="px-4 py-3 text-right font-mono text-xs text-zinc-600 uppercase tracking-widest">Amount</th>
+        <th class="px-4 py-3 text-right font-mono text-xs text-zinc-600 uppercase tracking-widest">Actions</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-zinc-800/60">
+      {% for tx in transactions %}
+      <tr class="hover:bg-zinc-800/30 transition-colors">
+        <td class="px-4 py-3 font-mono text-xs text-zinc-400 whitespace-nowrap">{{ tx.date|date:"Y-m-d" }}</td>
+        <td class="px-4 py-3 text-zinc-300 max-w-xs truncate">{{ tx.description }}</td>
+        <td class="px-4 py-3 text-xs text-zinc-400">
+          {% if tx.budget_item %}{{ tx.budget_item.category.name }}{% else %}<span class="text-zinc-700">—</span>{% endif %}
+        </td>
+        <td class="px-4 py-3 text-xs text-zinc-500">
+          {% if tx.budget_item %}{{ tx.budget_item.period.name }}{% else %}<span class="text-zinc-700">—</span>{% endif %}
+        </td>
+        <td class="px-4 py-3 text-right font-mono text-sm font-medium
+          {% if tx.budget_item and tx.budget_item.type == 'IN' %}text-emerald-400{% else %}text-red-400{% endif %}">
+          ${{ tx.real_amount|floatformat:0 }}
+        </td>
+        <td class="px-4 py-3 text-right">
+          <div class="flex justify-end gap-3">
+            <a href="{% url 'finance:transaction_update' tx.pk %}" class="text-xs text-zinc-500 hover:text-zinc-300">edit</a>
+            <a href="{% url 'finance:transaction_delete' tx.pk %}" class="text-xs text-zinc-500 hover:text-red-400">delete</a>
+          </div>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6" class="px-4 py-8 text-center font-mono text-xs text-zinc-600">No transactions yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% if is_paginated %}
+  <div class="flex items-center justify-between border-t border-zinc-800 px-4 py-3">
+    <span class="font-mono text-xs text-zinc-600">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    <div class="flex gap-2">
+      {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}" class="btn-secondary text-xs">← Prev</a>{% endif %}
+      {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}" class="btn-secondary text-xs">Next →</a>{% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

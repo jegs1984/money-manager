@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}Money Manager{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+    body { font-family: 'IBM Plex Sans', sans-serif; }
+    .font-mono { font-family: 'IBM Plex Mono', monospace; }
+    .form-input,
+    .form-select {
+      display:block; width:100%;
+      border-radius:.375rem; border:1px solid #3f3f46;
+      background:#18181b; padding:.5rem .75rem;
+      font-size:.875rem; color:#f4f4f5;
+      outline:none;
+    }
+    .form-input:focus, .form-select:focus {
+      border-color:#10b981; box-shadow:0 0 0 1px #10b981;
+    }
+    .form-checkbox { border-radius:.25rem; border-color:#52525b; background:#18181b; color:#10b981; }
+    .btn-primary   { display:inline-flex; align-items:center; gap:.5rem; border-radius:.375rem; background:#10b981; padding:.4rem 1rem; font-size:.875rem; font-weight:500; color:#0a0a0a; transition:background .15s; }
+    .btn-primary:hover  { background:#34d399; }
+    .btn-secondary { display:inline-flex; align-items:center; gap:.5rem; border-radius:.375rem; border:1px solid #3f3f46; padding:.4rem 1rem; font-size:.875rem; font-weight:500; color:#d4d4d8; transition:border-color .15s, color .15s; }
+    .btn-secondary:hover { border-color:#71717a; color:#f4f4f5; }
+    .btn-danger { display:inline-flex; align-items:center; gap:.5rem; border-radius:.375rem; background:#dc2626; padding:.4rem 1rem; font-size:.875rem; font-weight:500; color:#fff; transition:background .15s; }
+    .btn-danger:hover { background:#ef4444; }
+    .card { border-radius:.5rem; border:1px solid #27272a; background:#18181b; padding:1.25rem; }
+    .progress-track { height:6px; width:100%; border-radius:9999px; background:#27272a; overflow:hidden; }
+    .progress-fill  { height:100%; border-radius:9999px; transition:width .5s; }
+  </style>
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="h-full bg-zinc-950 text-zinc-100 antialiased">
+<div class="flex h-full">
+
+  <!-- Sidebar -->
+  <aside class="fixed inset-y-0 left-0 z-40 flex w-56 flex-col border-r border-zinc-800 bg-zinc-950">
+    <div class="flex h-14 shrink-0 items-center border-b border-zinc-800 px-5">
+      <span class="font-mono text-sm font-semibold tracking-widest text-emerald-400">₿ LEDGER</span>
+    </div>
+    <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-0.5 text-sm">
+
+      <a href="{% url 'finance:dashboard' %}"
+         class="flex items-center gap-2.5 rounded px-3 py-2 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 transition-colors">
+        <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        Dashboard
+      </a>
+
+      <a href="{% url 'finance:group_dashboard' %}"
+         class="flex items-center gap-2.5 rounded px-3 py-2 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 transition-colors">
+        <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+        By Group
+      </a>
+
+      <a href="{% url 'finance:statement_upload' %}"
+         class="flex items-center gap-2.5 rounded px-3 py-2 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 transition-colors">
+        <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+        Import Statement
+      </a>
+
+      <a href="{% url 'finance:staging_review' %}"
+         class="flex items-center gap-2.5 rounded px-3 py-2 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 transition-colors">
+        <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+        Staging Review
+      </a>
+
+      <a href="{% url 'finance:cc_statement_upload' %}"
+         class="flex items-center gap-2.5 rounded px-3 py-2 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 transition-colors">
+        <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+        Import Credit Card
+      </a>
+
+      <a href="{% url 'finance:cc_staging_review' %}"
+         class="flex items-center gap-2.5 rounded px-3 py-2 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 transition-colors">
+        <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        CC Staging Review
+      </a>
+
+      <div class="pt-3 pb-1 px-3">
+        <span class="font-mono text-xs uppercase tracking-widest text-zinc-600">Manage</span>
+      </div>
+
+      <a href="{% url 'finance:period_list' %}"
+         class="flex items-center gap-2.5 rounded px-3 py-2 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 transition-colors">
+        <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        Periods
+      </a>
+
+      <a href="{% url 'finance:category_list' %}"
+         class="flex items-center gap-2.5 rounded px-3 py-2 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 transition-colors">
+        <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a2 2 0 012-2z"/></svg>
+        Categories
+      </a>
+
+      <a href="{% url 'finance:transaction_list' %}"
+         class="flex items-center gap-2.5 rounded px-3 py-2 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 transition-colors">
+        <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"/></svg>
+        Transactions
+      </a>
+
+    </nav>
+  </aside>
+
+  <!-- Main -->
+  <div class="flex flex-1 flex-col pl-56 min-h-screen">
+    <header class="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between border-b border-zinc-800 bg-zinc-950/90 backdrop-blur px-6">
+      <h1 class="text-sm font-medium text-zinc-300">{% block page_title %}{% endblock %}</h1>
+      <div class="flex items-center gap-4">
+        {% if messages %}
+          {% for msg in messages %}
+            <span class="font-mono text-xs {% if msg.tags == 'error' %}text-red-400{% elif msg.tags == 'warning' %}text-amber-400{% else %}text-emerald-400{% endif %}">
+              {{ msg }}
+            </span>
+          {% endfor %}
+        {% endif %}
+        {% block header_actions %}{% endblock %}
+      </div>
+    </header>
+
+    <main class="flex-1 p-6">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+</div>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

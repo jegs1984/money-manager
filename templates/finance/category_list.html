@@ -1,0 +1,39 @@
+{% extends "finance/base.html" %}
+{% block title %}Categories — Money Manager{% endblock %}
+{% block page_title %}Categories{% endblock %}
+{% block header_actions %}<a href="{% url 'finance:category_create' %}" class="btn-primary text-xs">+ New Category</a>{% endblock %}
+{% block content %}
+<div class="card overflow-hidden p-0">
+  <table class="w-full text-sm">
+    <thead>
+      <tr class="border-b border-zinc-800">
+        <th class="px-4 py-3 text-left  font-mono text-xs text-zinc-600 uppercase tracking-widest">Name</th>
+        <th class="px-4 py-3 text-left  font-mono text-xs text-zinc-600 uppercase tracking-widest">Group</th>
+        <th class="px-4 py-3 text-right font-mono text-xs text-zinc-600 uppercase tracking-widest">Actions</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-zinc-800/60">
+      {% for cat in categories %}
+      <tr class="hover:bg-zinc-800/30 transition-colors">
+        <td class="px-4 py-3 font-medium text-zinc-200">{{ cat.name }}</td>
+        <td class="px-4 py-3">
+          <span class="rounded-full px-2 py-0.5 font-mono text-xs
+            {% if cat.group == 'ESSENTIAL' %}bg-blue-900/50 text-blue-300
+            {% elif cat.group == 'LIFESTYLE'  %}bg-purple-900/50 text-purple-300
+            {% elif cat.group == 'SAVINGS'    %}bg-emerald-900/50 text-emerald-300
+            {% else %}bg-amber-900/50 text-amber-300{% endif %}">{{ cat.group }}</span>
+        </td>
+        <td class="px-4 py-3 text-right">
+          <div class="flex justify-end gap-3">
+            <a href="{% url 'finance:category_update' cat.pk %}" class="text-xs text-zinc-500 hover:text-zinc-300">edit</a>
+            <a href="{% url 'finance:category_delete' cat.pk %}" class="text-xs text-zinc-500 hover:text-red-400">delete</a>
+          </div>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="3" class="px-4 py-8 text-center font-mono text-xs text-zinc-600">No categories yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

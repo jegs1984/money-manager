@@ -1,0 +1,113 @@
+{% extends "finance/base.html" %}
+{% block title %}Staging Review — Money Manager{% endblock %}
+{% block page_title %}Staging Review · {{ pending_count }} pending{% endblock %}
+{% block header_actions %}
+  <a href="{% url 'finance:statement_upload' %}" class="btn-secondary text-xs">+ Import More</a>
+{% endblock %}
+
+{% block content %}
+{% if pending_count == 0 %}
+<div class="flex flex-col items-center justify-center py-32 text-center">
+  <svg class="mb-4 h-12 w-12 text-zinc-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+  </svg>
+  <p class="font-mono text-zinc-600 text-sm mb-4">No pending transactions.</p>
+  <a href="{% url 'finance:statement_upload' %}" class="btn-primary text-xs">Import Statement</a>
+</div>
+
+{% else %}
+<form method="post" id="staging-form">
+  {% csrf_token %}
+  {{ formset.management_form }}
+
+  <div class="card overflow-hidden p-0 mb-28">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-zinc-800 bg-zinc-900/50">
+            <th class="px-4 py-2.5 text-left  font-mono text-xs text-zinc-600 uppercase tracking-widest w-24">Date</th>
+            <th class="px-4 py-2.5 text-left  font-mono text-xs text-zinc-600 uppercase tracking-widest">Description</th>
+            <th class="px-4 py-2.5 text-left  font-mono text-xs text-zinc-600 uppercase tracking-widest w-24">Doc #</th>
+            <th class="px-4 py-2.5 text-right font-mono text-xs text-zinc-600 uppercase tracking-widest w-32">Amount</th>
+            <th class="px-4 py-2.5 text-right font-mono text-xs text-zinc-600 uppercase tracking-widest w-32">Balance</th>
+            <th class="px-4 py-2.5 text-left  font-mono text-xs text-zinc-600 uppercase tracking-widest w-8">T</th>
+            <th class="px-4 py-2.5 text-left  font-mono text-xs text-zinc-600 uppercase tracking-widest w-48">Category</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-zinc-800/60">
+          {% for form in formset.forms %}
+          <tr class="hover:bg-zinc-800/20 transition-colors">
+            {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+
+            <!-- Date -->
+            <td class="px-4 py-2.5 font-mono text-xs text-zinc-400 whitespace-nowrap">
+              {{ form.instance.original_date|date:"d/m/Y" }}
+            </td>
+
+            <!-- Description -->
+            <td class="px-4 py-2.5 text-zinc-300 max-w-xs">
+              <span class="block truncate" title="{{ form.instance.description }}">{{ form.instance.description }}</span>
+              {% if form.instance.account_number %}
+                <span class="font-mono text-xs text-zinc-600">{{ form.instance.account_number }}</span>
+              {% endif %}
+            </td>
+
+            <!-- Doc # -->
+            <td class="px-4 py-2.5 font-mono text-xs text-zinc-600">
+              {{ form.instance.doc_number|default:"—" }}
+            </td>
+
+            <!-- Amount -->
+            <td class="px-4 py-2.5 text-right font-mono text-sm font-semibold whitespace-nowrap
+              {% if form.instance.type == 'IN' %}text-emerald-400{% else %}text-red-400{% endif %}">
+              {% if form.instance.type == 'OUT' %}-{% endif %}${{ form.instance.amount|floatformat:0 }}
+            </td>
+
+            <!-- Balance -->
+            <td class="px-4 py-2.5 text-right font-mono text-xs text-zinc-500 whitespace-nowrap">
+              {% if form.instance.balance %}${{ form.instance.balance|floatformat:0 }}{% else %}—{% endif %}
+            </td>
+
+            <!-- Type badge -->
+            <td class="px-4 py-2.5">
+              <span class="rounded px-1.5 py-0.5 font-mono text-xs
+                {% if form.instance.type == 'IN' %}bg-emerald-900/50 text-emerald-300{% else %}bg-red-900/50 text-red-300{% endif %}">
+                {{ form.instance.type }}
+              </span>
+            </td>
+
+            <!-- Category -->
+            <td class="px-4 py-2.5">
+              {{ form.assigned_category }}
+              {% if form.assigned_category.errors %}
+                <p class="font-mono text-xs text-red-400 mt-1">{{ form.assigned_category.errors.0 }}</p>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Sticky action bar -->
+  <div class="fixed bottom-0 left-56 right-0 z-50 border-t border-zinc-800 bg-zinc-950/95 backdrop-blur px-6 py-3">
+    <div class="flex items-center justify-between">
+      <p class="font-mono text-xs text-zinc-500">
+        {{ pending_count }} row{{ pending_count|pluralize }} staged
+        <span class="text-zinc-700">· rows with no category are skipped</span>
+      </p>
+      <div class="flex items-center gap-3">
+        <a href="{% url 'finance:dashboard' %}" class="btn-secondary text-xs">Cancel</a>
+        <button type="submit" class="btn-primary">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          </svg>
+          Commit to Ledger
+        </button>
+      </div>
+    </div>
+  </div>
+</form>
+{% endif %}
+{% endblock %}
