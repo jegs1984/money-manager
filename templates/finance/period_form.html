@@ -1,6 +1,6 @@
 {% extends "finance/base.html" %}
-{% block title %}{% if object %}Edit{% else %}Log{% endif %} Transaction — Money Manager{% endblock %}
-{% block page_title %}{% if object %}Edit{% else %}Log{% endif %} Transaction{% endblock %}
+{% block title %}{% if object %}Edit{% else %}New{% endif %} Period — Money Manager{% endblock %}
+{% block page_title %}{% if object %}Edit{% else %}New{% endif %} Period{% endblock %}
 {% block content %}
 <div class="max-w-md">
   <div class="card">
@@ -15,7 +15,7 @@
       {% endfor %}
       <div class="flex gap-3 pt-2">
         <button type="submit" class="btn-primary">Save</button>
-        <a href="{% url 'finance:transaction_list' %}" class="btn-secondary">Cancel</a>
+        <a href="{% url 'finance:period_list' %}" class="btn-secondary">Cancel</a>
       </div>
     </form>
   </div>

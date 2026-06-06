@@ -1,48 +1,33 @@
 from django.urls import path
-from finance.views import (
-    DashboardView,
-    GroupListView,
-    GroupCreateView,
-    GroupUpdateView,
-    GroupDeleteView,
-    BudgetMonthListView,
-    BudgetMonthCreateView,
-    BudgetMonthUpdateView,
-    BudgetMonthDeleteView,
-    CategoryListView,
-    CategoryCreateView,
-    CategoryUpdateView,
-    CategoryDeleteView,
-    BudgetItemCreateView,
-    BudgetItemUpdateView,
-    BudgetItemDeleteView,
-    TransactionCreateView,
-    TransactionUpdateView,
-    TransactionDeleteView,
-    StatementUploadView,
-    StagingReviewView,
-)
+from . import views
+
+app_name = 'finance'
 
 urlpatterns = [
-    path('', DashboardView.as_view(), name='dashboard'),
-    path('groups/', GroupListView.as_view(), name='group-list'),
-    path('groups/create/', GroupCreateView.as_view(), name='group-create'),
-    path('groups/<int:pk>/update/', GroupUpdateView.as_view(), name='group-update'),
-    path('groups/<int:pk>/delete/', GroupDeleteView.as_view(), name='group-delete'),
-    path('months/', BudgetMonthListView.as_view(), name='budget-month-list'),
-    path('months/create/', BudgetMonthCreateView.as_view(), name='budget-month-create'),
-    path('months/<int:pk>/update/', BudgetMonthUpdateView.as_view(), name='budget-month-update'),
-    path('months/<int:pk>/delete/', BudgetMonthDeleteView.as_view(), name='budget-month-delete'),
-    path('categories/', CategoryListView.as_view(), name='category-list'),
-    path('categories/create/', CategoryCreateView.as_view(), name='category-create'),
-    path('categories/<int:pk>/update/', CategoryUpdateView.as_view(), name='category-update'),
-    path('categories/<int:pk>/delete/', CategoryDeleteView.as_view(), name='category-delete'),
-    path('budget-items/create/', BudgetItemCreateView.as_view(), name='budget-item-create'),
-    path('budget-items/<int:pk>/update/', BudgetItemUpdateView.as_view(), name='budget-item-update'),
-    path('budget-items/<int:pk>/delete/', BudgetItemDeleteView.as_view(), name='budget-item-delete'),
-    path('transactions/create/', TransactionCreateView.as_view(), name='transaction-create'),
-    path('transactions/<int:pk>/update/', TransactionUpdateView.as_view(), name='transaction-update'),
-    path('transactions/<int:pk>/delete/', TransactionDeleteView.as_view(), name='transaction-delete'),
-    path('upload-statement/', StatementUploadView.as_view(), name='statement-upload'),
-    path('staging-review/', StagingReviewView.as_view(), name='staging-review'),
+    path('',                              views.DashboardView.as_view(),       name='dashboard'),
+
+    path('periods/',                      views.PeriodListView.as_view(),      name='period_list'),
+    path('periods/create/',               views.PeriodCreateView.as_view(),    name='period_create'),
+    path('periods/<int:pk>/edit/',        views.PeriodUpdateView.as_view(),    name='period_update'),
+    path('periods/<int:pk>/delete/',      views.PeriodDeleteView.as_view(),    name='period_delete'),
+
+    path('categories/',                   views.CategoryListView.as_view(),    name='category_list'),
+    path('categories/create/',            views.CategoryCreateView.as_view(),  name='category_create'),
+    path('categories/<int:pk>/edit/',     views.CategoryUpdateView.as_view(),  name='category_update'),
+    path('categories/<int:pk>/delete/',   views.CategoryDeleteView.as_view(),  name='category_delete'),
+
+    path('budget-items/create/',          views.BudgetItemCreateView.as_view(),  name='budgetitem_create'),
+    path('budget-items/<int:pk>/edit/',   views.BudgetItemUpdateView.as_view(),  name='budgetitem_update'),
+    path('budget-items/<int:pk>/delete/', views.BudgetItemDeleteView.as_view(),  name='budgetitem_delete'),
+
+    path('transactions/',                 views.TransactionListView.as_view(),   name='transaction_list'),
+    path('transactions/create/',          views.TransactionCreateView.as_view(), name='transaction_create'),
+    path('transactions/<int:pk>/edit/',   views.TransactionUpdateView.as_view(), name='transaction_update'),
+    path('transactions/<int:pk>/delete/', views.TransactionDeleteView.as_view(), name='transaction_delete'),
+
+    path('upload/',   views.StatementUploadView.as_view(), name='statement_upload'),
+    path('staging/',  views.StagingReviewView.as_view(),   name='staging_review'),
+
+    path('cc/upload/',  views.CCStatementUploadView.as_view(), name='cc_statement_upload'),
+    path('cc/staging/', views.CCStagingReviewView.as_view(),   name='cc_staging_review'),
 ]

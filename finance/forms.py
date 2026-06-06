@@ -1,99 +1,111 @@
 from django import forms
 from django.forms import modelformset_factory
-from finance.models import (
-    Group,
-    BudgetMonth,
-    Category,
-    BudgetItem,
-    Transaction,
-    StagingTransaction,
-)
+
+from .models import BudgetItem, Category, Period, StagingCCTransaction, StagingTransaction, Transaction
 
 
-class GroupForm(forms.ModelForm):
+class PeriodForm(forms.ModelForm):
     class Meta:
-        model = Group
-        fields = ['name']
+        model  = Period
+        fields = ['name', 'start_date', 'end_date', 'is_active']
         widgets = {
-            'name': forms.TextInput(attrs={'class': 'block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm'}),
-        }
-
-
-class BudgetMonthForm(forms.ModelForm):
-    class Meta:
-        model = BudgetMonth
-        fields = ['month_date', 'is_active']
-        widgets = {
-            'month_date': forms.DateInput(attrs={'type': 'date', 'class': 'block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm'}),
-            'is_active': forms.CheckboxInput(attrs={'class': 'h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded'}),
+            'name':       forms.TextInput(attrs={'class': 'form-input'}),
+            'start_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-input'}),
+            'end_date':   forms.DateInput(attrs={'type': 'date', 'class': 'form-input'}),
+            'is_active':  forms.CheckboxInput(attrs={'class': 'form-checkbox'}),
         }
 
 
 class CategoryForm(forms.ModelForm):
     class Meta:
-        model = Category
+        model  = Category
         fields = ['name', 'group']
         widgets = {
-            'name': forms.TextInput(attrs={'class': 'block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm'}),
-            'group': forms.Select(attrs={'class': 'block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm'}),
+            'name':  forms.TextInput(attrs={'class': 'form-input'}),
+            'group': forms.Select(attrs={'class': 'form-select'}),
         }
 
 
 class BudgetItemForm(forms.ModelForm):
     class Meta:
-        model = BudgetItem
-        fields = ['budget_month', 'category', 'type', 'projected_amount']
+        model  = BudgetItem
+        fields = ['period', 'category', 'type', 'projected_amount']
         widgets = {
-            'budget_month': forms.Select(attrs={'class': 'block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm'}),
-            'category': forms.Select(attrs={'class': 'block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm'}),
-            'type': forms.Select(attrs={'class': 'block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm'}),
-            'projected_amount': forms.NumberInput(attrs={'class': 'block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm', 'step': '0.01'}),
+            'period':           forms.Select(attrs={'class': 'form-select'}),
+            'category':         forms.Select(attrs={'class': 'form-select'}),
+            'type':             forms.Select(attrs={'class': 'form-select'}),
+            'projected_amount': forms.NumberInput(attrs={'class': 'form-input', 'step': '0.01', 'min': '0'}),
         }
 
 
 class TransactionForm(forms.ModelForm):
     class Meta:
-        model = Transaction
+        model  = Transaction
         fields = ['budget_item', 'date', 'real_amount', 'description', 'notes']
         widgets = {
-            'budget_item': forms.Select(attrs={'class': 'block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm'}),
-            'date': forms.DateInput(attrs={'type': 'date', 'class': 'block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm'}),
-            'real_amount': forms.NumberInput(attrs={'class': 'block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm', 'step': '0.01'}),
-            'description': forms.TextInput(attrs={'class': 'block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm'}),
-            'notes': forms.Textarea(attrs={'class': 'block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm', 'rows': 3}),
+            'budget_item': forms.Select(attrs={'class': 'form-select'}),
+            'date':        forms.DateInput(attrs={'type': 'date', 'class': 'form-input'}),
+            'real_amount': forms.NumberInput(attrs={'class': 'form-input', 'step': '0.01'}),
+            'description': forms.TextInput(attrs={'class': 'form-input'}),
+            'notes':       forms.Textarea(attrs={'class': 'form-input', 'rows': 3}),
         }
 
 
 class StatementUploadForm(forms.Form):
     statement_file = forms.FileField(
-        label='Bank Statement File',
-        widget=forms.FileInput(attrs={'accept': '.csv,.txt'})
+        label='Bank Statement (.dat / .csv / .txt)',
+        widget=forms.ClearableFileInput(attrs={'accept': '.dat,.csv,.txt', 'class': 'hidden', 'id': 'id_statement_file'}),
     )
 
 
-class StagingTransactionForm(forms.ModelForm):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # These fields are disabled in the UI and thus not sent in POST.
-        # We mark them as not required so validation doesn't fail.
-        for field in ['original_date', 'description', 'amount', 'type']:
-            self.fields[field].required = False
-
+class StagingTransactionReviewForm(forms.ModelForm):
     class Meta:
-        model = StagingTransaction
-        fields = ['original_date', 'description', 'amount', 'type', 'assigned_category']
+        model  = StagingTransaction
+        fields = ['assigned_category']
         widgets = {
-            'original_date': forms.DateInput(attrs={'disabled': True}),
-            'description': forms.TextInput(attrs={'disabled': True}),
-            'amount': forms.NumberInput(attrs={'disabled': True, 'step': '0.01'}),
-            'type': forms.Select(attrs={'disabled': True}),
-            'assigned_category': forms.Select(attrs={'class': 'block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm'}),
+            'assigned_category': forms.Select(attrs={'class': 'form-select text-xs'}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['assigned_category'].required  = False
+        self.fields['assigned_category'].queryset  = Category.objects.order_by('group', 'name')
+        self.fields['assigned_category'].empty_label = '— Skip —'
 
-StagingTransactionFormSet = modelformset_factory(
+
+StagingReviewFormset = modelformset_factory(
     StagingTransaction,
-    form=StagingTransactionForm,
+    form=StagingTransactionReviewForm,
     extra=0,
-    can_delete=False
+)
+
+
+class CCStatementUploadForm(forms.Form):
+    statement_file = forms.FileField(
+        label='Credit Card Statement (.xls)',
+        widget=forms.ClearableFileInput(
+            attrs={'accept': '.xls,.xlsx', 'class': 'hidden', 'id': 'id_cc_statement_file'}
+        ),
+    )
+
+
+class StagingCCTransactionReviewForm(forms.ModelForm):
+    class Meta:
+        model  = StagingCCTransaction
+        fields = ['assigned_category']
+        widgets = {
+            'assigned_category': forms.Select(attrs={'class': 'form-select text-xs'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['assigned_category'].required   = False
+        self.fields['assigned_category'].queryset   = Category.objects.order_by('group', 'name')
+        self.fields['assigned_category'].empty_label = '— Skip —'
+
+
+StagingCCReviewFormset = modelformset_factory(
+    StagingCCTransaction,
+    form=StagingCCTransactionReviewForm,
+    extra=0,
 )

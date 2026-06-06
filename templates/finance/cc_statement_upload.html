@@ -1,0 +1,104 @@
+{% extends "finance/base.html" %}
+{% block title %}Import Credit Card — Money Manager{% endblock %}
+{% block page_title %}Import Credit Card Statement{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto space-y-4">
+  <div class="card">
+    <h2 class="font-mono text-xs text-zinc-500 uppercase tracking-widest mb-1">Scotiabank Tarjeta de Crédito .xls</h2>
+    <p class="text-sm text-zinc-400 mb-6">
+      Upload an <em>Estado de Cuenta</em> credit card statement in Excel (.xls) format.
+      Purchases, payments, installments and credits will be staged for review before
+      being committed to the ledger.
+    </p>
+
+    <form method="post" enctype="multipart/form-data" id="cc-upload-form">
+      {% csrf_token %}
+
+      <!-- Drop zone -->
+      <div id="drop-zone"
+           class="relative flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-zinc-700 bg-zinc-800/30 px-8 py-14 text-center cursor-pointer hover:border-violet-500 hover:bg-zinc-800/50 transition-colors"
+           onclick="document.getElementById('id_cc_statement_file').click()">
+
+        <svg class="mb-3 h-10 w-10 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+        </svg>
+        <p class="text-sm text-zinc-400 mb-1">
+          Drag &amp; drop or <span class="text-violet-400 underline underline-offset-2">browse</span>
+        </p>
+        <p class="font-mono text-xs text-zinc-600">.xls &nbsp;·&nbsp; Estado de Cuenta Nacional Tarjeta de Crédito</p>
+
+        <div id="file-display" class="mt-4 hidden">
+          <span id="file-name" class="rounded bg-zinc-700 px-3 py-1 font-mono text-xs text-zinc-200"></span>
+        </div>
+
+        {{ form.statement_file }}
+      </div>
+
+      {% if form.statement_file.errors %}
+        <p class="mt-2 font-mono text-xs text-red-400">{{ form.statement_file.errors.0 }}</p>
+      {% endif %}
+
+      <button type="submit" class="mt-5 w-full justify-center inline-flex items-center gap-2 rounded bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500 transition-colors focus:outline-none">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+        </svg>
+        Parse &amp; Stage CC Transactions
+      </button>
+    </form>
+  </div>
+
+  <!-- Format reference -->
+  <div class="rounded-lg border border-zinc-800 bg-zinc-900/40 p-4">
+    <h3 class="font-mono text-xs text-zinc-500 uppercase tracking-widest mb-3">Expected Format</h3>
+    <p class="text-xs text-zinc-400 mb-2">
+      Scotiabank Chile <strong class="text-zinc-300">Estado de Cuenta Nacional de Tarjeta de Crédito</strong>
+      exported as <strong class="text-zinc-300">.xls</strong> (Excel 97–2003 workbook).
+    </p>
+    <ul class="space-y-1 text-xs text-zinc-600 font-mono">
+      <li>· Cardholder, card number and statement date extracted from header</li>
+      <li>· Purchases →&nbsp;<span class="text-red-400">OUT</span> &nbsp;/&nbsp; Payments &amp; credits →&nbsp;<span class="text-emerald-400">IN</span></li>
+      <li>· Installment detail (N° cuota / valor cuota) captured per row</li>
+      <li>· Amounts in CLP with period thousands separator: <span class="text-zinc-400">$ 42.720</span></li>
+    </ul>
+    <div class="mt-3 pt-3 border-t border-zinc-800">
+      <p class="text-xs text-zinc-600 font-mono">
+        ⚠ Requires <span class="text-zinc-400">LibreOffice</span> on the server PATH
+        (used internally to convert .xls → CSV).
+        Install with: <span class="text-zinc-400">sudo apt install libreoffice-calc</span>
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const input   = document.getElementById('id_cc_statement_file');
+  const zone    = document.getElementById('drop-zone');
+  const display = document.getElementById('file-display');
+  const nameEl  = document.getElementById('file-name');
+
+  function show(name) { nameEl.textContent = name; display.classList.remove('hidden'); }
+
+  input.addEventListener('change', () => { if (input.files[0]) show(input.files[0].name); });
+
+  zone.addEventListener('dragover', e => {
+    e.preventDefault();
+    zone.classList.add('border-violet-500', 'bg-zinc-800/50');
+  });
+  zone.addEventListener('dragleave', () => {
+    zone.classList.remove('border-violet-500', 'bg-zinc-800/50');
+  });
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('border-violet-500', 'bg-zinc-800/50');
+    const file = e.dataTransfer.files[0];
+    if (!file) return;
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    input.files = dt.files;
+    show(file.name);
+  });
+</script>
+{% endblock %}

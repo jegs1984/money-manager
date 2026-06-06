@@ -1,273 +1,319 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.views.generic import (
-    ListView, CreateView, UpdateView, DeleteView, DetailView, FormView, TemplateView
-)
-from django.urls import reverse_lazy
-from django.db.models import Sum, F, Value, DecimalField
-from django.db.models.functions import Coalesce
-from django.contrib import messages
-from django.http import HttpResponse
-from django.db import transaction as db_transaction
 from decimal import Decimal
 
-from finance.models import (
-    Group,
-    BudgetMonth,
-    Category,
-    BudgetItem,
-    Transaction,
-    StagingTransaction,
+from django.contrib import messages
+from django.db.models import F, Sum, Value
+from django.db.models.functions import Coalesce
+from django.shortcuts import redirect
+from django.urls import reverse_lazy
+from django.views.generic import (
+    CreateView, DeleteView, FormView, ListView, TemplateView, UpdateView,
 )
-from finance.forms import (
-    GroupForm,
-    BudgetMonthForm,
-    CategoryForm,
-    BudgetItemForm,
-    TransactionForm,
-    StatementUploadForm,
-    StagingTransactionFormSet,
+
+from .forms import (
+    BudgetItemForm, CategoryForm, PeriodForm,
+    StagingReviewFormset, StatementUploadForm, TransactionForm,
+    CCStatementUploadForm, StagingCCReviewFormset,
 )
-from finance.services import (
-    parse_scotiabank_statement,
-    process_staging_batch,
-    log_transaction_service,
-    rollover_month_balance,
-    calculate_safe_to_spend,
+from .models import BudgetItem, Category, Period, StagingCCTransaction, StagingTransaction, Transaction
+from .services import (
+    calculate_safe_to_spend, parse_scotiabank_statement, process_staging_batch,
+    parse_scotiabank_cc_statement, process_cc_staging_batch,
 )
 
 
-class GroupListView(ListView):
-    model = Group
-    template_name = 'finance/group_list.html'
-    context_object_name = 'groups'
-    paginate_by = 20
-
-
-class GroupCreateView(CreateView):
-    model = Group
-    form_class = GroupForm
-    template_name = 'finance/group_form.html'
-    success_url = reverse_lazy('group-list')
-
-
-class GroupUpdateView(UpdateView):
-    model = Group
-    form_class = GroupForm
-    template_name = 'finance/group_form.html'
-    success_url = reverse_lazy('group-list')
-
-
-class GroupDeleteView(DeleteView):
-    model = Group
-    template_name = 'finance/group_confirm_delete.html'
-    success_url = reverse_lazy('group-list')
-
+# ─────────────────────────────────────────────
+# Dashboard
+# ─────────────────────────────────────────────
 
 class DashboardView(TemplateView):
     template_name = 'finance/dashboard.html'
-    
+
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        
-        active_month = BudgetMonth.objects.filter(is_active=True).first()
-        context['active_month'] = active_month
-        
-        if active_month:
-            budget_items = BudgetItem.objects.filter(
-                budget_month=active_month
-            ).select_related('category').annotate(
-                total_real=Coalesce(Sum('transactions__real_amount'), Value(Decimal('0.00'), output_field=DecimalField())),
-                diff=F('projected_amount') - Coalesce(Sum('transactions__real_amount'), Value(Decimal('0.00'), output_field=DecimalField()))
+        ctx = super().get_context_data(**kwargs)
+        period_id    = self.request.GET.get('period')
+        all_periods  = Period.objects.order_by('-start_date')
+
+        if period_id:
+            active_period = Period.objects.filter(pk=period_id).first()
+        else:
+            active_period = all_periods.filter(is_active=True).first() or all_periods.first()
+
+        if active_period:
+            stats = calculate_safe_to_spend(active_period.id)
+            items = (
+                BudgetItem.objects.filter(period=active_period)
+                .select_related('category')
+                .annotate(
+                    total_real=Coalesce(Sum('transactions__real_amount'), Value(Decimal('0.00'))),
+                    diff=F('projected_amount') - Coalesce(Sum('transactions__real_amount'), Value(Decimal('0.00'))),
+                )
+                .order_by('type', 'category__group', 'category__name')
             )
-            
-            context['budget_items'] = budget_items
-            
-            income_total = budget_items.filter(type='IN').aggregate(
-                total=Coalesce(Sum('total_real'), Value(Decimal('0.00'), output_field=DecimalField()))
-            )['total']
-            
-            expense_total = budget_items.filter(type='OUT').aggregate(
-                total=Coalesce(Sum('total_real'), Value(Decimal('0.00'), output_field=DecimalField()))
-            )['total']
-            
-            context['total_income'] = income_total
-            context['total_expenses'] = expense_total
-            context['safe_to_spend'] = income_total - expense_total
-            
-            max_projected = budget_items.filter(type='OUT').aggregate(
-                max=Coalesce(Sum('projected_amount'), Value(Decimal('0.00'), output_field=DecimalField()))
-            )['max']
-            
-            context['max_projected'] = max_projected if max_projected > 0 else 1
-            
-            if max_projected > 0:
-                context['burn_rate'] = (expense_total / max_projected) * 100
-            else:
-                context['burn_rate'] = 0
-        
-        context['all_months'] = BudgetMonth.objects.all()
-        
-        return context
+            ctx.update(stats)
+            ctx['budget_items'] = items
+
+        ctx['active_period'] = active_period
+        ctx['all_periods']   = all_periods
+        return ctx
 
 
-class BudgetMonthListView(ListView):
-    model = BudgetMonth
-    template_name = 'finance/budgetmonth_list.html'
-    context_object_name = 'months'
-    paginate_by = 12
+# ─────────────────────────────────────────────
+# Period CRUD
+# ─────────────────────────────────────────────
+
+class PeriodListView(ListView):
+    model               = Period
+    template_name       = 'finance/period_list.html'
+    context_object_name = 'periods'
 
 
-class BudgetMonthCreateView(CreateView):
-    model = BudgetMonth
-    form_class = BudgetMonthForm
-    template_name = 'finance/budgetmonth_form.html'
-    success_url = reverse_lazy('budget-month-list')
+class PeriodCreateView(CreateView):
+    model         = Period
+    form_class    = PeriodForm
+    template_name = 'finance/period_form.html'
+    success_url   = reverse_lazy('finance:period_list')
 
 
-class BudgetMonthUpdateView(UpdateView):
-    model = BudgetMonth
-    form_class = BudgetMonthForm
-    template_name = 'finance/budgetmonth_form.html'
-    success_url = reverse_lazy('budget-month-list')
+class PeriodUpdateView(UpdateView):
+    model         = Period
+    form_class    = PeriodForm
+    template_name = 'finance/period_form.html'
+    success_url   = reverse_lazy('finance:period_list')
 
 
-class BudgetMonthDeleteView(DeleteView):
-    model = BudgetMonth
-    template_name = 'finance/budgetmonth_confirm_delete.html'
-    success_url = reverse_lazy('budget-month-list')
+class PeriodDeleteView(DeleteView):
+    model         = Period
+    template_name = 'finance/confirm_delete.html'
+    success_url   = reverse_lazy('finance:period_list')
 
+
+# ─────────────────────────────────────────────
+# Category CRUD
+# ─────────────────────────────────────────────
 
 class CategoryListView(ListView):
-    model = Category
-    template_name = 'finance/category_list.html'
+    model               = Category
+    template_name       = 'finance/category_list.html'
     context_object_name = 'categories'
-    paginate_by = 20
 
 
 class CategoryCreateView(CreateView):
-    model = Category
-    form_class = CategoryForm
+    model         = Category
+    form_class    = CategoryForm
     template_name = 'finance/category_form.html'
-    success_url = reverse_lazy('category-list')
+    success_url   = reverse_lazy('finance:category_list')
 
 
 class CategoryUpdateView(UpdateView):
-    model = Category
-    form_class = CategoryForm
+    model         = Category
+    form_class    = CategoryForm
     template_name = 'finance/category_form.html'
-    success_url = reverse_lazy('category-list')
+    success_url   = reverse_lazy('finance:category_list')
 
 
 class CategoryDeleteView(DeleteView):
-    model = Category
-    template_name = 'finance/category_confirm_delete.html'
-    success_url = reverse_lazy('category-list')
+    model         = Category
+    template_name = 'finance/confirm_delete.html'
+    success_url   = reverse_lazy('finance:category_list')
 
+
+# ─────────────────────────────────────────────
+# BudgetItem CRUD
+# ─────────────────────────────────────────────
 
 class BudgetItemCreateView(CreateView):
-    model = BudgetItem
-    form_class = BudgetItemForm
+    model         = BudgetItem
+    form_class    = BudgetItemForm
     template_name = 'finance/budgetitem_form.html'
-    success_url = reverse_lazy('dashboard')
+    success_url   = reverse_lazy('finance:dashboard')
 
 
 class BudgetItemUpdateView(UpdateView):
-    model = BudgetItem
-    form_class = BudgetItemForm
+    model         = BudgetItem
+    form_class    = BudgetItemForm
     template_name = 'finance/budgetitem_form.html'
-    success_url = reverse_lazy('dashboard')
+    success_url   = reverse_lazy('finance:dashboard')
 
 
 class BudgetItemDeleteView(DeleteView):
-    model = BudgetItem
-    template_name = 'finance/budgetitem_confirm_delete.html'
-    success_url = reverse_lazy('dashboard')
+    model         = BudgetItem
+    template_name = 'finance/confirm_delete.html'
+    success_url   = reverse_lazy('finance:dashboard')
+
+
+# ─────────────────────────────────────────────
+# Transaction CRUD
+# ─────────────────────────────────────────────
+
+class TransactionListView(ListView):
+    model               = Transaction
+    template_name       = 'finance/transaction_list.html'
+    context_object_name = 'transactions'
+    paginate_by         = 50
+
+    def get_queryset(self):
+        return Transaction.objects.select_related('budget_item__category', 'budget_item__period')
 
 
 class TransactionCreateView(CreateView):
-    model = Transaction
-    form_class = TransactionForm
+    model         = Transaction
+    form_class    = TransactionForm
     template_name = 'finance/transaction_form.html'
-    success_url = reverse_lazy('dashboard')
+    success_url   = reverse_lazy('finance:dashboard')
 
 
 class TransactionUpdateView(UpdateView):
-    model = Transaction
-    form_class = TransactionForm
+    model         = Transaction
+    form_class    = TransactionForm
     template_name = 'finance/transaction_form.html'
-    success_url = reverse_lazy('dashboard')
+    success_url   = reverse_lazy('finance:dashboard')
 
 
 class TransactionDeleteView(DeleteView):
-    model = Transaction
-    template_name = 'finance/transaction_confirm_delete.html'
-    success_url = reverse_lazy('dashboard')
+    model         = Transaction
+    template_name = 'finance/confirm_delete.html'
+    success_url   = reverse_lazy('finance:dashboard')
 
+
+# ─────────────────────────────────────────────
+# Statement Upload
+# ─────────────────────────────────────────────
 
 class StatementUploadView(FormView):
-    form_class = StatementUploadForm
     template_name = 'finance/statement_upload.html'
-    success_url = reverse_lazy('staging-review')
-    
-    def form_valid(self, form):
-        try:
-            statement_file = form.cleaned_data['statement_file']
-            parse_scotiabank_statement(statement_file)
-            messages.success(self.request, 'Statement uploaded and parsed successfully.')
-            return super().form_valid(form)
-        except Exception as e:
-            messages.error(self.request, f'Error parsing statement: {str(e)}')
-            return self.form_invalid(form)
+    form_class    = StatementUploadForm
 
+    def form_valid(self, form):
+        file_obj = form.cleaned_data['statement_file']
+        result   = parse_scotiabank_statement(file_obj, source_filename=file_obj.name)
+        if result['count']:
+            messages.success(
+                self.request,
+                f"{result['count']} transactions staged "
+                f"(account {result['account_number']}, "
+                f"{result['date_from']} → {result['date_to']}). "
+                f"{result['skipped']} rows skipped.",
+            )
+        else:
+            messages.warning(
+                self.request,
+                f"No transactions found. {result['skipped']} rows skipped. "
+                "Check the file format.",
+            )
+        return redirect('finance:staging_review')
+
+    def form_invalid(self, form):
+        messages.error(self.request, 'Invalid upload. Please select a valid statement file.')
+        return super().form_invalid(form)
+
+
+# ─────────────────────────────────────────────
+# Staging Review
+# ─────────────────────────────────────────────
 
 class StagingReviewView(TemplateView):
     template_name = 'finance/staging_review.html'
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        
-        unprocessed_staging = StagingTransaction.objects.filter(
-            is_processed=False
-        ).order_by('-original_date')
-        
-        if 'formset' not in context:
-            context['formset'] = StagingTransactionFormSet(queryset=unprocessed_staging)
 
-        context['staging_transactions'] = unprocessed_staging
-        
-        return context
-    
+    def _qs(self):
+        return StagingTransaction.objects.filter(is_processed=False).order_by('-original_date')
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        qs  = self._qs()
+        ctx['formset']       = StagingReviewFormset(queryset=qs)
+        ctx['pending_count'] = qs.count()
+        return ctx
+
     def post(self, request, *args, **kwargs):
-        unprocessed_staging = StagingTransaction.objects.filter(
-            is_processed=False
-        ).order_by('-original_date')
-        
-        formset = StagingTransactionFormSet(
-            request.POST,
-            queryset=unprocessed_staging
-        )
-        
+        qs      = self._qs()
+        formset = StagingReviewFormset(request.POST, queryset=qs)
+
         if formset.is_valid():
-            staging_ids_with_categories = []
-            
-            for form in formset.forms:
-                if form.cleaned_data:
-                    staging_id = form.instance.id
-                    assigned_category = form.cleaned_data.get('assigned_category')
-                    
-                    if assigned_category:
-                        staging_ids_with_categories.append({
-                            'staging_id': staging_id,
-                            'category_id': assigned_category.id
-                        })
-            
-            if staging_ids_with_categories:
-                try:
-                    process_staging_batch(staging_ids_with_categories)
-                    messages.success(request, f'Processed {len(staging_ids_with_categories)} transactions.')
-                except Exception as e:
-                    messages.error(request, f'Error processing transactions: {str(e)}')
-            
-            return redirect('dashboard')
+            entries = [
+                {'staging_id': f.instance.id, 'category_id': f.cleaned_data['assigned_category'].id}
+                for f in formset
+                if f.cleaned_data.get('assigned_category')
+            ]
+            processed = process_staging_batch(entries)
+            messages.success(request, f'{processed} transactions committed to the ledger.')
+            return redirect('finance:dashboard')
+
+        ctx            = self.get_context_data()
+        ctx['formset'] = formset
+        return self.render_to_response(ctx)
+
+
+# ─────────────────────────────────────────────
+# Credit Card Upload
+# ─────────────────────────────────────────────
+
+class CCStatementUploadView(FormView):
+    template_name = 'finance/cc_statement_upload.html'
+    form_class    = CCStatementUploadForm
+
+    def form_valid(self, form):
+        file_obj = form.cleaned_data['statement_file']
+        try:
+            result = parse_scotiabank_cc_statement(file_obj, source_filename=file_obj.name)
+        except ValueError as e:
+            messages.error(self.request, str(e))
+            return self.form_invalid(form)
+
+        if result['count']:
+            messages.success(
+                self.request,
+                f"{result['count']} CC transactions staged "
+                f"({result['card_holder']} · {result['card_number']}). "
+                f"{result['skipped']} rows skipped.",
+            )
         else:
-            return self.render_to_response(self.get_context_data(formset=formset, **kwargs))
+            messages.warning(
+                self.request,
+                f"No transactions found. {result['skipped']} rows skipped. "
+                "Check the file format.",
+            )
+        return redirect('finance:cc_staging_review')
+
+    def form_invalid(self, form):
+        messages.error(self.request, 'Invalid upload. Please select a valid .xls statement file.')
+        return super().form_invalid(form)
+
+
+# ─────────────────────────────────────────────
+# Credit Card Staging Review
+# ─────────────────────────────────────────────
+
+class CCStagingReviewView(TemplateView):
+    template_name = 'finance/cc_staging_review.html'
+
+    def _qs(self):
+        return StagingCCTransaction.objects.filter(is_processed=False).order_by('-original_date')
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        qs  = self._qs()
+        ctx['formset']       = StagingCCReviewFormset(queryset=qs)
+        ctx['pending_count'] = qs.count()
+        # Pass first record's card info for the header
+        first = qs.first()
+        ctx['card_number'] = first.card_number if first else ''
+        ctx['card_holder'] = first.card_holder if first else ''
+        return ctx
+
+    def post(self, request, *args, **kwargs):
+        qs      = self._qs()
+        formset = StagingCCReviewFormset(request.POST, queryset=qs)
+
+        if formset.is_valid():
+            entries = [
+                {'staging_id': f.instance.id, 'category_id': f.cleaned_data['assigned_category'].id}
+                for f in formset
+                if f.cleaned_data.get('assigned_category')
+            ]
+            processed = process_cc_staging_batch(entries)
+            messages.success(request, f'{processed} CC transactions committed to the ledger.')
+            return redirect('finance:dashboard')
+
+        ctx            = self.get_context_data()
+        ctx['formset'] = formset
+        return self.render_to_response(ctx)
