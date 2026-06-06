@@ -63,6 +63,10 @@ nosetests.xml
 *.dat
 *.csv
 
+# Installer — keep scripts, ignore generated artefacts
+!installer/
+installer/*.log
+
 # Node (if any frontend tooling is added)
 node_modules/
 npm-debug.log*

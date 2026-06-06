@@ -118,16 +118,35 @@ python manage.py migrate --fake-initial
 
 ## Startup
 
+### macOS — one command
+
+```bash
+bash start.sh
+```
+
+This single script handles everything:
+- Starts PostgreSQL if it isn't already running
+- Activates the virtual environment
+- Launches the Django server on `http://127.0.0.1:8765`
+- Opens the browser automatically once the server is ready
+
+Press **Ctrl-C** to stop.
+
+> First time on a Mac? Run `bash installer/setup.sh` once before `start.sh`.
+> It installs all dependencies and creates the database automatically.
+
+### Or manually
+
 ```bash
 # Activate the virtual environment
 source venv/bin/activate          # macOS / Linux
 venv\Scripts\activate             # Windows
 
 # Start the development server
-python manage.py runserver
+python manage.py runserver 127.0.0.1:8765
 
 # Open in browser
-http://127.0.0.1:8000/
+http://127.0.0.1:8765/
 ```
 
 ---
