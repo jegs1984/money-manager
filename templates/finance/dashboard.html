@@ -1,7 +1,10 @@
 {% extends "finance/base.html" %}
 {% block title %}Dashboard — Money Manager{% endblock %}
 {% block page_title %}{% if active_period %}{{ active_period.name }}{% else %}Dashboard{% endif %}{% endblock %}
-{% block header_actions %}<a href="{% url 'finance:budgetitem_create' %}" class="btn-primary text-xs">+ Budget Item</a>{% endblock %}
+{% block header_actions %}
+  <a href="{% url 'finance:budgetitem_create' %}" class="btn-primary text-xs">+ Budget Item</a>
+  <a href="{% url 'finance:transaction_create' %}" class="btn-primary text-xs">+ Log Transaction</a>
+{% endblock %}
 
 {% block content %}
 {% if not active_period %}

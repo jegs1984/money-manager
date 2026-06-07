@@ -1,7 +1,10 @@
 {% extends "finance/base.html" %}
 {% block title %}Group Dashboard — Money Manager{% endblock %}
 {% block page_title %}{% if active_period %}{{ active_period.name }} — By Group{% else %}Group Dashboard{% endif %}{% endblock %}
-{% block header_actions %}<a href="{% url 'finance:budgetitem_create' %}" class="btn-primary text-xs">+ Budget Item</a>{% endblock %}
+{% block header_actions %}
+  <a href="{% url 'finance:budgetitem_create' %}" class="btn-primary text-xs">+ Budget Item</a>
+  <a href="{% url 'finance:transaction_create' %}" class="btn-primary text-xs">+ Log Transaction</a>
+{% endblock %}
 
 {% block content %}
 {% if not active_period %}
@@ -99,8 +102,12 @@
 {% for grp in groups %}
 {% if grp.type == 'IN' %}
 <div class="card overflow-hidden p-0 mb-4">
-  <div class="px-5 py-3 border-b border-zinc-800 flex items-center justify-between bg-emerald-950/30">
+  <button type="button" onclick="toggleGroup(this)"
+          class="w-full px-5 py-3 border-b border-zinc-800 flex items-center justify-between bg-emerald-950/30 hover:bg-emerald-950/50 transition-colors cursor-pointer">
     <div class="flex items-center gap-3">
+      <svg class="toggle-icon h-3.5 w-3.5 text-zinc-500 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+      </svg>
       <span class="font-mono text-xs text-zinc-500 uppercase tracking-widest">Income ·</span>
       <span class="font-semibold text-emerald-300 text-sm">{{ grp.group }}</span>
     </div>
@@ -111,8 +118,8 @@
         {% if grp.diff >= 0 %}+{% endif %}{{ grp.diff|floatformat:0 }}
       </span>
     </div>
-  </div>
-  <div class="overflow-x-auto">
+  </button>
+  <div class="overflow-x-auto group-body hidden">
     <table class="w-full text-sm">
       <thead>
         <tr class="border-b border-zinc-800/60 bg-zinc-900/30">
@@ -161,8 +168,12 @@
 {% for grp in groups %}
 {% if grp.type == 'OUT' %}
 <div class="card overflow-hidden p-0 mb-4">
-  <div class="px-5 py-3 border-b border-zinc-800 flex items-center justify-between bg-red-950/20">
+  <button type="button" onclick="toggleGroup(this)"
+          class="w-full px-5 py-3 border-b border-zinc-800 flex items-center justify-between bg-red-950/20 hover:bg-red-950/40 transition-colors cursor-pointer">
     <div class="flex items-center gap-3">
+      <svg class="toggle-icon h-3.5 w-3.5 text-zinc-500 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+      </svg>
       <span class="font-mono text-xs text-zinc-500 uppercase tracking-widest">Expense ·</span>
       <span class="font-semibold text-red-300 text-sm">{{ grp.group }}</span>
     </div>
@@ -173,8 +184,8 @@
         {% if grp.diff >= 0 %}+{% endif %}{{ grp.diff|floatformat:0 }}
       </span>
     </div>
-  </div>
-  <div class="overflow-x-auto">
+  </button>
+  <div class="overflow-x-auto group-body hidden">
     <table class="w-full text-sm">
       <thead>
         <tr class="border-b border-zinc-800/60 bg-zinc-900/30">
@@ -230,6 +241,15 @@
 {% endblock %}
 
 {% block extra_js %}
+<script>
+function toggleGroup(btn) {
+  var body = btn.nextElementSibling;
+  var icon = btn.querySelector('.toggle-icon');
+  var open = !body.classList.contains('hidden');
+  body.classList.toggle('hidden', open);
+  icon.style.transform = open ? '' : 'rotate(90deg)';
+}
+</script>
 {% if groups %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>

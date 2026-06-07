@@ -1,5 +1,6 @@
 from django import forms
 from django.forms import modelformset_factory
+from django.utils import timezone
 
 from .models import BudgetItem, Category, Period, StagingCCTransaction, StagingTransaction, Transaction
 
@@ -58,7 +59,12 @@ class TransactionForm(forms.ModelForm):
             'description': forms.TextInput(attrs={'class': 'form-input'}),
             'notes':       forms.Textarea(attrs={'class': 'form-input', 'rows': 3}),
         }
-
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Only set the default if this is a new form (not editing an existing instance)
+        if not self.instance.pk and 'date' in self.fields:
+            self.fields['date'].initial = timezone.now().date()
+            self.fields['description'].initial = '—'
 
 class StatementUploadForm(forms.Form):
     statement_file = forms.FileField(
