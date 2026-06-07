@@ -330,13 +330,17 @@ def log_transaction_service(
     ).first()
     if period is None:
         raise ValueError(f'No Period covers date {tx_date}. Create one first.')
+    if description.strip() == '-':
+        desc = category.name
+    else:
+        desc = description
     tx_type     = 'IN' if amount >= Decimal('0.00') else 'OUT'
     budget_item = _get_or_create_budget_item(period, category, tx_type)
     return Transaction.objects.create(
         budget_item=budget_item,
         date=tx_date,
         real_amount=abs(amount),
-        description=description,
+        description=desc,
         notes=notes,
     )
 
