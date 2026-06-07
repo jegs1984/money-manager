@@ -14,6 +14,7 @@ object Routes {
     const val STAGING_REVIEW      = "staging_review/{periodId}"
     const val IMPORT_CC           = "import_cc"
     const val STAGING_CC_REVIEW   = "staging_cc_review/{periodId}"
+    const val NOTIFICATIONS       = "notifications"
 
     fun periodForm(periodId: Long = 0L)           = "period_form/$periodId"
     fun categoryForm(categoryId: Long = 0L)       = "category_form/$categoryId"
