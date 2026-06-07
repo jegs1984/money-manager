@@ -52,46 +52,55 @@ object XlsParser {
         for (rIdx in 0..sheet.lastRowNum) {
             val row = sheet.getRow(rIdx) ?: continue
             val rawDate = cellStr(row, 0).trim()
-            val date    = parseDate(rawDate) ?: continue   // skip non-date rows
+            val date    = parseDate(rawDate)
+            if (date != null) {
+                val description = cellStr(row, 1).trim()
+                if (description.isBlank()) {
+                    skipped++
+                } else {
+                    val location    = cellStr(row, 2).trim().takeIf { it.isNotBlank() }
+                    val refCode     = cellStr(row, 3).trim().takeIf { it.isNotBlank() }
+                    val rawAmount   = cellStr(row, 4).trim()
+                    val rawCuota    = cellStr(row, 5).trim()   // e.g. "06/06"
 
-            val description = cellStr(row, 1).trim().ifBlank { skipped++; continue }
-            val location    = cellStr(row, 2).trim().takeIf { it.isNotBlank() }
-            val refCode     = cellStr(row, 3).trim().takeIf { it.isNotBlank() }
-            val rawAmount   = cellStr(row, 4).trim()
-            val rawCuota    = cellStr(row, 5).trim()   // e.g. "06/06"
+                    val amount = parseClpAmount(rawAmount)
+                    if (amount == null) {
+                        skipped++
+                    } else {
 
-            val amount = parseClpAmount(rawAmount) ?: run { skipped++; continue }
+                        // Negative amounts in the file → payments/credits → IN
+                        val type = if (amount < 0) "IN" else "OUT"
+                        val absAmt = kotlin.math.abs(amount)
 
-            // Negative amounts in the file → payments/credits → IN
-            val type   = if (amount < 0) "IN" else "OUT"
-            val absAmt = kotlin.math.abs(amount)
+                        var cuotaCurrent: Int? = null
+                        var cuotaTotal: Int? = null
+                        var cuotaValue: Double? = null
+                        if (rawCuota.contains("/")) {
+                            val parts = rawCuota.split("/")
+                            cuotaCurrent = parts[0].trim().toIntOrNull()
+                            cuotaTotal = parts[1].trim().toIntOrNull()
+                        }
+                        val rawInstVal = cellStr(row, 6).trim()
+                        cuotaValue = parseClpAmount(rawInstVal)?.let { kotlin.math.abs(it) }
 
-            var cuotaCurrent: Int? = null
-            var cuotaTotal: Int?   = null
-            var cuotaValue: Double? = null
-            if (rawCuota.contains("/")) {
-                val parts = rawCuota.split("/")
-                cuotaCurrent = parts[0].trim().toIntOrNull()
-                cuotaTotal   = parts[1].trim().toIntOrNull()
+                        rows += StagingCCTransactionEntity(
+                            sourceFile = sourceFilename,
+                            cardNumber = cardNumber,
+                            cardHolder = cardHolder,
+                            statementDate = statementDate,
+                            originalDate = date,
+                            description = description,
+                            location = location,
+                            refCode = refCode,
+                            amount = absAmt,
+                            installmentCurrent = cuotaCurrent,
+                            installmentTotal = cuotaTotal,
+                            installmentValue = cuotaValue,
+                            type = type,
+                        )
+                    }
+                }
             }
-            val rawInstVal = cellStr(row, 6).trim()
-            cuotaValue = parseClpAmount(rawInstVal)?.let { kotlin.math.abs(it) }
-
-            rows += StagingCCTransactionEntity(
-                sourceFile         = sourceFilename,
-                cardNumber         = cardNumber,
-                cardHolder         = cardHolder,
-                statementDate      = statementDate,
-                originalDate       = date,
-                description        = description,
-                location           = location,
-                refCode            = refCode,
-                amount             = absAmt,
-                installmentCurrent = cuotaCurrent,
-                installmentTotal   = cuotaTotal,
-                installmentValue   = cuotaValue,
-                type               = type,
-            )
         }
 
         wb.close()

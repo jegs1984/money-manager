@@ -1,5 +1,5 @@
 [versions]
-agp                 = "8.3.2"
+agp                 = "8.13.2"
 kotlin              = "1.9.23"
 ksp                 = "1.9.23-1.0.20"
 hilt                = "2.51.1"
@@ -12,6 +12,8 @@ poi                 = "3.17"
 apache-commons-io   = "2.16.1"
 core-ktx            = "1.13.1"
 activity-compose    = "1.9.0"
+junit               = "4.13.2"
+mockk               = "1.13.10"
 
 [libraries]
 # AndroidX core
@@ -50,6 +52,10 @@ coroutines-android  = { group = "org.jetbrains.kotlinx", name = "kotlinx-corouti
 
 # Apache POI (legacy XLS)
 poi                 = { group = "org.apache.poi", name = "poi", version.ref = "poi" }
+
+# Testing
+junit               = { group = "junit", name = "junit", version.ref = "junit" }
+mockk               = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
 
 [plugins]
 android-application = { id = "com.android.application",         version.ref = "agp" }
