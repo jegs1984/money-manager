@@ -1,138 +1,103 @@
 package com.moneymanager.notifications
 
 import android.app.Notification
+import android.content.Intent
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
-import com.moneymanager.data.entity.StagingTransactionEntity
+import com.moneymanager.data.db.StagingTransactionEntity
 import com.moneymanager.data.repository.FinanceRepository
-import com.moneymanager.domain.usecase.ParseBankNotificationUseCase
-import com.moneymanager.notifications.model.RawBankNotification
-import dagger.hilt.EntryPoint
-import dagger.hilt.InstallIn
-import dagger.hilt.android.EntryPointAccessors
-import dagger.hilt.components.SingletonComponent
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import java.math.BigDecimal
+import java.time.LocalDate
+import java.util.regex.Pattern
+import javax.inject.Inject
 
 /**
- * System-bound service that intercepts status bar notifications and re-emits
- * those originating from whitelisted banking apps as [RawBankNotification] events.
+ * Intercepts push notifications from whitelisted Chilean bank apps.
+ * Extracts amount + description and inserts a StagingTransaction for review.
  *
- * Lifecycle notes:
- *  - The OS binds/unbinds this service independently of the app's process lifecycle.
- *  - [serviceScope] is tied to the service instance; it is cancelled in [onDestroy]
- *    to prevent coroutine leaks across OS rebind cycles.
- *  - [notificationFlow] lives in the companion object (process singleton) so that
- *    collectors in ViewModels can subscribe before the service is first bound,
- *    avoiding a startup race condition.
+ * The user must grant Notification Access manually:
+ *   Settings → Apps → Special app access → Notification access → Money Manager
  */
+@AndroidEntryPoint
 class BankNotificationService : NotificationListenerService() {
 
-    @EntryPoint
-    @InstallIn(SingletonComponent::class)
-    interface BankNotificationServiceEntryPoint {
-        fun parseBankNotificationUseCase(): ParseBankNotificationUseCase
-        fun financeRepository(): FinanceRepository
-    }
+    @Inject lateinit var repo: FinanceRepository
 
-    // SupervisorJob: a failed emit does not cancel sibling coroutines or the scope.
-    // IO dispatcher: SharedFlow.emit() may suspend under backpressure; keep off Main.
-    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    private val entryPoint by lazy {
-        EntryPointAccessors.fromApplication(
-            applicationContext,
-            BankNotificationServiceEntryPoint::class.java
-        )
-    }
+    // Whitelist: Scotiabank Chile package IDs. Extend as needed.
+    private val ALLOWED_PACKAGES = setOf(
+        "cl.scotiabankchile.banca",
+        "cl.bci.bci",
+        "cl.santander.mobile",
+        "cl.bancoestado.app",
+        "cl.itau",
+        "com.falabella.falabellabank",
+    )
 
-    override fun onDestroy() {
-        super.onDestroy()
-        serviceScope.cancel()
-    }
+    // Regex for Chilean peso amounts: $1.234 or $1.234,56
+    private val AMOUNT_PATTERN = Pattern.compile(
+        "\\$\\s?([\\d\\.]+(?:,\\d{1,2})?)"
+    )
 
-    override fun onNotificationPosted(sbn: StatusBarNotification?) {
-        sbn ?: return
+    // Heuristic: "Compra", "Cargo", "Débito" → OUT; "Abono", "Depósito" → IN
+    private val OUT_KEYWORDS = listOf("compra", "cargo", "débito", "debito", "pago", "transferencia salida")
+    private val IN_KEYWORDS  = listOf("abono", "depósito", "deposito", "transferencia entrada", "recibiste")
 
-        // ── SECURITY GATE ─────────────────────────────────────────────────────
-        // Hard whitelist check is the very first operation. If the package is not
-        // a known bank we return immediately without touching any notification data,
-        // protecting the user's privacy (messages, email, social, etc. are ignored).
-        if (sbn.packageName !in BANK_PACKAGE_WHITELIST) return
+    override fun onNotificationPosted(sbn: StatusBarNotification) {
+        if (sbn.packageName !in ALLOWED_PACKAGES) return
 
-        val extras  = sbn.notification?.extras ?: return
-        val title   = extras.getCharSequence(Notification.EXTRA_TITLE)?.toString() ?: return
-        val content = extras.getCharSequence(Notification.EXTRA_TEXT)?.toString()  ?: return
+        val extras = sbn.notification.extras ?: return
+        val title = extras.getString(Notification.EXTRA_TITLE) ?: ""
+        val text  = extras.getCharSequence(Notification.EXTRA_TEXT)?.toString() ?: ""
+        val full  = "$title $text"
 
-        val raw = RawBankNotification(
-            bankAppId = sbn.packageName,
-            title     = title,
-            content   = content,
-            timestamp = sbn.postTime,
-        )
+        val amount = extractAmount(full) ?: return
+        val type   = detectType(full)
+        val description = buildDescription(title, text)
 
-        // Emit off the main thread so this OS callback is never blocked.
-        serviceScope.launch {
-            // 1. Emit for real-time UI updates
-            _notificationFlow.emit(raw)
-
-            // 2. Persistence: Parse and save to Staging table
-            val parsed = entryPoint.parseBankNotificationUseCase().parse(raw)
-            if (parsed != null && parsed.amount != null) {
-                entryPoint.financeRepository().insertStagingRows(
-                    listOf(
-                        StagingTransactionEntity(
-                            sourceFile   = "Notification: ${sbn.packageName}",
-                            originalDate = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
-                                .format(java.util.Date(sbn.postTime)),
-                            description  = "${parsed.title}: ${parsed.rawContent}",
-                            amount       = parsed.amount,
-                            type         = if (parsed.amount < 0) "OUT" else "IN"
-                        )
+        scope.launch {
+            repo.insertStagingRows(
+                listOf(
+                    StagingTransactionEntity(
+                        sourceFile   = "notification:${sbn.packageName}",
+                        originalDate = LocalDate.now(),
+                        description  = description,
+                        amount       = amount.toPlainString(),
+                        type         = type,
                     )
                 )
-            }
+            )
         }
     }
 
-    companion object {
-        /**
-         * SharedFlow is used instead of Channel because:
-         *  - Multiple downstream collectors can subscribe simultaneously
-         *    (parser use case, audit logger, analytics, etc.).
-         *  - replay=1 lets a late subscriber receive the most recent emission
-         *    without reprocessing the full history.
-         *  - extraBufferCapacity=16 absorbs OTP/alert bursts without dropping events.
-         *
-         * Exposed as the read-only [SharedFlow] interface so only this service emits.
-         */
-        private val _notificationFlow = MutableSharedFlow<RawBankNotification>(
-            replay              = 1,
-            extraBufferCapacity = 16,
-        )
-        val notificationFlow: SharedFlow<RawBankNotification> = _notificationFlow.asSharedFlow()
+    private fun extractAmount(text: String): BigDecimal? {
+        val m = AMOUNT_PATTERN.matcher(text)
+        if (!m.find()) return null
+        val raw = m.group(1)
+            ?.replace(".", "")   // thousands separator
+            ?.replace(",", ".") // decimal separator
+            ?: return null
+        return runCatching { BigDecimal(raw).setScale(2) }.getOrNull()
+    }
 
-        /**
-         * Chilean and international banks relevant to MoneyManager.
-         * Extend this set or inject it via a repository for testability / remote config.
-         */
-        val BANK_PACKAGE_WHITELIST: Set<String> = setOf(
-            // ── Chile ──────────────────────────────────────────────────────────
-            "cl.bancochile.mi_banco",          // Banco de Chile — Mi Banco
-            "com.scotiabank.banking",           // Scotiabank Chile
-            "cl.bci.android",                  // BCI
-            "cl.santander.app",                // Santander Chile
-            "com.falabella.bank",              // Banco Falabella
-            "cl.itau.banking",                 // Itaú Chile
-            // ── International fallbacks ────────────────────────────────────────
-            "com.chase.sig.android",            // Chase Mobile
-            "com.bofa.mBanking",               // Bank of America
-        )
+    private fun detectType(text: String): String {
+        val lower = text.lowercase()
+        if (IN_KEYWORDS.any { it in lower }) return "IN"
+        return "OUT"  // default: treat unknown as expense
+    }
+
+    private fun buildDescription(title: String, text: String): String {
+        val combined = "$title – $text".replace(Regex("\\s+"), " ").trim()
+        return combined.take(255)
+    }
+
+    override fun onListenerDisconnected() {
+        // requestRebind if needed in future
     }
 }

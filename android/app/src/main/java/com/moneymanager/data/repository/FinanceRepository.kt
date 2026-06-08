@@ -1,187 +1,213 @@
 package com.moneymanager.data.repository
 
-import com.moneymanager.data.db.dao.*
-import com.moneymanager.data.entity.*
+import com.moneymanager.data.db.*
 import kotlinx.coroutines.flow.Flow
+import java.math.BigDecimal
+import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
 
-@Singleton
-class FinanceRepository @Inject constructor(
-    private val periodDao:              PeriodDao,
-    private val categoryDao:            CategoryDao,
-    private val budgetItemDao:          BudgetItemDao,
-    private val transactionDao:         TransactionDao,
-    private val stagingDao:             StagingTransactionDao,
-    private val stagingCCDao:           StagingCCTransactionDao,
+// ─────────────────────────────────────────────
+// Domain result models (thin wrappers — no extra layer needed at this scale)
+// ─────────────────────────────────────────────
+
+data class PeriodStats(
+    val period: PeriodEntity,
+    val totalIncomeProjected: BigDecimal,
+    val totalIncomeReal: BigDecimal,
+    val totalExpenseProjected: BigDecimal,
+    val totalExpenseReal: BigDecimal,
 ) {
+    val safeToSpend: BigDecimal get() = totalIncomeReal - totalExpenseReal
+    val projection: BigDecimal  get() = totalIncomeProjected - totalExpenseProjected
+    val burnRate: BigDecimal    get() =
+        if (totalIncomeReal > BigDecimal.ZERO)
+            (totalExpenseReal / totalIncomeReal * BigDecimal("100")).setScale(1, java.math.RoundingMode.HALF_UP)
+        else BigDecimal.ZERO
+}
 
-    // ── Periods ───────────────────────────────────────────────────────────────
-
-    fun observePeriods(): Flow<List<PeriodEntity>> = periodDao.observeAll()
-
-    suspend fun getPeriods(): List<PeriodEntity> = periodDao.getAll()
-
-    suspend fun getActivePeriod(): PeriodEntity? = periodDao.getActive()
-
-    suspend fun savePeriod(p: PeriodEntity): Long {
-        return if (p.id == 0L) {
-            if (p.isActive) periodDao.deactivateAll()
-            periodDao.insert(p)
-        } else {
-            if (p.isActive) periodDao.deactivateAll()
-            periodDao.update(p)
-            p.id
-        }
-    }
-
-    suspend fun deletePeriod(p: PeriodEntity) = periodDao.delete(p)
-
-    // ── Categories ────────────────────────────────────────────────────────────
-
-    fun observeCategories(): Flow<List<CategoryEntity>> = categoryDao.observeAll()
-
-    suspend fun getCategories(): List<CategoryEntity> = categoryDao.getAll()
-
-    suspend fun saveCategory(c: CategoryEntity): Long =
-        if (c.id == 0L) categoryDao.insert(c) else { categoryDao.update(c); c.id }
-
-    suspend fun deleteCategory(c: CategoryEntity) = categoryDao.delete(c)
-
-    // ── Budget Items ──────────────────────────────────────────────────────────
-
-    fun observeBudgetItemsWithStats(periodId: Long): Flow<List<BudgetItemWithStats>> =
-        budgetItemDao.observeWithStatsByPeriod(periodId)
-
-    suspend fun getBudgetItem(id: Long): BudgetItemEntity? = budgetItemDao.getById(id)
-
-    suspend fun saveBudgetItem(item: BudgetItemEntity): Long =
-        if (item.id == 0L) budgetItemDao.insert(item)
-        else { budgetItemDao.update(item); item.id }
-
-    suspend fun deleteBudgetItem(item: BudgetItemEntity) = budgetItemDao.delete(item)
-
-    // ── Transactions ──────────────────────────────────────────────────────────
-
-    fun observeTransactions(limit: Int = 50, offset: Int = 0): Flow<List<TransactionEntity>> =
-        transactionDao.observePaged(limit, offset)
-
-    fun observeTransactionsByBudgetItem(budgetItemId: Long): Flow<List<TransactionEntity>> =
-        transactionDao.observeByBudgetItem(budgetItemId)
-
-    suspend fun getTransaction(id: Long): TransactionEntity? = transactionDao.getById(id)
-
-    suspend fun saveTransaction(tx: TransactionEntity): Long =
-        if (tx.id == 0L) transactionDao.insert(tx)
-        else { transactionDao.update(tx); tx.id }
-
-    suspend fun deleteTransaction(tx: TransactionEntity) = transactionDao.delete(tx)
-
-    // ── Staging (bank DAT) ────────────────────────────────────────────────────
-
-    fun observePendingStaging(): Flow<List<StagingTransactionEntity>> =
-        stagingDao.observePending()
-
-    suspend fun insertStagingRows(rows: List<StagingTransactionEntity>) =
-        stagingDao.insertAll(rows)
-
-    suspend fun assignStagingCategory(id: Long, categoryId: Long) =
-        stagingDao.assignCategory(id, categoryId)
-
-    /**
-     * Commit all staging rows that have an assigned category:
-     *  1. Look up the matching BudgetItem for the period that covers the transaction date.
-     *  2. Insert a Transaction linked to it.
-     *  3. Mark staging rows processed.
-     */
-    suspend fun commitStagingBatch(
-        entries: List<StagingCommitEntry>,
-        budgetItems: List<BudgetItemWithStats>,
-    ): Int {
-        val pending = stagingDao.getPending()
-        val idMap   = entries.associateBy { it.stagingId }
-        var count   = 0
-        val committed = mutableListOf<Long>()
-
-        for (row in pending) {
-            val entry = idMap[row.id] ?: continue
-            // Find BudgetItem in same period that matches this category
-            val bi = budgetItems.firstOrNull { it.categoryId == entry.categoryId } ?: continue
-            transactionDao.insert(
-                TransactionEntity(
-                    budgetItemId = bi.id,
-                    date         = row.originalDate,
-                    realAmount   = row.amount,
-                    description  = row.description,
-                )
-            )
-            committed += row.id
-            count++
-        }
-        if (committed.isNotEmpty()) stagingDao.markProcessed(committed)
-        return count
-    }
-
-    // ── Staging CC ────────────────────────────────────────────────────────────
-
-    fun observePendingStagingCC(): Flow<List<StagingCCTransactionEntity>> =
-        stagingCCDao.observePending()
-
-    suspend fun insertStagingCCRows(rows: List<StagingCCTransactionEntity>) =
-        stagingCCDao.insertAll(rows)
-
-    suspend fun assignStagingCCCategory(id: Long, categoryId: Long) =
-        stagingCCDao.assignCategory(id, categoryId)
-
-    suspend fun commitCCStagingBatch(
-        entries: List<StagingCommitEntry>,
-        budgetItems: List<BudgetItemWithStats>,
-    ): Int {
-        val pending = stagingCCDao.getPending()
-        val idMap   = entries.associateBy { it.stagingId }
-        var count   = 0
-        val committed = mutableListOf<Long>()
-
-        for (row in pending) {
-            val entry = idMap[row.id] ?: continue
-            val bi    = budgetItems.firstOrNull { it.categoryId == entry.categoryId } ?: continue
-            transactionDao.insert(
-                TransactionEntity(
-                    budgetItemId = bi.id,
-                    date         = row.originalDate,
-                    realAmount   = row.amount,
-                    description  = row.description,
-                    notes        = row.location,
-                )
-            )
-            committed += row.id
-            count++
-        }
-        if (committed.isNotEmpty()) stagingCCDao.markProcessed(committed)
-        return count
-    }
-
-    // ── Dashboard calculation (mirrors services.calculate_safe_to_spend) ─────
-
-    data class DashboardStats(
-        val totalIncome:    Double,
-        val totalExpenses:  Double,
-        val projectedIn:    Double,
-        val projectedOut:   Double,
-        val safeToSpend:    Double,
-        val burnRate:       Double,    // 0..1
-    )
-
-    suspend fun getDashboardStats(periodId: Long): DashboardStats {
-        val items = budgetItemDao.getWithStatsByPeriod(periodId)
-        val totalIncome   = items.filter { it.type == "IN"  }.sumOf { it.totalReal }
-        val totalExpenses = items.filter { it.type == "OUT" }.sumOf { it.totalReal }
-        val projectedIn   = items.filter { it.type == "IN"  }.sumOf { it.projectedAmount }
-        val projectedOut  = items.filter { it.type == "OUT" }.sumOf { it.projectedAmount }
-        val safeToSpend   = totalIncome - totalExpenses
-        val burnRate      = if (totalIncome > 0) totalExpenses / totalIncome else 0.0
-        return DashboardStats(totalIncome, totalExpenses, projectedIn, projectedOut, safeToSpend, burnRate)
+data class BudgetItemWithStats(
+    val item: BudgetItemEntity,
+    val category: CategoryEntity,
+    val totalReal: BigDecimal,
+) {
+    val diff: BigDecimal get() = when (item.type) {
+        "IN"  -> totalReal - item.projectedAmount.toBigDecimal()
+        else  -> item.projectedAmount.toBigDecimal() - totalReal
     }
 }
 
-data class StagingCommitEntry(val stagingId: Long, val categoryId: Long)
+// ─────────────────────────────────────────────
+// FinanceRepository
+// ─────────────────────────────────────────────
+@Singleton
+class FinanceRepository @Inject constructor(
+    private val periodDao: PeriodDao,
+    private val categoryDao: CategoryDao,
+    private val budgetItemDao: BudgetItemDao,
+    private val transactionDao: TransactionDao,
+    private val stagingDao: StagingTransactionDao,
+    private val stagingCCDao: StagingCCTransactionDao,
+    private val db: AppDatabase,
+) {
+
+    // ── Periods ───────────────────────────────────────────────────────────
+
+    fun observePeriods(): Flow<List<PeriodEntity>> = periodDao.observeAll()
+    suspend fun getPeriods(): List<PeriodEntity> = periodDao.getAll()
+    suspend fun getActivePeriod(): PeriodEntity? =
+        periodDao.getActive() ?: periodDao.getAll().firstOrNull()
+    suspend fun findPeriodByDate(date: LocalDate): PeriodEntity? = periodDao.findByDate(date)
+    suspend fun savePeriod(period: PeriodEntity) = periodDao.insert(period)
+    suspend fun updatePeriod(period: PeriodEntity) = periodDao.update(period)
+    suspend fun deletePeriod(period: PeriodEntity) = periodDao.delete(period)
+
+    // ── Categories ────────────────────────────────────────────────────────
+
+    fun observeCategories(): Flow<List<CategoryEntity>> = categoryDao.observeAll()
+    suspend fun getCategories(): List<CategoryEntity> = categoryDao.getAll()
+    suspend fun saveCategory(category: CategoryEntity) = categoryDao.insert(category)
+    suspend fun updateCategory(category: CategoryEntity) = categoryDao.update(category)
+    suspend fun deleteCategory(category: CategoryEntity) = categoryDao.delete(category)
+
+    suspend fun getOrCreateUnplanned(): CategoryEntity {
+        return categoryDao.getByName("Unplanned/Extra") ?: run {
+            val id = categoryDao.insert(CategoryEntity(name = "Unplanned/Extra", group = "Gastos"))
+            categoryDao.getById(id)!!
+        }
+    }
+
+    // ── BudgetItems ───────────────────────────────────────────────────────
+
+    fun observeBudgetItems(periodId: Long): Flow<List<BudgetItemEntity>> =
+        budgetItemDao.observeByPeriod(periodId)
+
+    suspend fun getOrCreateBudgetItem(periodId: Long, categoryId: Long, type: String): BudgetItemEntity {
+        return budgetItemDao.find(periodId, categoryId) ?: run {
+            val entity = BudgetItemEntity(periodId = periodId, categoryId = categoryId, type = type)
+            val id = budgetItemDao.insert(entity)
+            budgetItemDao.find(periodId, categoryId)!!
+        }
+    }
+
+    // ── Transactions ──────────────────────────────────────────────────────
+
+    fun observeTransactions(periodId: Long): Flow<List<TransactionEntity>> =
+        transactionDao.observeByPeriod(periodId)
+
+    suspend fun insertTransaction(tx: TransactionEntity): Long = transactionDao.insert(tx)
+
+    /**
+     * Mirror of services.py calculate_safe_to_spend.
+     */
+    suspend fun calculateStats(period: PeriodEntity): PeriodStats {
+        val items = budgetItemDao.getByPeriod(period.id)
+        val txsByItem = items.associate { item ->
+            item.id to transactionDao.getByBudgetItem(item.id)
+                .sumOf { it.realAmount.toBigDecimal() }
+        }
+
+        val projIn  = items.filter { it.type == "IN"  }.sumOf { it.projectedAmount.toBigDecimal() }
+        val projOut = items.filter { it.type == "OUT" }.sumOf { it.projectedAmount.toBigDecimal() }
+        val realIn  = items.filter { it.type == "IN"  }.sumOf { txsByItem[it.id] ?: BigDecimal.ZERO }
+        val realOut = items.filter { it.type == "OUT" }.sumOf { txsByItem[it.id] ?: BigDecimal.ZERO }
+
+        return PeriodStats(period, projIn, realIn, projOut, realOut)
+    }
+
+    suspend fun getBudgetItemsWithStats(periodId: Long): List<BudgetItemWithStats> {
+        val items = budgetItemDao.getByPeriod(periodId)
+        val cats  = categoryDao.getAll().associateBy { it.id }
+        return items.mapNotNull { item ->
+            val cat = cats[item.categoryId] ?: return@mapNotNull null
+            val total = transactionDao.getByBudgetItem(item.id).sumOf { it.realAmount.toBigDecimal() }
+            BudgetItemWithStats(item, cat, total)
+        }
+    }
+
+    // ── Duplicate detection (mirrors get_duplicate_staging_ids) ───────────
+
+    suspend fun isDuplicateInPeriod(
+        periodId: Long,
+        date: LocalDate,
+        amount: BigDecimal,
+        description: String,
+    ): Boolean = transactionDao.findDuplicate(
+        periodId, date, amount.toPlainString(), description
+    ) != null
+
+    // ── Staging (Debit) ───────────────────────────────────────────────────
+
+    fun observePendingStaging(): Flow<List<StagingTransactionEntity>> = stagingDao.observePending()
+    suspend fun getPendingStaging(): List<StagingTransactionEntity> = stagingDao.getPending()
+    suspend fun insertStagingRows(rows: List<StagingTransactionEntity>) = stagingDao.insertAll(rows)
+
+    /**
+     * Mirrors process_staging_batch.
+     * removeIds: rows user chose to discard (duplicate → remove).
+     * entries:   list of (stagingId, categoryId).
+     * Returns count of committed transactions.
+     */
+    suspend fun processStagingBatch(
+        entries: List<Pair<Long, Long>>,
+        removeIds: Set<Long> = emptySet(),
+    ): Int = db.withTransaction {
+        if (removeIds.isNotEmpty()) stagingDao.deleteByIds(removeIds.toList())
+
+        var committed = 0
+        for ((stagingId, categoryId) in entries) {
+            val stx = stagingDao.getPending().firstOrNull { it.id == stagingId } ?: continue
+            val period = findPeriodByDate(stx.originalDate) ?: continue
+            val cat    = categoryDao.getById(categoryId) ?: getOrCreateUnplanned()
+            val bItem  = getOrCreateBudgetItem(period.id, cat.id, stx.type)
+            transactionDao.insert(
+                TransactionEntity(
+                    budgetItemId = bItem.id,
+                    date         = stx.originalDate,
+                    realAmount   = stx.amount,
+                    description  = stx.description,
+                    notes        = null,
+                )
+            )
+            stagingDao.markProcessed(stagingId, cat.id)
+            committed++
+        }
+        committed
+    }
+
+    // ── Staging (CC) ──────────────────────────────────────────────────────
+
+    fun observePendingCCStaging(): Flow<List<StagingCCTransactionEntity>> = stagingCCDao.observePending()
+    suspend fun getPendingCCStaging(): List<StagingCCTransactionEntity> = stagingCCDao.getPending()
+    suspend fun insertCCStagingRows(rows: List<StagingCCTransactionEntity>) = stagingCCDao.insertAll(rows)
+
+    suspend fun processCCStagingBatch(
+        entries: List<Pair<Long, Long>>,
+        removeIds: Set<Long> = emptySet(),
+    ): Int = db.withTransaction {
+        if (removeIds.isNotEmpty()) stagingCCDao.deleteByIds(removeIds.toList())
+
+        var committed = 0
+        for ((stagingId, categoryId) in entries) {
+            val stx = stagingCCDao.getPending().firstOrNull { it.id == stagingId } ?: continue
+            val period = findPeriodByDate(stx.originalDate) ?: continue
+            val cat    = categoryDao.getById(categoryId) ?: getOrCreateUnplanned()
+            val bItem  = getOrCreateBudgetItem(period.id, cat.id, stx.type)
+            transactionDao.insert(
+                TransactionEntity(
+                    budgetItemId = bItem.id,
+                    date         = stx.originalDate,
+                    realAmount   = stx.amount,
+                    description  = stx.description,
+                    notes        = listOfNotNull(
+                        stx.cardNumber?.let { "[CC] $it" },
+                        stx.location,
+                    ).joinToString(" ").ifBlank { null },
+                )
+            )
+            stagingCCDao.markProcessed(stagingId, cat.id)
+            committed++
+        }
+        committed
+    }
+}
