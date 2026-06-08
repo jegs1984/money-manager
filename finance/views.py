@@ -16,7 +16,8 @@ from .forms import (
 )
 from .models import BudgetItem, Category, Period, StagingCCTransaction, StagingTransaction, Transaction
 from .services import (
-    calculate_safe_to_spend, parse_scotiabank_statement, process_staging_batch,
+    calculate_safe_to_spend, get_duplicate_staging_ids,
+    parse_scotiabank_statement, process_staging_batch,
     parse_scotiabank_cc_statement, process_cc_staging_batch,
 )
 
@@ -42,7 +43,7 @@ class DashboardView(TemplateView):
             stats = calculate_safe_to_spend(active_period.id)
 
             total_real_expr = Coalesce(Sum('transactions__real_amount'), Value(Decimal('0.00')))
-            
+
             items = (
                 BudgetItem.objects.filter(period=active_period)
                 .select_related('category')
@@ -100,7 +101,6 @@ class GroupDashboardView(TemplateView):
                 .order_by('type', 'category__group', 'category__name')
             )
 
-            # Build group-level aggregation
             from collections import defaultdict
             groups = defaultdict(lambda: {
                 'group': '',
@@ -121,7 +121,6 @@ class GroupDashboardView(TemplateView):
                 g['diff']      += item.diff
                 g['items'].append(item)
 
-            # Sort: IN first, then OUT; alpha within each
             sorted_groups = sorted(groups.values(), key=lambda g: (0 if g['type'] == 'IN' else 1, g['group']))
 
             ctx.update(stats)
@@ -283,7 +282,7 @@ class StatementUploadView(FormView):
 
 
 # ─────────────────────────────────────────────
-# Staging Review
+# Staging Review (Debit)
 # ─────────────────────────────────────────────
 
 class StagingReviewView(TemplateView):
@@ -292,11 +291,22 @@ class StagingReviewView(TemplateView):
     def _qs(self):
         return StagingTransaction.objects.filter(is_processed=False).order_by('original_date')
 
+    def _active_period(self):
+        return (
+            Period.objects.filter(is_active=True).first()
+            or Period.objects.order_by('-start_date').first()
+        )
+
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         qs  = self._qs()
+        period = self._active_period()
+        duplicate_ids = get_duplicate_staging_ids(period, qs) if period else set()
+
         ctx['formset']       = StagingReviewFormset(queryset=qs)
         ctx['pending_count'] = qs.count()
+        ctx['duplicate_ids'] = duplicate_ids
+        ctx['active_period'] = period
         return ctx
 
     def post(self, request, *args, **kwargs):
@@ -304,17 +314,38 @@ class StagingReviewView(TemplateView):
         formset = StagingReviewFormset(request.POST, queryset=qs)
 
         if formset.is_valid():
-            entries = [
-                {'staging_id': f.instance.id, 'category_id': f.cleaned_data['assigned_category'].id}
-                for f in formset
-                if f.cleaned_data.get('assigned_category')
-            ]
-            processed = process_staging_batch(entries)
-            messages.success(request, f'{processed} transactions committed to the ledger.')
+            # Collect "remove" decisions from duplicate radio buttons
+            remove_ids: set[int] = set()
+            entries = []
+
+            for f in formset:
+                sid = f.instance.id
+                dup_action = request.POST.get(f'dup_action_{sid}')
+
+                if dup_action == 'remove':
+                    remove_ids.add(sid)
+                    continue  # skip — will be deleted
+
+                # dup_action == 'keep' OR normal (non-duplicate) row
+                cat = f.cleaned_data.get('assigned_category')
+                if cat:
+                    entries.append({'staging_id': sid, 'category_id': cat.id})
+
+            processed = process_staging_batch(entries, remove_ids=remove_ids)
+            removed   = len(remove_ids)
+            msg_parts = []
+            if processed:
+                msg_parts.append(f'{processed} transaction{"s" if processed != 1 else ""} committed to the ledger')
+            if removed:
+                msg_parts.append(f'{removed} duplicate{"s" if removed != 1 else ""} removed from staging')
+            messages.success(request, '. '.join(msg_parts) + '.')
             return redirect('finance:dashboard')
 
-        ctx            = self.get_context_data()
-        ctx['formset'] = formset
+        period = self._active_period()
+        duplicate_ids = get_duplicate_staging_ids(period, qs) if period else set()
+        ctx = self.get_context_data()
+        ctx['formset']       = formset
+        ctx['duplicate_ids'] = duplicate_ids
         return self.render_to_response(ctx)
 
 
@@ -364,12 +395,22 @@ class CCStagingReviewView(TemplateView):
     def _qs(self):
         return StagingCCTransaction.objects.filter(is_processed=False).order_by('original_date')
 
+    def _active_period(self):
+        return (
+            Period.objects.filter(is_active=True).first()
+            or Period.objects.order_by('-start_date').first()
+        )
+
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         qs  = self._qs()
+        period = self._active_period()
+        duplicate_ids = get_duplicate_staging_ids(period, qs) if period else set()
+
         ctx['formset']       = StagingCCReviewFormset(queryset=qs)
         ctx['pending_count'] = qs.count()
-        # Pass first record's card info for the header
+        ctx['duplicate_ids'] = duplicate_ids
+        ctx['active_period'] = period
         first = qs.first()
         ctx['card_number'] = first.card_number if first else ''
         ctx['card_holder'] = first.card_holder if first else ''
@@ -380,15 +421,34 @@ class CCStagingReviewView(TemplateView):
         formset = StagingCCReviewFormset(request.POST, queryset=qs)
 
         if formset.is_valid():
-            entries = [
-                {'staging_id': f.instance.id, 'category_id': f.cleaned_data['assigned_category'].id}
-                for f in formset
-                if f.cleaned_data.get('assigned_category')
-            ]
-            processed = process_cc_staging_batch(entries)
-            messages.success(request, f'{processed} CC transactions committed to the ledger.')
+            remove_ids: set[int] = set()
+            entries = []
+
+            for f in formset:
+                sid = f.instance.id
+                dup_action = request.POST.get(f'dup_action_{sid}')
+
+                if dup_action == 'remove':
+                    remove_ids.add(sid)
+                    continue
+
+                cat = f.cleaned_data.get('assigned_category')
+                if cat:
+                    entries.append({'staging_id': sid, 'category_id': cat.id})
+
+            processed = process_cc_staging_batch(entries, remove_ids=remove_ids)
+            removed   = len(remove_ids)
+            msg_parts = []
+            if processed:
+                msg_parts.append(f'{processed} CC transaction{"s" if processed != 1 else ""} committed to the ledger')
+            if removed:
+                msg_parts.append(f'{removed} duplicate{"s" if removed != 1 else ""} removed from staging')
+            messages.success(request, '. '.join(msg_parts) + '.')
             return redirect('finance:dashboard')
 
-        ctx            = self.get_context_data()
-        ctx['formset'] = formset
+        period = self._active_period()
+        duplicate_ids = get_duplicate_staging_ids(period, qs) if period else set()
+        ctx = self.get_context_data()
+        ctx['formset']       = formset
+        ctx['duplicate_ids'] = duplicate_ids
         return self.render_to_response(ctx)

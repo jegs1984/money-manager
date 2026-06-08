@@ -1,8 +1,9 @@
 package com.moneymanager.di
 
 import android.content.Context
-import com.moneymanager.data.db.AppDatabase
-import com.moneymanager.data.db.dao.*
+import androidx.room.Room
+import com.moneymanager.data.db.*
+import com.moneymanager.data.repository.FinanceRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -14,14 +15,17 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
 
-    @Provides @Singleton
+    @Provides
+    @Singleton
     fun provideDatabase(@ApplicationContext ctx: Context): AppDatabase =
-        AppDatabase.build(ctx)
+        Room.databaseBuilder(ctx, AppDatabase::class.java, AppDatabase.DATABASE_NAME)
+            .fallbackToDestructiveMigration()   // bump version + write proper Migration for prod
+            .build()
 
-    @Provides fun providePeriodDao(db: AppDatabase): PeriodDao                   = db.periodDao()
-    @Provides fun provideCategoryDao(db: AppDatabase): CategoryDao               = db.categoryDao()
-    @Provides fun provideBudgetItemDao(db: AppDatabase): BudgetItemDao           = db.budgetItemDao()
-    @Provides fun provideTransactionDao(db: AppDatabase): TransactionDao         = db.transactionDao()
-    @Provides fun provideStagingDao(db: AppDatabase): StagingTransactionDao      = db.stagingTransactionDao()
-    @Provides fun provideStagingCCDao(db: AppDatabase): StagingCCTransactionDao  = db.stagingCCTransactionDao()
+    @Provides fun periodDao(db: AppDatabase): PeriodDao               = db.periodDao()
+    @Provides fun categoryDao(db: AppDatabase): CategoryDao           = db.categoryDao()
+    @Provides fun budgetItemDao(db: AppDatabase): BudgetItemDao       = db.budgetItemDao()
+    @Provides fun transactionDao(db: AppDatabase): TransactionDao     = db.transactionDao()
+    @Provides fun stagingDao(db: AppDatabase): StagingTransactionDao  = db.stagingTransactionDao()
+    @Provides fun stagingCCDao(db: AppDatabase): StagingCCTransactionDao = db.stagingCCTransactionDao()
 }

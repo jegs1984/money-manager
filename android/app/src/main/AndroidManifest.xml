@@ -1,9 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!-- File import: Storage Access Framework on API 33+, legacy permission below -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
+
+    <!--
+        BIND_NOTIFICATION_LISTENER_SERVICE is a "special access" permission.
+        It is declared here but NOT requested at runtime — the user must grant it
+        manually via Settings > Apps > Special app access > Notification access.
+    -->
+    <uses-permission
+        android:name="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
+        tools:ignore="ProtectedPermissions" />
 
     <application
         android:name=".MoneyManagerApp"
@@ -23,5 +33,24 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!--
+            NotificationListenerService must be exported and bound to the system permission.
+            The meta-data tag (API 31+) tells the OS to only deliver "conversations" and
+            "alerting" channel notifications, reducing unnecessary wake-ups.
+        -->
+        <service
+            android:name=".notifications.BankNotificationService"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.service.notification.default_filter_types"
+                android:value="conversations|alerting" />
+        </service>
+
     </application>
 </manifest>

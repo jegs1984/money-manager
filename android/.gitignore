@@ -1,0 +1,26 @@
+# --- Build Outputs ---
+**/build/
+build/
+app/build/
+*.apk
+*.aar
+
+# --- Local Configuration (DO NOT REMOVE FROM GITIGNORE) ---
+local.properties
+.gradle/
+.navigation/
+captures/
+
+# --- IDE Settings ---
+.idea/workspace.xml
+.idea/libraries/
+.idea/caches/
+.idea/assetWizardSettings.xml
+.idea/modules.xml
+.idea/navEditor.xml
+*.iml
+*.iws
+
+# --- OS Specific ---
+.DS_Store
+Thumbs.db

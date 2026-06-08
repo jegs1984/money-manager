@@ -40,11 +40,6 @@ from .models import BudgetItem, Category, Period, StagingCCTransaction, StagingT
 # ─────────────────────────────────────────────
 
 def _parse_amount(raw: str) -> Decimal:
-    """
-    Convert a Scotiabank-style zero-padded, comma-decimal string to Decimal.
-    Strips leading +/-, leading zeros, and any non-numeric chars except '.'.
-    Returns Decimal('0.00') for empty / unparseable input.
-    """
     s = raw.strip().lstrip('+').lstrip('-').replace(',', '.').strip()
     s = re.sub(r'[^\d.]', '', s)
     if not s:
@@ -56,11 +51,6 @@ def _parse_amount(raw: str) -> Decimal:
 
 
 def _parse_header(lines: list[str]) -> dict:
-    """
-    Extract account metadata from the leading ';'-prefixed comment block.
-    Stops at the first line that does NOT start with ';'.
-    Returns dict with keys: account_number, date_from, date_to.
-    """
     meta = {}
     for line in lines:
         stripped = line.strip()
@@ -81,12 +71,6 @@ def _parse_header(lines: list[str]) -> dict:
 
 
 def _parse_date(raw: str) -> date | None:
-    """
-    Parse date from Scotiabank data rows.
-    Primary   : DDMMYYYY  (e.g. '21042026')  – digits only, 8 chars after strip
-    Fallback  : DD/MM/YYYY
-    Returns None if unparseable.
-    """
     s = raw.strip()
     digits = re.sub(r'\D', '', s)
     if len(digits) == 8:
@@ -101,8 +85,38 @@ def _parse_date(raw: str) -> date | None:
     return None
 
 
-# Column-header tokens that mark the header row to skip
 _HEADER_TOKENS = {'fecha', 'descripcion', 'nrodoc', 'cargos', 'abonos', 'saldo'}
+
+
+# ─────────────────────────────────────────────
+# Public: Duplicate detection
+# ─────────────────────────────────────────────
+
+def get_duplicate_staging_ids(
+    period: Period,
+    staging_qs,  # QuerySet[StagingTransaction] | QuerySet[StagingCCTransaction]
+) -> set[int]:
+    """
+    Return the set of staging row IDs whose (date, amount, description) triple
+    already exists in Transaction rows belonging to the given Period.
+
+    Match key: (Transaction.date == staging.original_date)
+              AND (Transaction.real_amount == staging.amount)
+              AND (Transaction.description == staging.description)
+    """
+    # Build a set of (date, amount, description) tuples already in the ledger
+    existing = set(
+        Transaction.objects.filter(budget_item__period=period)
+        .values_list('date', 'real_amount', 'description')
+    )
+
+    duplicate_ids: set[int] = set()
+    for stx in staging_qs:
+        key = (stx.original_date, stx.amount, stx.description)
+        if key in existing:
+            duplicate_ids.add(stx.pk)
+
+    return duplicate_ids
 
 
 # ─────────────────────────────────────────────
@@ -123,7 +137,6 @@ def parse_scotiabank_statement(file_obj, source_filename: str = '') -> dict:
             'date_to':        str,
         }
     """
-    # ── Read raw text ──────────────────────────────────────────────────────
     if hasattr(file_obj, 'read'):
         raw = file_obj.read()
         if isinstance(raw, bytes):
@@ -137,7 +150,6 @@ def parse_scotiabank_statement(file_obj, source_filename: str = '') -> dict:
     meta           = _parse_header(lines)
     account_number = meta.get('account_number', '')
 
-    # ── Parse rows ────────────────────────────────────────────────────────
     staging_records = []
     skipped = 0
 
@@ -147,51 +159,40 @@ def parse_scotiabank_statement(file_obj, source_filename: str = '') -> dict:
         if not row:
             continue
 
-        first = row[0]           # may have leading spaces – kept for date parse
+        first = row[0]
         first_stripped = first.strip()
 
-        # Skip comment / metadata lines
         if first_stripped.startswith(';') or first_stripped == '':
             continue
 
-        # Skip the column-header row
         token = re.sub(r'[\s.]', '', first_stripped).lower()
         if token in _HEADER_TOKENS:
             continue
 
-        # Minimum columns: Fecha, Descripcion, NroDoc., Cargos, Abonos
         if len(row) < 5:
             skipped += 1
             continue
 
-        # ── Date ──────────────────────────────────────────────────────────
         date_obj = _parse_date(first_stripped)
         if date_obj is None:
             skipped += 1
             continue
 
-        # ── Description ───────────────────────────────────────────────────
         description = re.sub(r'\s+', ' ', row[1].strip())
         if not description:
             skipped += 1
             continue
 
-        # ── Doc number ────────────────────────────────────────────────────
         doc_raw = row[2].strip() if len(row) > 2 else ''
-        # all-zero doc numbers are meaningless in this format
         doc_number = doc_raw if doc_raw and not re.fullmatch(r'0+', doc_raw) else None
 
-        # ── Amounts ───────────────────────────────────────────────────────
         cargo = _parse_amount(row[3]) if len(row) > 3 else Decimal('0.00')
         abono = _parse_amount(row[4]) if len(row) > 4 else Decimal('0.00')
 
-        # ── Balance (optional 6th column) ─────────────────────────────────
         balance_raw = row[5].strip() if len(row) > 5 else ''
         balance = _parse_amount(balance_raw) if balance_raw else None
 
-        # ── Direction ─────────────────────────────────────────────────────
         if cargo > Decimal('0.00') and abono > Decimal('0.00'):
-            # Both populated (unusual edge case): cargo wins
             tx_type, amount = 'OUT', cargo
         elif cargo > Decimal('0.00'):
             tx_type, amount = 'OUT', cargo
@@ -253,19 +254,24 @@ def _get_or_create_budget_item(period: Period, category: Category, tx_type: str)
 # ─────────────────────────────────────────────
 
 @db_transaction.atomic
-def process_staging_batch(staging_ids_with_categories: list[dict]) -> int:
+def process_staging_batch(staging_ids_with_categories: list[dict], remove_ids: set[int] | None = None) -> int:
     """
     Accept: [{'staging_id': int, 'category_id': int}, ...]
+    remove_ids: set of StagingTransaction PKs marked "remove" by the user
+                (duplicate rows the user chose to discard).
 
     For each entry:
-      - Finds the Period whose date range contains original_date
-        (start_date <= original_date <= end_date).
+      - Finds the Period whose date range contains original_date.
       - Creates a Transaction linked to the correct BudgetItem.
       - Marks StagingTransaction.is_processed = True.
 
+    Rows in remove_ids are deleted from staging without creating a Transaction.
     Rows with no matching Period are silently skipped.
     Returns count of committed transactions.
     """
+    if remove_ids:
+        StagingTransaction.objects.filter(id__in=remove_ids, is_processed=False).delete()
+
     processed = 0
 
     for entry in staging_ids_with_categories:
@@ -374,22 +380,12 @@ def rollover_period_balance(source_period_id: int, target_period_id: int) -> Dec
 # ─────────────────────────────────────────────
 
 def _parse_clp_amount(raw: str) -> Decimal | None:
-    """
-    Convert Scotiabank CC XLS amount string to Decimal.
-    Handles:  '$ 42.720'  '$ -343.916'  '$ 1.050'  ''
-    Chilean thousands separator is '.' and decimal separator is ','.
-    These amounts are integers (no cents), but we store as Decimal for consistency.
-    Returns None for empty / unparseable.
-    """
     s = raw.strip()
     if not s:
         return None
-    # Remove currency symbol and spaces
     s = s.replace('$', '').strip()
-    # Determine sign
     negative = s.startswith('-')
     s = s.lstrip('-').strip()
-    # Remove thousands dots (Chilean format: 1.234.567)
     s = s.replace('.', '').replace(',', '.')
     s = re.sub(r'[^\d.]', '', s)
     if not s:
@@ -402,12 +398,6 @@ def _parse_clp_amount(raw: str) -> Decimal | None:
 
 
 def _parse_cc_header(rows: list[list[str]]) -> dict:
-    """
-    Extract cardholder metadata from the first ~10 rows of the CC XLS CSV.
-    The cell at col 18 (approx) contains a multi-line value:
-      'JUAN GAETE STANGL\nVISA XXXX-XXXX-XXXX-7239\n22/05/2026'
-    LibreOffice preserves real newlines inside quoted cells.
-    """
     meta = {}
     for row in rows[:10]:
         for cell_idx in range(len(row)):
@@ -415,7 +405,6 @@ def _parse_cc_header(rows: list[list[str]]) -> dict:
             upper = cell.upper()
             if not cell or ('VISA' not in upper and 'MASTER' not in upper and 'XXXX' not in upper):
                 continue
-            # Split on real newlines or the literal two-char sequence \n
             parts = [p.strip() for p in re.split(r'\n|\\n', cell) if p.strip()]
             if len(parts) >= 1:
                 meta['card_holder'] = parts[0]
@@ -437,25 +426,6 @@ def _parse_cc_header(rows: list[list[str]]) -> dict:
 def parse_scotiabank_cc_statement(file_obj, source_filename: str = '') -> dict:
     """
     Parse a Scotiabank credit card statement in .xls format.
-
-    The XLS is a wide spreadsheet (~75 columns) converted to CSV internally.
-    Transaction rows are identified by a DD/MM/YYYY date at column index 11.
-    Relevant column indices (0-based):
-      5  → location / city
-      11 → transaction date  (DD/MM/YYYY)
-      16 → reference code
-      22 → description
-      54 → transaction amount  ($ X.XXX or $ -X.XXX)
-      67 → installment label  (e.g. '06/06', '01/01', '02/21')
-      72 → installment value this period
-
-    Amount sign convention:
-      Positive → purchase / charge → type OUT
-      Negative → payment / credit / reversal → type IN
-
-    Requires:  xlrd  (for .xls)  OR  LibreOffice on PATH (fallback conversion).
-    The file is converted to CSV in-memory before parsing.
-
     Returns:
         {
             'count':          int,
@@ -471,16 +441,13 @@ def parse_scotiabank_cc_statement(file_obj, source_filename: str = '') -> dict:
     import tempfile
     import os
 
-    # ── Read the file bytes ────────────────────────────────────────────────
     if hasattr(file_obj, 'read'):
         raw_bytes = file_obj.read()
     else:
         raw_bytes = file_obj
 
-    # ── Convert XLS → CSV (try xlrd first, fallback to LibreOffice) ───────
     csv_text = None
 
-    # Attempt 1: xlrd (handles legacy .xls BIFF format)
     try:
         import xlrd  # noqa: F401
         import pandas as pd
@@ -494,14 +461,12 @@ def parse_scotiabank_cc_statement(file_obj, source_filename: str = '') -> dict:
     except Exception:
         pass
 
-    # Attempt 2: LibreOffice / soffice headless
     if csv_text is None:
         try:
             with tempfile.NamedTemporaryFile(suffix='.xls', delete=False) as tmp:
                 tmp.write(raw_bytes)
                 tmp_path = tmp.name
             out_dir = tempfile.mkdtemp()
-            # Try both binary names
             for binary in ('soffice', 'libreoffice'):
                 result = subprocess.run(
                     [binary, '--headless', '--convert-to', 'csv',
@@ -512,7 +477,6 @@ def parse_scotiabank_cc_statement(file_obj, source_filename: str = '') -> dict:
                     break
             csv_path = os.path.join(out_dir, os.path.basename(tmp_path).replace('.xls', '.csv'))
             if result.returncode == 0 and os.path.exists(csv_path):
-                # LibreOffice writes latin-1 on many systems
                 for enc in ('utf-8', 'latin-1', 'cp1252'):
                     try:
                         with open(csv_path, encoding=enc) as f:
@@ -533,15 +497,12 @@ def parse_scotiabank_cc_statement(file_obj, source_filename: str = '') -> dict:
             'Install xlrd (pip install xlrd==1.2.0) or ensure LibreOffice is on PATH.'
         )
 
-    # ── Parse CSV rows ─────────────────────────────────────────────────────
     rows = list(csv_mod.reader(io_mod.StringIO(csv_text)))
     meta = _parse_cc_header(rows)
 
     date_pat = re.compile(r'^\d{2}/\d{2}/\d{4}$')
     installment_pat = re.compile(r'^(\d+)/(\d+)$')
 
-    # Skip-description keywords — rows we don't want staged
-    # (section sub-totals, period carry-forward lines, etc. have no location+date)
     SKIP_DESCRIPTIONS = {
         'período facturado', 'pagar hasta', 'período de facturación anterior',
     }
@@ -557,7 +518,6 @@ def parse_scotiabank_cc_statement(file_obj, source_filename: str = '') -> dict:
         if not date_pat.match(date_raw):
             continue
 
-        # Parse date
         try:
             tx_date = datetime.strptime(date_raw, '%d/%m/%Y').date()
         except ValueError:
@@ -569,7 +529,6 @@ def parse_scotiabank_cc_statement(file_obj, source_filename: str = '') -> dict:
             skipped += 1
             continue
 
-        # Amount at col 54 (transaction amount)
         amount_raw = row[54].strip() if len(row) > 54 else ''
         amount = _parse_clp_amount(amount_raw)
         if amount is None:
@@ -579,7 +538,6 @@ def parse_scotiabank_cc_statement(file_obj, source_filename: str = '') -> dict:
         location = re.sub(r'\s+', ' ', row[5].strip()) if len(row) > 5 else ''
         ref_code = row[16].strip() if len(row) > 16 else ''
 
-        # Installment: col 67 e.g. '06/06' or '01/01' or '02/21'
         installment_current = installment_total = None
         installment_value = None
         inst_raw = row[67].strip() if len(row) > 67 else ''
@@ -590,7 +548,6 @@ def parse_scotiabank_cc_statement(file_obj, source_filename: str = '') -> dict:
         inst_val_raw = row[72].strip() if len(row) > 72 else ''
         installment_value = _parse_clp_amount(inst_val_raw)
 
-        # Direction: negative = payment/credit (IN), positive = purchase (OUT)
         tx_type = 'IN' if amount < Decimal('0.00') else 'OUT'
         abs_amount = abs(amount)
 
@@ -626,11 +583,17 @@ def parse_scotiabank_cc_statement(file_obj, source_filename: str = '') -> dict:
 
 
 @db_transaction.atomic
-def process_cc_staging_batch(staging_ids_with_categories: list[dict]) -> int:
+def process_cc_staging_batch(
+    staging_ids_with_categories: list[dict],
+    remove_ids: set[int] | None = None,
+) -> int:
     """
     Same logic as process_staging_batch but for StagingCCTransaction.
-    Resolves Period by date range, creates Transaction records, marks rows processed.
+    remove_ids: CC staging PKs the user chose to discard (duplicate → remove).
     """
+    if remove_ids:
+        StagingCCTransaction.objects.filter(id__in=remove_ids, is_processed=False).delete()
+
     processed = 0
 
     for entry in staging_ids_with_categories:
@@ -679,37 +642,27 @@ def process_cc_staging_batch(staging_ids_with_categories: list[dict]) -> int:
 
 def calculate_safe_to_spend(period_id: int) -> dict:
     period = Period.objects.get(id=period_id)
-    
-    # 1. Sum up projected amounts directly from BudgetItem (No joins = no duplication)
+
     budget_totals = BudgetItem.objects.filter(period=period).aggregate(
         proj_in=Coalesce(Sum('projected_amount', filter=Q(type='IN')), Value(Decimal('0.00'))),
         proj_out=Coalesce(Sum('projected_amount', filter=Q(type='OUT')), Value(Decimal('0.00'))),
     )
 
-    # 2. Sum up real amounts directly from Transaction, filtering by the budget item's type
     transaction_totals = Transaction.objects.filter(budget_item__period=period).aggregate(
         real_in=Coalesce(Sum('real_amount', filter=Q(budget_item__type='IN')), Value(Decimal('0.00'))),
         real_out=Coalesce(Sum('real_amount', filter=Q(budget_item__type='OUT')), Value(Decimal('0.00'))),
     )
 
-    # 3. Combine your results cleanly
     ti_proj = budget_totals['proj_in']
     te_proj = budget_totals['proj_out']
-    
     ti_real = transaction_totals['real_in']
     te_real = transaction_totals['real_out']
 
-    # Your safe_to_spend logic remains clean
-    safe_to_spend = ti_real - te_real
-    burn_rate = (te_real / ti_real * 100) if ti_real > Decimal('0.00') else Decimal('0.00')
-
-    # Net remaining cash right now
-    safe_to_spend = ti_real - te_real 
+    safe_to_spend  = ti_real - te_real
     total_projected = ti_proj - te_proj
-    
     burn_rate = (te_real / ti_real * 100) if ti_real > Decimal('0.00') else Decimal('0.00')
 
-    out = {
+    return {
         'period':                   period,
         'total_income_projected':   ti_proj,
         'total_income_real':        ti_real,
@@ -719,5 +672,3 @@ def calculate_safe_to_spend(period_id: int) -> dict:
         'burn_rate':                burn_rate,
         'projection':               total_projected,
     }
-
-    return out

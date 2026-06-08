@@ -12,6 +12,7 @@ import com.moneymanager.ui.screens.categories.CategoryFormScreen
 import com.moneymanager.ui.screens.categories.CategoriesScreen
 import com.moneymanager.ui.screens.dashboard.DashboardScreen
 import com.moneymanager.ui.screens.importflow.*
+import com.moneymanager.ui.screens.notifications.NotificationPermissionScreen
 import com.moneymanager.ui.screens.periods.PeriodFormScreen
 import com.moneymanager.ui.screens.periods.PeriodsScreen
 import com.moneymanager.ui.screens.transactions.TransactionFormScreen
@@ -71,5 +72,8 @@ fun NavGraph() {
             Routes.STAGING_CC_REVIEW,
             arguments = listOf(navArgument("periodId") { type = NavType.LongType }),
         ) { StagingCCReviewScreen(nav, it.arguments!!.getLong("periodId")) }
+
+        // ── Notification Monitor ───────────────────────────────────────────
+        composable(Routes.NOTIFICATIONS) { NotificationPermissionScreen() }
     }
 }

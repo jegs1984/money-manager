@@ -47,42 +47,57 @@ object DatParser {
             }
 
             // ── Skip comment / header lines ──────────────────────────────────
-            if (line.startsWith(";") || line.startsWith("Fecha") || line.isBlank()) continue
+            if (line.startsWith(";") || line.startsWith("Fecha") || line.isBlank()) {
+                // skip
+            } else {
+                val cols = line.split(";")
+                if (cols.size < 5) {
+                    skipped++
+                } else {
+                    val rawDate   = cols[0].trim()
+                    val desc      = cols[1].trim()
+                    val docNumber = cols[2].trim().takeIf { it.isNotBlank() && it != "00000000" }
+                    val cargo     = cols[3].trim()
+                    val abono     = cols[4].trim()
+                    val balance   = cols.getOrNull(5)?.trim()
 
-            val cols = line.split(";")
-            if (cols.size < 5) { skipped++; continue }
+                    val date = parseDdmmyyyy(rawDate)
+                    if (date == null) {
+                        skipped++
+                    } else if (desc.isBlank()) {
+                        skipped++
+                    } else {
+                        val cargoAmt = parseAmount(cargo)
+                        val abonoAmt = parseAmount(abono)
 
-            val rawDate   = cols[0].trim()
-            val desc      = cols[1].trim()
-            val docNumber = cols[2].trim().takeIf { it.isNotBlank() && it != "00000000" }
-            val cargo     = cols[3].trim()
-            val abono     = cols[4].trim()
-            val balance   = cols.getOrNull(5)?.trim()
+                        if (cargoAmt == null && abonoAmt == null) {
+                            skipped++
+                        } else {
+                            val result = when {
+                                (cargoAmt ?: 0.0) > 0.0 -> cargoAmt!! to "OUT"
+                                (abonoAmt ?: 0.0) > 0.0 -> abonoAmt!! to "IN"
+                                else -> null
+                            }
 
-            val date = parseDdmmyyyy(rawDate) ?: run { skipped++; continue }
-            if (desc.isBlank()) { skipped++; continue }
-
-            val cargoAmt = parseAmount(cargo)
-            val abonoAmt = parseAmount(abono)
-
-            if (cargoAmt == null && abonoAmt == null) { skipped++; continue }
-
-            val (amount, type) = when {
-                (cargoAmt ?: 0.0) > 0.0 -> cargoAmt!! to "OUT"
-                (abonoAmt ?: 0.0) > 0.0 -> abonoAmt!! to "IN"
-                else -> { skipped++; continue }
+                            if (result == null) {
+                                skipped++
+                            } else {
+                                val (amount, type) = result
+                                rows += StagingTransactionEntity(
+                                    sourceFile    = sourceFilename,
+                                    accountNumber = accountNumber,
+                                    originalDate  = date,
+                                    description   = desc,
+                                    docNumber     = docNumber,
+                                    amount        = amount,
+                                    balance       = balance?.let { parseAmount(it.removePrefix("+").removePrefix("-")) },
+                                    type          = type,
+                                )
+                            }
+                        }
+                    }
+                }
             }
-
-            rows += StagingTransactionEntity(
-                sourceFile    = sourceFilename,
-                accountNumber = accountNumber,
-                originalDate  = date,
-                description   = desc,
-                docNumber     = docNumber,
-                amount        = amount,
-                balance       = balance?.let { parseAmount(it.removePrefix("+").removePrefix("-")) },
-                type          = type,
-            )
         }
 
         return ParseResult(rows, accountNumber, dateFrom, dateTo, skipped)

@@ -16,34 +16,11 @@ android/
 │       └── java/com/moneymanager/
 │           ├── MoneyManagerApp.kt              ← @HiltAndroidApp
 │           ├── MainActivity.kt
-│           ├── data/
-│           │   ├── db/
-│           │   │   ├── AppDatabase.kt          ← Room v1 + seed callback
-│           │   │   └── dao/                    ← PeriodDao, CategoryDao,
-│           │   │                                  BudgetItemDao, TransactionDao,
-│           │   │                                  StagingTransactionDao,
-│           │   │                                  StagingCCTransactionDao
-│           │   ├── entity/                     ← 6 @Entity data classes
-│           │   ├── repository/
-│           │   │   └── FinanceRepository.kt    ← single source of truth
-│           │   └── parser/
-│           │       ├── DatParser.kt            ← Scotiabank .dat (pure Kotlin)
-│           │       └── XlsParser.kt            ← Scotiabank CC .xls (Apache POI)
-│           ├── di/
-│           │   └── DatabaseModule.kt           ← Hilt @Module
-│           └── ui/
-│               ├── theme/Theme.kt
-│               ├── navigation/
-│               │   ├── Routes.kt
-│               │   └── NavGraph.kt
-│               └── screens/
-│                   ├── dashboard/              ← DashboardScreen + ViewModel
-│                   ├── periods/                ← list + form
-│                   ├── categories/             ← list + form
-│                   ├── budgetitems/            ← list + form
-│                   ├── transactions/           ← list + form
-│                   └── importflow/             ← DAT import, DAT staging review,
-│                                                  CC import, CC staging review
+│           ├── data/                           ← Local DB & Repositories
+│           ├── domain/                         ← Business logic & UseCases
+│           ├── notifications/                  ← Bank notification interception
+│           ├── di/                             ← Dependency Injection
+│           └── ui/                             ← Jetpack Compose UI
 ├── build.gradle.kts
 ├── settings.gradle.kts
 └── gradle/
@@ -53,45 +30,45 @@ android/
 
 ---
 
-## Feature map (web → Android)
+## Core Feature: Auto-Logging via Notifications
 
-| Web screen | Android screen |
-|---|---|
-| Dashboard (safe-to-spend, burn rate, budget bars) | `DashboardScreen` |
-| Periods CRUD | `PeriodsScreen` + `PeriodFormScreen` |
-| Categories CRUD | `CategoriesScreen` + `CategoryFormScreen` |
-| Budget Items CRUD | `BudgetItemsScreen` + `BudgetItemFormScreen` |
-| Transactions list / form | `TransactionsScreen` + `TransactionFormScreen` |
-| Import Scotiabank `.dat` | `ImportDatScreen` → `StagingReviewScreen` |
-| Import Scotiabank CC `.xls` | `ImportCCScreen` → `StagingCCReviewScreen` |
-
-Pre-seeded categories (64 entries) are inserted on first launch via a `RoomDatabase.Callback`.
+The app includes a `BankNotificationService` that intercepts push notifications from banking apps.
+- **Privacy First**: It uses a strict package whitelist (Scotiabank, Santander, BCI, etc.). It ignores your private messages, emails, and social media.
+- **Smart Parsing**: A domain-level Use Case uses Regex heuristics to extract amounts and currencies from the notification text, automatically staging them for review.
 
 ---
 
-## Build — development
+## Building & Deploying
+
+This section guides you through turning the source code into a functional app on your phone.
 
 ### Prerequisites
 
-| Tool | Minimum version |
-|---|---|
-| Android Studio | Hedgehog 2023.1.1 |
-| JDK | 17 |
-| Android SDK | API 34 (compile), API 26 (min) |
-
-### Steps
-
-```bash
-# Open the android/ folder in Android Studio
-# File → Open → .../money-manager/android
-# Wait for Gradle sync, then Run → Run 'app'  (Shift+F10)
-```
+1.  **Android Studio**: Download the latest version (Hedgehog or newer). It includes the compilers and tools needed.
+2.  **JDK 17**: The Java Development Kit required to run the build system (Gradle).
+3.  **Physical Android Device**: (Recommended) To test notification interception, as emulators don't receive real bank pushes.
 
 ---
 
-## Build a release APK
+### Phase 1: Development Build (Debug)
 
-### 1 — Generate a signing keystore (one-time)
+**What is it?** A version of the app optimized for developers. It includes debug symbols and allows you to attach a debugger to see what's happening inside.
+**When to use?** Every day while writing code or testing new features.
+
+1.  Open the `android/` folder in Android Studio.
+2.  Wait for the "Gradle Sync" to finish (this downloads dependencies).
+3.  Connect your phone via USB and enable **USB Debugging** in Developer Options.
+4.  Press the **Green Play Button** (Shift+F10) in the top toolbar.
+
+---
+
+### Phase 2: Packaging for Release (Signed APK)
+
+If you want to install the app permanently on your device or share it, you must "Sign" it.
+
+#### 1. Generate a Signing Keystore (One-time)
+**Why?** Android requires all apps to be digitally signed before they can be installed. A "Keystore" is a secure file that holds your digital identity. It proves that the app was created by you and hasn't been tampered with.
+**What to do?** Run this command in your terminal (replace `YOUR_PASSWORD`):
 
 ```bash
 keytool -genkeypair \
@@ -102,81 +79,57 @@ keytool -genkeypair \
   -storepass YOUR_STORE_PASSWORD \
   -keypass  YOUR_KEY_PASSWORD
 ```
+**Warning**: Keep this `.jks` file safe. If you lose it, you cannot update the app on your phone without uninstalling and losing your data.
 
-Store `money-manager-release.jks` safely — it cannot be recovered if lost.
-
-### 2 — Supply signing credentials
-
-Preferred: environment variables (never commit secrets):
+#### 2. Configure Build Credentials
+**Why?** You need to tell the build system (Gradle) where your Keystore is and what the passwords are.
+**How?** Set environment variables so you don't accidentally save passwords in the code:
 
 ```bash
 export RELEASE_STORE_PASSWORD=YOUR_STORE_PASSWORD
 export RELEASE_KEY_PASSWORD=YOUR_KEY_PASSWORD
 ```
 
-Then uncomment the `signingConfigs` block in `app/build.gradle.kts`:
+Then, ensure the `signingConfigs` in `app/build.gradle.kts` are uncommented to use these variables.
 
-```kotlin
-signingConfigs {
-    create("release") {
-        storeFile     = file("money-manager-release.jks")
-        storePassword = System.getenv("RELEASE_STORE_PASSWORD") ?: ""
-        keyAlias      = "money-manager"
-        keyPassword   = System.getenv("RELEASE_KEY_PASSWORD") ?: ""
-    }
-}
-// ...
-buildTypes {
-    release {
-        // ...
-        signingConfig = signingConfigs.getByName("release")
-    }
-}
-```
-
-### 3 — Build the signed APK
-
+#### 3. Build the APK
+**What is an APK?** The "Android Package" file — essentially a `.zip` containing the compiled code and resources.
+**How?**
 ```bash
-cd android
 ./gradlew assembleRelease
 ```
+The output will be at: `app/build/outputs/apk/release/app-release.apk`
 
-Output: `app/build/outputs/apk/release/app-release.apk`
+---
 
-### 4 — (Optional) AAB for Play Store
+### Phase 3: Installation
 
+#### Using ADB (Command Line)
+**What is ADB?** The Android Debug Bridge. It's a tool that lets your computer talk to your phone.
+**How?**
 ```bash
-./gradlew bundleRelease
-# Output: app/build/outputs/bundle/release/app-release.aab
-```
+# Ensure your phone is connected and recognized
+adb devices
 
-### 5 — Install directly on a connected device
-
-```bash
+# Install the app
 adb install app/build/outputs/apk/release/app-release.apk
-# or via Gradle:
-./gradlew installRelease
 ```
 
----
-
-## Database
-
-Room manages a local SQLite database (`money_manager.db`) stored in the app's private data directory — no setup required, no server needed.
-
-Schema version: **1**. Future migrations go in a `Migrations.kt` file and are registered in `AppDatabase.build()`.
+#### Manual Install
+1.  Copy the `app-release.apk` to your phone's storage (via Google Drive, USB, or Telegram).
+2.  Open the file on your phone.
+3.  If prompted, allow "Install from Unknown Sources".
 
 ---
 
-## File import
+## Database & Storage
 
-The app uses the Android Storage Access Framework (`ActivityResultContracts.OpenDocument`) — no storage permissions required on API 33+. On API 26–32 `READ_EXTERNAL_STORAGE` is declared with `maxSdkVersion=32`.
-
-- **DatParser** — pure Kotlin, zero dependencies, replicates `services.parse_scotiabank_statement`.
-- **XlsParser** — uses Apache POI 3.17 (HSSF). No LibreOffice needed on the device.
+The app uses **Room** (a layer over SQLite).
+- **Data Location**: Stored locally on your device. No cloud sync is currently implemented for maximum privacy.
+- **Migrations**: If you change the database schema, you must increment the version in `AppDatabase.kt`.
 
 ---
 
 ## License
 
-Private / personal use.
+Private / Personal use.
