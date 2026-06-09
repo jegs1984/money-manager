@@ -3,10 +3,11 @@ from decimal import Decimal
 from django.contrib import messages
 from django.db.models import F, Sum, Value, Case, When
 from django.db.models.functions import Coalesce
+from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.views.generic import (
-    CreateView, DeleteView, FormView, ListView, TemplateView, UpdateView,
+    CreateView, DeleteView, FormView, ListView, TemplateView, UpdateView, View,
 )
 
 from .forms import (
@@ -16,7 +17,7 @@ from .forms import (
 )
 from .models import BudgetItem, Category, Period, StagingCCTransaction, StagingTransaction, Transaction
 from .services import (
-    calculate_safe_to_spend, get_duplicate_staging_ids,
+    calculate_safe_to_spend, generate_dashboard_pdf, get_duplicate_staging_ids,
     parse_scotiabank_statement, process_staging_batch,
     parse_scotiabank_cc_statement, process_cc_staging_batch,
 )
@@ -63,6 +64,44 @@ class DashboardView(TemplateView):
         ctx['active_period'] = active_period
         ctx['all_periods']   = all_periods
         return ctx
+
+
+# ─────────────────────────────────────────────
+# Dashboard PDF Export
+# ─────────────────────────────────────────────
+
+class DashboardPDFView(View):
+    """
+    GET /dashboard/pdf/?period=<id>
+    Returns a PDF of the projected budget for the selected (or active) period.
+    No template — pure binary response.
+    """
+
+    def get(self, request, *args, **kwargs):
+        period_id = request.GET.get('period')
+
+        if period_id:
+            period = Period.objects.filter(pk=period_id).first()
+        else:
+            period = (
+                Period.objects.filter(is_active=True).first()
+                or Period.objects.order_by('-start_date').first()
+            )
+
+        if not period:
+            messages.error(request, 'No period found to export.')
+            return redirect('finance:dashboard')
+
+        try:
+            pdf_bytes = generate_dashboard_pdf(period.id)
+        except Exception as exc:
+            messages.error(request, f'PDF generation failed: {exc}')
+            return redirect('finance:dashboard')
+
+        filename = f'budget_{period.name.replace(" ", "_")}.pdf'
+        response = HttpResponse(pdf_bytes, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
 
 
 # ─────────────────────────────────────────────
@@ -314,7 +353,6 @@ class StagingReviewView(TemplateView):
         formset = StagingReviewFormset(request.POST, queryset=qs)
 
         if formset.is_valid():
-            # Collect "remove" decisions from duplicate radio buttons
             remove_ids: set[int] = set()
             entries = []
 
@@ -324,9 +362,8 @@ class StagingReviewView(TemplateView):
 
                 if dup_action == 'remove':
                     remove_ids.add(sid)
-                    continue  # skip — will be deleted
+                    continue
 
-                # dup_action == 'keep' OR normal (non-duplicate) row
                 cat = f.cleaned_data.get('assigned_category')
                 if cat:
                     entries.append({'staging_id': sid, 'category_id': cat.id})
