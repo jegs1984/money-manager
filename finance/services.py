@@ -40,11 +40,6 @@ from .models import BudgetItem, Category, Period, StagingCCTransaction, StagingT
 # ─────────────────────────────────────────────
 
 def _parse_amount(raw: str) -> Decimal:
-    """
-    Convert a Scotiabank-style zero-padded, comma-decimal string to Decimal.
-    Strips leading +/-, leading zeros, and any non-numeric chars except '.'.
-    Returns Decimal('0.00') for empty / unparseable input.
-    """
     s = raw.strip().lstrip('+').lstrip('-').replace(',', '.').strip()
     s = re.sub(r'[^\d.]', '', s)
     if not s:
@@ -56,11 +51,6 @@ def _parse_amount(raw: str) -> Decimal:
 
 
 def _parse_header(lines: list[str]) -> dict:
-    """
-    Extract account metadata from the leading ';'-prefixed comment block.
-    Stops at the first line that does NOT start with ';'.
-    Returns dict with keys: account_number, date_from, date_to.
-    """
     meta = {}
     for line in lines:
         stripped = line.strip()
@@ -81,12 +71,6 @@ def _parse_header(lines: list[str]) -> dict:
 
 
 def _parse_date(raw: str) -> date | None:
-    """
-    Parse date from Scotiabank data rows.
-    Primary   : DDMMYYYY  (e.g. '21042026')  – digits only, 8 chars after strip
-    Fallback  : DD/MM/YYYY
-    Returns None if unparseable.
-    """
     s = raw.strip()
     digits = re.sub(r'\D', '', s)
     if len(digits) == 8:
@@ -101,8 +85,33 @@ def _parse_date(raw: str) -> date | None:
     return None
 
 
-# Column-header tokens that mark the header row to skip
 _HEADER_TOKENS = {'fecha', 'descripcion', 'nrodoc', 'cargos', 'abonos', 'saldo'}
+
+
+# ─────────────────────────────────────────────
+# Public: Duplicate detection
+# ─────────────────────────────────────────────
+
+def get_duplicate_staging_ids(
+    period: Period,
+    staging_qs,  # QuerySet[StagingTransaction] | QuerySet[StagingCCTransaction]
+) -> set[int]:
+    """
+    Return the set of staging row IDs whose (date, amount, description) triple
+    already exists in Transaction rows belonging to the given Period.
+    """
+    existing = set(
+        Transaction.objects.filter(budget_item__period=period)
+        .values_list('date', 'real_amount', 'description')
+    )
+
+    duplicate_ids: set[int] = set()
+    for stx in staging_qs:
+        key = (stx.original_date, stx.amount, stx.description)
+        if key in existing:
+            duplicate_ids.add(stx.pk)
+
+    return duplicate_ids
 
 
 # ─────────────────────────────────────────────
@@ -110,20 +119,6 @@ _HEADER_TOKENS = {'fecha', 'descripcion', 'nrodoc', 'cargos', 'abonos', 'saldo'}
 # ─────────────────────────────────────────────
 
 def parse_scotiabank_statement(file_obj, source_filename: str = '') -> dict:
-    """
-    Parse a Scotiabank .dat / .csv bank statement and bulk-insert
-    StagingTransaction records (is_processed=False).
-
-    Returns:
-        {
-            'count':          int,   # rows staged
-            'skipped':        int,   # rows ignored (zero-amount, bad date, etc.)
-            'account_number': str,
-            'date_from':      str,
-            'date_to':        str,
-        }
-    """
-    # ── Read raw text ──────────────────────────────────────────────────────
     if hasattr(file_obj, 'read'):
         raw = file_obj.read()
         if isinstance(raw, bytes):
@@ -137,7 +132,6 @@ def parse_scotiabank_statement(file_obj, source_filename: str = '') -> dict:
     meta           = _parse_header(lines)
     account_number = meta.get('account_number', '')
 
-    # ── Parse rows ────────────────────────────────────────────────────────
     staging_records = []
     skipped = 0
 
@@ -147,51 +141,40 @@ def parse_scotiabank_statement(file_obj, source_filename: str = '') -> dict:
         if not row:
             continue
 
-        first = row[0]           # may have leading spaces – kept for date parse
+        first = row[0]
         first_stripped = first.strip()
 
-        # Skip comment / metadata lines
         if first_stripped.startswith(';') or first_stripped == '':
             continue
 
-        # Skip the column-header row
         token = re.sub(r'[\s.]', '', first_stripped).lower()
         if token in _HEADER_TOKENS:
             continue
 
-        # Minimum columns: Fecha, Descripcion, NroDoc., Cargos, Abonos
         if len(row) < 5:
             skipped += 1
             continue
 
-        # ── Date ──────────────────────────────────────────────────────────
         date_obj = _parse_date(first_stripped)
         if date_obj is None:
             skipped += 1
             continue
 
-        # ── Description ───────────────────────────────────────────────────
         description = re.sub(r'\s+', ' ', row[1].strip())
         if not description:
             skipped += 1
             continue
 
-        # ── Doc number ────────────────────────────────────────────────────
         doc_raw = row[2].strip() if len(row) > 2 else ''
-        # all-zero doc numbers are meaningless in this format
         doc_number = doc_raw if doc_raw and not re.fullmatch(r'0+', doc_raw) else None
 
-        # ── Amounts ───────────────────────────────────────────────────────
         cargo = _parse_amount(row[3]) if len(row) > 3 else Decimal('0.00')
         abono = _parse_amount(row[4]) if len(row) > 4 else Decimal('0.00')
 
-        # ── Balance (optional 6th column) ─────────────────────────────────
         balance_raw = row[5].strip() if len(row) > 5 else ''
         balance = _parse_amount(balance_raw) if balance_raw else None
 
-        # ── Direction ─────────────────────────────────────────────────────
         if cargo > Decimal('0.00') and abono > Decimal('0.00'):
-            # Both populated (unusual edge case): cargo wins
             tx_type, amount = 'OUT', cargo
         elif cargo > Decimal('0.00'):
             tx_type, amount = 'OUT', cargo
@@ -253,19 +236,10 @@ def _get_or_create_budget_item(period: Period, category: Category, tx_type: str)
 # ─────────────────────────────────────────────
 
 @db_transaction.atomic
-def process_staging_batch(staging_ids_with_categories: list[dict]) -> int:
-    """
-    Accept: [{'staging_id': int, 'category_id': int}, ...]
+def process_staging_batch(staging_ids_with_categories: list[dict], remove_ids: set[int] | None = None) -> int:
+    if remove_ids:
+        StagingTransaction.objects.filter(id__in=remove_ids, is_processed=False).delete()
 
-    For each entry:
-      - Finds the Period whose date range contains original_date
-        (start_date <= original_date <= end_date).
-      - Creates a Transaction linked to the correct BudgetItem.
-      - Marks StagingTransaction.is_processed = True.
-
-    Rows with no matching Period are silently skipped.
-    Returns count of committed transactions.
-    """
     processed = 0
 
     for entry in staging_ids_with_categories:
@@ -374,22 +348,12 @@ def rollover_period_balance(source_period_id: int, target_period_id: int) -> Dec
 # ─────────────────────────────────────────────
 
 def _parse_clp_amount(raw: str) -> Decimal | None:
-    """
-    Convert Scotiabank CC XLS amount string to Decimal.
-    Handles:  '$ 42.720'  '$ -343.916'  '$ 1.050'  ''
-    Chilean thousands separator is '.' and decimal separator is ','.
-    These amounts are integers (no cents), but we store as Decimal for consistency.
-    Returns None for empty / unparseable.
-    """
     s = raw.strip()
     if not s:
         return None
-    # Remove currency symbol and spaces
     s = s.replace('$', '').strip()
-    # Determine sign
     negative = s.startswith('-')
     s = s.lstrip('-').strip()
-    # Remove thousands dots (Chilean format: 1.234.567)
     s = s.replace('.', '').replace(',', '.')
     s = re.sub(r'[^\d.]', '', s)
     if not s:
@@ -402,12 +366,6 @@ def _parse_clp_amount(raw: str) -> Decimal | None:
 
 
 def _parse_cc_header(rows: list[list[str]]) -> dict:
-    """
-    Extract cardholder metadata from the first ~10 rows of the CC XLS CSV.
-    The cell at col 18 (approx) contains a multi-line value:
-      'JUAN GAETE STANGL\nVISA XXXX-XXXX-XXXX-7239\n22/05/2026'
-    LibreOffice preserves real newlines inside quoted cells.
-    """
     meta = {}
     for row in rows[:10]:
         for cell_idx in range(len(row)):
@@ -415,7 +373,6 @@ def _parse_cc_header(rows: list[list[str]]) -> dict:
             upper = cell.upper()
             if not cell or ('VISA' not in upper and 'MASTER' not in upper and 'XXXX' not in upper):
                 continue
-            # Split on real newlines or the literal two-char sequence \n
             parts = [p.strip() for p in re.split(r'\n|\\n', cell) if p.strip()]
             if len(parts) >= 1:
                 meta['card_holder'] = parts[0]
@@ -435,52 +392,19 @@ def _parse_cc_header(rows: list[list[str]]) -> dict:
 
 
 def parse_scotiabank_cc_statement(file_obj, source_filename: str = '') -> dict:
-    """
-    Parse a Scotiabank credit card statement in .xls format.
-
-    The XLS is a wide spreadsheet (~75 columns) converted to CSV internally.
-    Transaction rows are identified by a DD/MM/YYYY date at column index 11.
-    Relevant column indices (0-based):
-      5  → location / city
-      11 → transaction date  (DD/MM/YYYY)
-      16 → reference code
-      22 → description
-      54 → transaction amount  ($ X.XXX or $ -X.XXX)
-      67 → installment label  (e.g. '06/06', '01/01', '02/21')
-      72 → installment value this period
-
-    Amount sign convention:
-      Positive → purchase / charge → type OUT
-      Negative → payment / credit / reversal → type IN
-
-    Requires:  xlrd  (for .xls)  OR  LibreOffice on PATH (fallback conversion).
-    The file is converted to CSV in-memory before parsing.
-
-    Returns:
-        {
-            'count':          int,
-            'skipped':        int,
-            'card_number':    str,
-            'card_holder':    str,
-            'statement_date': date | None,
-        }
-    """
     import csv as csv_mod
     import io as io_mod
     import subprocess
     import tempfile
     import os
 
-    # ── Read the file bytes ────────────────────────────────────────────────
     if hasattr(file_obj, 'read'):
         raw_bytes = file_obj.read()
     else:
         raw_bytes = file_obj
 
-    # ── Convert XLS → CSV (try xlrd first, fallback to LibreOffice) ───────
     csv_text = None
 
-    # Attempt 1: xlrd (handles legacy .xls BIFF format)
     try:
         import xlrd  # noqa: F401
         import pandas as pd
@@ -494,14 +418,12 @@ def parse_scotiabank_cc_statement(file_obj, source_filename: str = '') -> dict:
     except Exception:
         pass
 
-    # Attempt 2: LibreOffice / soffice headless
     if csv_text is None:
         try:
             with tempfile.NamedTemporaryFile(suffix='.xls', delete=False) as tmp:
                 tmp.write(raw_bytes)
                 tmp_path = tmp.name
             out_dir = tempfile.mkdtemp()
-            # Try both binary names
             for binary in ('soffice', 'libreoffice'):
                 result = subprocess.run(
                     [binary, '--headless', '--convert-to', 'csv',
@@ -512,7 +434,6 @@ def parse_scotiabank_cc_statement(file_obj, source_filename: str = '') -> dict:
                     break
             csv_path = os.path.join(out_dir, os.path.basename(tmp_path).replace('.xls', '.csv'))
             if result.returncode == 0 and os.path.exists(csv_path):
-                # LibreOffice writes latin-1 on many systems
                 for enc in ('utf-8', 'latin-1', 'cp1252'):
                     try:
                         with open(csv_path, encoding=enc) as f:
@@ -533,15 +454,12 @@ def parse_scotiabank_cc_statement(file_obj, source_filename: str = '') -> dict:
             'Install xlrd (pip install xlrd==1.2.0) or ensure LibreOffice is on PATH.'
         )
 
-    # ── Parse CSV rows ─────────────────────────────────────────────────────
     rows = list(csv_mod.reader(io_mod.StringIO(csv_text)))
     meta = _parse_cc_header(rows)
 
     date_pat = re.compile(r'^\d{2}/\d{2}/\d{4}$')
     installment_pat = re.compile(r'^(\d+)/(\d+)$')
 
-    # Skip-description keywords — rows we don't want staged
-    # (section sub-totals, period carry-forward lines, etc. have no location+date)
     SKIP_DESCRIPTIONS = {
         'período facturado', 'pagar hasta', 'período de facturación anterior',
     }
@@ -557,7 +475,6 @@ def parse_scotiabank_cc_statement(file_obj, source_filename: str = '') -> dict:
         if not date_pat.match(date_raw):
             continue
 
-        # Parse date
         try:
             tx_date = datetime.strptime(date_raw, '%d/%m/%Y').date()
         except ValueError:
@@ -569,7 +486,6 @@ def parse_scotiabank_cc_statement(file_obj, source_filename: str = '') -> dict:
             skipped += 1
             continue
 
-        # Amount at col 54 (transaction amount)
         amount_raw = row[54].strip() if len(row) > 54 else ''
         amount = _parse_clp_amount(amount_raw)
         if amount is None:
@@ -579,7 +495,6 @@ def parse_scotiabank_cc_statement(file_obj, source_filename: str = '') -> dict:
         location = re.sub(r'\s+', ' ', row[5].strip()) if len(row) > 5 else ''
         ref_code = row[16].strip() if len(row) > 16 else ''
 
-        # Installment: col 67 e.g. '06/06' or '01/01' or '02/21'
         installment_current = installment_total = None
         installment_value = None
         inst_raw = row[67].strip() if len(row) > 67 else ''
@@ -590,7 +505,6 @@ def parse_scotiabank_cc_statement(file_obj, source_filename: str = '') -> dict:
         inst_val_raw = row[72].strip() if len(row) > 72 else ''
         installment_value = _parse_clp_amount(inst_val_raw)
 
-        # Direction: negative = payment/credit (IN), positive = purchase (OUT)
         tx_type = 'IN' if amount < Decimal('0.00') else 'OUT'
         abs_amount = abs(amount)
 
@@ -626,11 +540,13 @@ def parse_scotiabank_cc_statement(file_obj, source_filename: str = '') -> dict:
 
 
 @db_transaction.atomic
-def process_cc_staging_batch(staging_ids_with_categories: list[dict]) -> int:
-    """
-    Same logic as process_staging_batch but for StagingCCTransaction.
-    Resolves Period by date range, creates Transaction records, marks rows processed.
-    """
+def process_cc_staging_batch(
+    staging_ids_with_categories: list[dict],
+    remove_ids: set[int] | None = None,
+) -> int:
+    if remove_ids:
+        StagingCCTransaction.objects.filter(id__in=remove_ids, is_processed=False).delete()
+
     processed = 0
 
     for entry in staging_ids_with_categories:
@@ -679,37 +595,27 @@ def process_cc_staging_batch(staging_ids_with_categories: list[dict]) -> int:
 
 def calculate_safe_to_spend(period_id: int) -> dict:
     period = Period.objects.get(id=period_id)
-    
-    # 1. Sum up projected amounts directly from BudgetItem (No joins = no duplication)
+
     budget_totals = BudgetItem.objects.filter(period=period).aggregate(
         proj_in=Coalesce(Sum('projected_amount', filter=Q(type='IN')), Value(Decimal('0.00'))),
         proj_out=Coalesce(Sum('projected_amount', filter=Q(type='OUT')), Value(Decimal('0.00'))),
     )
 
-    # 2. Sum up real amounts directly from Transaction, filtering by the budget item's type
     transaction_totals = Transaction.objects.filter(budget_item__period=period).aggregate(
         real_in=Coalesce(Sum('real_amount', filter=Q(budget_item__type='IN')), Value(Decimal('0.00'))),
         real_out=Coalesce(Sum('real_amount', filter=Q(budget_item__type='OUT')), Value(Decimal('0.00'))),
     )
 
-    # 3. Combine your results cleanly
     ti_proj = budget_totals['proj_in']
     te_proj = budget_totals['proj_out']
-    
     ti_real = transaction_totals['real_in']
     te_real = transaction_totals['real_out']
 
-    # Your safe_to_spend logic remains clean
-    safe_to_spend = ti_real - te_real
-    burn_rate = (te_real / ti_real * 100) if ti_real > Decimal('0.00') else Decimal('0.00')
-
-    # Net remaining cash right now
-    safe_to_spend = ti_real - te_real 
+    safe_to_spend   = ti_real - te_real
     total_projected = ti_proj - te_proj
-    
     burn_rate = (te_real / ti_real * 100) if ti_real > Decimal('0.00') else Decimal('0.00')
 
-    out = {
+    return {
         'period':                   period,
         'total_income_projected':   ti_proj,
         'total_income_real':        ti_real,
@@ -720,4 +626,305 @@ def calculate_safe_to_spend(period_id: int) -> dict:
         'projection':               total_projected,
     }
 
-    return out
+
+# ─────────────────────────────────────────────
+# PDF Export
+# ─────────────────────────────────────────────
+
+def _clp(amount: Decimal) -> str:
+    """Format a Decimal as Chilean peso string: $1.234.567"""
+    sign = '-' if amount < 0 else ''
+    raw = f'{abs(amount):,.0f}'.replace(',', '.')
+    return f'{sign}${raw}'
+
+
+def generate_dashboard_pdf(period_id: int) -> bytes:
+    """
+    Build and return PDF bytes for the Dashboard projected budget report.
+
+    Content:
+      - Report header (title + generated timestamp)
+      - Period info block (name, date range)
+      - KPI summary row: Projected Income / Projected Expenses / Net Projection
+      - Budget table: Category | Group | Type | Projected Amount
+        - Income rows first, then Expense rows
+        - Section subtotals, grand net at the bottom
+    """
+    from io import BytesIO
+    from datetime import datetime as dt
+
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+    from reportlab.lib.units import cm
+    from reportlab.platypus import (
+        HRFlowable, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle,
+    )
+
+    # ── Palette (matches Tailwind dark theme values printed on white paper) ──
+    C_DARK       = colors.HexColor('#18181B')   # zinc-900
+    C_MID        = colors.HexColor('#3F3F46')   # zinc-700
+    C_LIGHT      = colors.HexColor('#A1A1AA')   # zinc-400
+    C_EMERALD    = colors.HexColor('#10B981')   # emerald-500
+    C_RED        = colors.HexColor('#EF4444')   # red-500
+    C_EMERALD_BG = colors.HexColor('#D1FAE5')   # emerald-100
+    C_RED_BG     = colors.HexColor('#FEE2E2')   # red-100
+    C_HEADER_BG  = colors.HexColor('#F4F4F5')   # zinc-100
+    C_ROW_ALT    = colors.HexColor('#FAFAFA')   # near-white
+
+    # ── Data fetch ────────────────────────────────────────────────────────────
+    stats = calculate_safe_to_spend(period_id)
+    period: Period = stats['period']
+
+    items = (
+        BudgetItem.objects.filter(period=period)
+        .select_related('category')
+        .order_by('type', 'category__group', 'category__name')
+    )
+
+    # ── Document setup ────────────────────────────────────────────────────────
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize        = A4,
+        leftMargin      = 2 * cm,
+        rightMargin     = 2 * cm,
+        topMargin       = 2 * cm,
+        bottomMargin    = 2 * cm,
+        title           = f'Budget — {period.name}',
+        author          = 'Money Manager',
+    )
+
+    styles = getSampleStyleSheet()
+
+    s_title = ParagraphStyle(
+        'MMTitle',
+        fontName  = 'Helvetica-Bold',
+        fontSize  = 18,
+        textColor = C_DARK,
+        spaceAfter = 4,
+    )
+    s_subtitle = ParagraphStyle(
+        'MMSubtitle',
+        fontName  = 'Helvetica',
+        fontSize  = 10,
+        textColor = C_LIGHT,
+        spaceAfter = 2,
+    )
+    s_section = ParagraphStyle(
+        'MMSection',
+        fontName   = 'Helvetica-Bold',
+        fontSize   = 9,
+        textColor  = C_MID,
+        spaceBefore = 14,
+        spaceAfter  = 4,
+        leading    = 12,
+    )
+    s_label = ParagraphStyle(
+        'MMLabel',
+        fontName  = 'Helvetica',
+        fontSize  = 7,
+        textColor = C_LIGHT,
+    )
+    s_kpi = ParagraphStyle(
+        'MMKpi',
+        fontName  = 'Helvetica-Bold',
+        fontSize  = 14,
+        leading   = 16,
+    )
+
+    story = []
+
+    # ── Header ────────────────────────────────────────────────────────────────
+    story.append(Paragraph('Money Manager', s_title))
+    story.append(Paragraph('Projected Budget Report', s_subtitle))
+    story.append(Paragraph(
+        f'Generated {dt.now().strftime("%d %b %Y, %H:%M")}',
+        s_subtitle,
+    ))
+    story.append(HRFlowable(width='100%', thickness=1, color=C_MID, spaceAfter=10))
+
+    # ── Period block ──────────────────────────────────────────────────────────
+    story.append(Paragraph('PERIOD', s_section))
+    period_data = [
+        [
+            Paragraph(period.name, ParagraphStyle('pn', fontName='Helvetica-Bold', fontSize=13, textColor=C_DARK)),
+            Paragraph(
+                f'{period.start_date.strftime("%d %b %Y")} &rarr; {period.end_date.strftime("%d %b %Y")}',
+                ParagraphStyle('pd', fontName='Helvetica', fontSize=10, textColor=C_LIGHT, alignment=2),
+            ),
+        ]
+    ]
+    period_tbl = Table(period_data, colWidths=['60%', '40%'])
+    period_tbl.setStyle(TableStyle([
+        ('VALIGN',      (0, 0), (-1, -1), 'MIDDLE'),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ('TOPPADDING',    (0, 0), (-1, -1), 6),
+    ]))
+    story.append(period_tbl)
+    story.append(Spacer(1, 6))
+
+    # ── KPI summary cards ─────────────────────────────────────────────────────
+    proj_income  = stats['total_income_projected']
+    proj_expense = stats['total_expense_projected']
+    net          = stats['projection']
+    net_color    = C_EMERALD if net >= 0 else C_RED
+    net_bg       = C_EMERALD_BG if net >= 0 else C_RED_BG
+
+    kpi_data = [
+        [
+            Paragraph('PROJECTED INCOME', s_label),
+            Paragraph('PROJECTED EXPENSES', s_label),
+            Paragraph('NET PROJECTION', s_label),
+        ],
+        [
+            Paragraph(_clp(proj_income),  ParagraphStyle('ki', fontName='Helvetica-Bold', fontSize=14, textColor=C_EMERALD)),
+            Paragraph(_clp(proj_expense), ParagraphStyle('ke', fontName='Helvetica-Bold', fontSize=14, textColor=C_RED)),
+            Paragraph(_clp(net),          ParagraphStyle('kn', fontName='Helvetica-Bold', fontSize=14, textColor=net_color)),
+        ],
+    ]
+    kpi_tbl = Table(kpi_data, colWidths=['33%', '33%', '34%'])
+    kpi_tbl.setStyle(TableStyle([
+        ('BACKGROUND',    (0, 0), (1, -1), C_HEADER_BG),
+        ('BACKGROUND',    (2, 0), (2, -1), net_bg),
+        ('TOPPADDING',    (0, 0), (-1, -1), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
+        ('LEFTPADDING',   (0, 0), (-1, -1), 12),
+        ('RIGHTPADDING',  (0, 0), (-1, -1), 12),
+        ('VALIGN',        (0, 0), (-1, -1), 'TOP'),
+        ('LINEAFTER',     (0, 0), (1, -1), 0.5, C_MID),
+        ('ROUNDEDCORNERS', [4]),
+    ]))
+    story.append(kpi_tbl)
+    story.append(Spacer(1, 16))
+
+    # ── Budget table ──────────────────────────────────────────────────────────
+    story.append(HRFlowable(width='100%', thickness=0.5, color=C_MID, spaceAfter=8))
+    story.append(Paragraph('PROJECTED BUDGET', s_section))
+
+    col_widths = ['34%', '28%', '10%', '28%']
+
+    header_style = ParagraphStyle(
+        'TH', fontName='Helvetica-Bold', fontSize=8, textColor=C_DARK,
+    )
+    cell_style = ParagraphStyle(
+        'TD', fontName='Helvetica', fontSize=9, textColor=C_DARK,
+    )
+    amount_style = ParagraphStyle(
+        'TA', fontName='Helvetica-Bold', fontSize=9, textColor=C_DARK, alignment=2,
+    )
+    subtotal_style = ParagraphStyle(
+        'TS', fontName='Helvetica-Bold', fontSize=9, textColor=C_DARK, alignment=2,
+    )
+    group_style = ParagraphStyle(
+        'TG', fontName='Helvetica', fontSize=8, textColor=C_LIGHT,
+    )
+
+    table_rows = [[
+        Paragraph('Category',  header_style),
+        Paragraph('Group',     header_style),
+        Paragraph('Type',      header_style),
+        Paragraph('Projected', ParagraphStyle('THA', fontName='Helvetica-Bold', fontSize=8, textColor=C_DARK, alignment=2)),
+    ]]
+    table_style_cmds = [
+        ('BACKGROUND',    (0, 0), (-1, 0), C_HEADER_BG),
+        ('TOPPADDING',    (0, 0), (-1, 0), 7),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 7),
+        ('LEFTPADDING',   (0, 0), (-1, -1), 8),
+        ('RIGHTPADDING',  (0, 0), (-1, -1), 8),
+        ('LINEBELOW',     (0, 0), (-1, 0), 0.75, C_MID),
+        ('VALIGN',        (0, 0), (-1, -1), 'MIDDLE'),
+    ]
+
+    income_items  = [i for i in items if i.type == 'IN']
+    expense_items = [i for i in items if i.type == 'OUT']
+
+    def add_section(section_items, label: str, type_color):
+        if not section_items:
+            return
+        # Section label row
+        row_idx = len(table_rows)
+        table_rows.append([
+            Paragraph(label, ParagraphStyle('SL', fontName='Helvetica-Bold', fontSize=8,
+                                            textColor=type_color, spaceBefore=4)),
+            '', '', '',
+        ])
+        table_style_cmds.append(('SPAN',       (0, row_idx), (-1, row_idx)))
+        table_style_cmds.append(('BACKGROUND', (0, row_idx), (-1, row_idx), C_ROW_ALT))
+        table_style_cmds.append(('TOPPADDING',    (0, row_idx), (-1, row_idx), 8))
+        table_style_cmds.append(('BOTTOMPADDING', (0, row_idx), (-1, row_idx), 4))
+
+        subtotal = Decimal('0.00')
+        for idx, item in enumerate(section_items):
+            row_idx = len(table_rows)
+            bg = colors.white if idx % 2 == 0 else C_ROW_ALT
+            table_rows.append([
+                Paragraph(item.category.name, cell_style),
+                Paragraph(item.category.get_group_display(), group_style),
+                Paragraph(item.type, ParagraphStyle(
+                    'TT', fontName='Helvetica', fontSize=8, textColor=type_color,
+                )),
+                Paragraph(_clp(item.projected_amount), amount_style),
+            ])
+            table_style_cmds.append(('BACKGROUND', (0, row_idx), (-1, row_idx), bg))
+            table_style_cmds.append(('TOPPADDING',    (0, row_idx), (-1, row_idx), 5))
+            table_style_cmds.append(('BOTTOMPADDING', (0, row_idx), (-1, row_idx), 5))
+            subtotal += item.projected_amount
+
+        # Subtotal row
+        row_idx = len(table_rows)
+        table_rows.append([
+            Paragraph(f'{label} Subtotal', ParagraphStyle(
+                'STL', fontName='Helvetica-Bold', fontSize=8, textColor=type_color,
+            )),
+            '', '',
+            Paragraph(_clp(subtotal), ParagraphStyle(
+                'STA', fontName='Helvetica-Bold', fontSize=9, textColor=type_color, alignment=2,
+            )),
+        ])
+        table_style_cmds.append(('SPAN',       (0, row_idx), (2, row_idx)))
+        table_style_cmds.append(('LINEABOVE',  (0, row_idx), (-1, row_idx), 0.5, C_MID))
+        table_style_cmds.append(('TOPPADDING',    (0, row_idx), (-1, row_idx), 6))
+        table_style_cmds.append(('BOTTOMPADDING', (0, row_idx), (-1, row_idx), 6))
+        table_style_cmds.append(('BACKGROUND', (0, row_idx), (-1, row_idx), C_HEADER_BG))
+        return subtotal
+
+    income_total  = add_section(income_items,  'Income',   C_EMERALD) or Decimal('0.00')
+    expense_total = add_section(expense_items, 'Expenses', C_RED)     or Decimal('0.00')
+
+    # Net total row
+    net_total = income_total - expense_total
+    net_row_color = C_EMERALD if net_total >= 0 else C_RED
+    row_idx = len(table_rows)
+    table_rows.append([
+        Paragraph('Net Projection', ParagraphStyle(
+            'NL', fontName='Helvetica-Bold', fontSize=10, textColor=net_row_color,
+        )),
+        '', '',
+        Paragraph(_clp(net_total), ParagraphStyle(
+            'NA', fontName='Helvetica-Bold', fontSize=10, textColor=net_row_color, alignment=2,
+        )),
+    ])
+    table_style_cmds.extend([
+        ('SPAN',       (0, row_idx), (2, row_idx)),
+        ('LINEABOVE',  (0, row_idx), (-1, row_idx), 1.0, C_DARK),
+        ('TOPPADDING',    (0, row_idx), (-1, row_idx), 8),
+        ('BOTTOMPADDING', (0, row_idx), (-1, row_idx), 8),
+        ('BACKGROUND', (0, row_idx), (-1, row_idx),
+         C_EMERALD_BG if net_total >= 0 else C_RED_BG),
+    ])
+
+    budget_tbl = Table(table_rows, colWidths=col_widths, repeatRows=1)
+    budget_tbl.setStyle(TableStyle(table_style_cmds))
+    story.append(budget_tbl)
+
+    # ── Footer note ───────────────────────────────────────────────────────────
+    story.append(Spacer(1, 16))
+    story.append(HRFlowable(width='100%', thickness=0.5, color=C_LIGHT, spaceAfter=6))
+    story.append(Paragraph(
+        'This report contains projected amounts only. Real expenses are not included.',
+        ParagraphStyle('FN', fontName='Helvetica-Oblique', fontSize=7, textColor=C_LIGHT),
+    ))
+
+    doc.build(story)
+    return buffer.getvalue()

@@ -75,3 +75,5 @@ yarn-error.log*
 # Compiled assets
 *.min.js
 *.min.css
+
+android/local.properties

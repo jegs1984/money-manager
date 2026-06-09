@@ -32,6 +32,18 @@
 </div>
 {% endif %}
 
+{% if duplicate_ids %}
+<div class="mb-4 flex items-center gap-3 rounded-lg border border-amber-800/50 bg-amber-950/30 px-4 py-3">
+  <svg class="h-5 w-5 shrink-0 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+  </svg>
+  <p class="font-mono text-xs text-amber-300">
+    {{ duplicate_ids|length }} row{{ duplicate_ids|length|pluralize }} already exist in the
+    <strong>{{ active_period.name }}</strong> ledger — review highlighted rows below.
+  </p>
+</div>
+{% endif %}
+
 <form method="post" id="cc-staging-form">
   {% csrf_token %}
   {{ formset.management_form }}
@@ -49,63 +61,60 @@
             <th class="px-4 py-2.5 text-center font-mono text-xs text-zinc-600 uppercase tracking-widest w-20">Cuota</th>
             <th class="px-4 py-2.5 text-right font-mono text-xs text-zinc-600 uppercase tracking-widest w-24">Cuota Val.</th>
             <th class="px-4 py-2.5 text-left  font-mono text-xs text-zinc-600 uppercase tracking-widest w-8">T</th>
-            <th class="px-4 py-2.5 text-left  font-mono text-xs text-zinc-600 uppercase tracking-widest w-48">Category</th>
+            <th class="px-4 py-2.5 text-left  font-mono text-xs text-zinc-600 uppercase tracking-widest w-56">Category / Action</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-zinc-800/60">
           {% for form in formset.forms %}
-          <tr class="hover:bg-zinc-800/20 transition-colors {% if form.instance.type == 'IN' %}bg-emerald-950/10{% endif %}">
+          {% with sid=form.instance.id %}
+          {% if sid in duplicate_ids %}
+          {# ── DUPLICATE ROW ─────────────────────────────────────────────── #}
+          <tr class="bg-amber-950/20 border-l-2 border-amber-600/60 hover:bg-amber-950/30 transition-colors">
             {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
 
-            <!-- Date -->
             <td class="px-4 py-2.5 font-mono text-xs text-zinc-400 whitespace-nowrap">
               {{ form.instance.original_date|date:"d/m/Y" }}
             </td>
 
-            <!-- Description -->
             <td class="px-4 py-2.5 text-zinc-300">
               <span class="block truncate max-w-xs" title="{{ form.instance.description }}">
                 {{ form.instance.description }}
               </span>
+              <span class="inline-flex items-center gap-1 mt-0.5">
+                <svg class="h-3 w-3 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                </svg>
+                <span class="font-mono text-xs text-amber-400/80">Already in ledger</span>
+              </span>
             </td>
 
-            <!-- Location -->
             <td class="px-4 py-2.5 font-mono text-xs text-zinc-500 truncate max-w-xs">
               {{ form.instance.location|default:"—" }}
             </td>
 
-            <!-- Ref -->
             <td class="px-4 py-2.5 font-mono text-xs text-zinc-600 whitespace-nowrap">
               {{ form.instance.ref_code|default:"—" }}
             </td>
 
-            <!-- Amount -->
             <td class="px-4 py-2.5 text-right font-mono text-sm font-semibold whitespace-nowrap
               {% if form.instance.type == 'IN' %}text-emerald-400{% else %}text-red-400{% endif %}">
               {% if form.instance.type == 'OUT' %}-{% endif %}${{ form.instance.amount|floatformat:0 }}
             </td>
 
-            <!-- Installment N° -->
             <td class="px-4 py-2.5 text-center font-mono text-xs text-zinc-500">
               {% if form.instance.installment_total and form.instance.installment_total > 1 %}
                 <span class="rounded bg-zinc-800 px-1.5 py-0.5 text-violet-300">
                   {{ form.instance.installment_current }}/{{ form.instance.installment_total }}
                 </span>
-              {% else %}
-                —
-              {% endif %}
+              {% else %}—{% endif %}
             </td>
 
-            <!-- Installment value -->
             <td class="px-4 py-2.5 text-right font-mono text-xs text-zinc-500 whitespace-nowrap">
               {% if form.instance.installment_value and form.instance.installment_total > 1 %}
                 ${{ form.instance.installment_value|floatformat:0 }}
-              {% else %}
-                —
-              {% endif %}
+              {% else %}—{% endif %}
             </td>
 
-            <!-- Type badge -->
             <td class="px-4 py-2.5">
               <span class="rounded px-1.5 py-0.5 font-mono text-xs
                 {% if form.instance.type == 'IN' %}bg-emerald-900/50 text-emerald-300{% else %}bg-red-900/50 text-red-300{% endif %}">
@@ -113,7 +122,76 @@
               </span>
             </td>
 
-            <!-- Category dropdown -->
+            <td class="px-4 py-3">
+              <div class="flex flex-col gap-1.5">
+                <label class="inline-flex items-center gap-2 cursor-pointer group">
+                  <input type="radio" name="dup_action_{{ sid }}" value="keep"
+                         class="accent-emerald-500 cursor-pointer"
+                         id="cc_dup_keep_{{ sid }}" checked>
+                  <span class="font-mono text-xs text-zinc-300 group-hover:text-emerald-300 transition-colors">Keep</span>
+                </label>
+                <label class="inline-flex items-center gap-2 cursor-pointer group">
+                  <input type="radio" name="dup_action_{{ sid }}" value="remove"
+                         class="accent-red-500 cursor-pointer"
+                         id="cc_dup_remove_{{ sid }}">
+                  <span class="font-mono text-xs text-zinc-300 group-hover:text-red-400 transition-colors">Remove from staging</span>
+                </label>
+                <div id="cc_dup_cat_{{ sid }}" class="mt-1">
+                  {{ form.assigned_category }}
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          {% else %}
+          {# ── NORMAL ROW ─────────────────────────────────────────────────── #}
+          <tr class="hover:bg-zinc-800/20 transition-colors {% if form.instance.type == 'IN' %}bg-emerald-950/10{% endif %}">
+            {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+
+            <td class="px-4 py-2.5 font-mono text-xs text-zinc-400 whitespace-nowrap">
+              {{ form.instance.original_date|date:"d/m/Y" }}
+            </td>
+
+            <td class="px-4 py-2.5 text-zinc-300">
+              <span class="block truncate max-w-xs" title="{{ form.instance.description }}">
+                {{ form.instance.description }}
+              </span>
+            </td>
+
+            <td class="px-4 py-2.5 font-mono text-xs text-zinc-500 truncate max-w-xs">
+              {{ form.instance.location|default:"—" }}
+            </td>
+
+            <td class="px-4 py-2.5 font-mono text-xs text-zinc-600 whitespace-nowrap">
+              {{ form.instance.ref_code|default:"—" }}
+            </td>
+
+            <td class="px-4 py-2.5 text-right font-mono text-sm font-semibold whitespace-nowrap
+              {% if form.instance.type == 'IN' %}text-emerald-400{% else %}text-red-400{% endif %}">
+              {% if form.instance.type == 'OUT' %}-{% endif %}${{ form.instance.amount|floatformat:0 }}
+            </td>
+
+            <td class="px-4 py-2.5 text-center font-mono text-xs text-zinc-500">
+              {% if form.instance.installment_total and form.instance.installment_total > 1 %}
+                <span class="rounded bg-zinc-800 px-1.5 py-0.5 text-violet-300">
+                  {{ form.instance.installment_current }}/{{ form.instance.installment_total }}
+                </span>
+              {% else %}—{% endif %}
+            </td>
+
+            <td class="px-4 py-2.5 text-right font-mono text-xs text-zinc-500 whitespace-nowrap">
+              {% if form.instance.installment_value and form.instance.installment_total > 1 %}
+                ${{ form.instance.installment_value|floatformat:0 }}
+              {% else %}—{% endif %}
+            </td>
+
+            <td class="px-4 py-2.5">
+              <span class="rounded px-1.5 py-0.5 font-mono text-xs
+                {% if form.instance.type == 'IN' %}bg-emerald-900/50 text-emerald-300{% else %}bg-red-900/50 text-red-300{% endif %}">
+                {{ form.instance.type }}
+              </span>
+            </td>
+
             <td class="px-4 py-2.5">
               {{ form.assigned_category }}
               {% if form.assigned_category.errors %}
@@ -121,6 +199,8 @@
               {% endif %}
             </td>
           </tr>
+          {% endif %}
+          {% endwith %}
           {% endfor %}
         </tbody>
       </table>
@@ -132,6 +212,9 @@
     <div class="flex items-center justify-between">
       <p class="font-mono text-xs text-zinc-500">
         {{ pending_count }} CC row{{ pending_count|pluralize }} staged
+        {% if duplicate_ids %}
+          · <span class="text-amber-500/70">{{ duplicate_ids|length }} duplicate{{ duplicate_ids|length|pluralize }}</span>
+        {% endif %}
         <span class="text-zinc-700">· rows with no category are skipped</span>
       </p>
       <div class="flex items-center gap-3">
@@ -147,5 +230,28 @@
     </div>
   </div>
 </form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  {% for form in formset.forms %}
+  {% with sid=form.instance.id %}
+  {% if sid in duplicate_ids %}
+  (function () {
+    var keepRadio   = document.getElementById('cc_dup_keep_{{ sid }}');
+    var removeRadio = document.getElementById('cc_dup_remove_{{ sid }}');
+    var catDiv      = document.getElementById('cc_dup_cat_{{ sid }}');
+    if (!keepRadio || !removeRadio || !catDiv) return;
+    function toggle() {
+      catDiv.style.display = removeRadio.checked ? 'none' : '';
+    }
+    keepRadio.addEventListener('change', toggle);
+    removeRadio.addEventListener('change', toggle);
+    toggle();
+  })();
+  {% endif %}
+  {% endwith %}
+  {% endfor %}
+});
+</script>
 {% endif %}
 {% endblock %}
