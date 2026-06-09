@@ -4,6 +4,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.Modifier
+import androidx.navigation.compose.rememberNavController
 import com.moneymanager.ui.navigation.NavGraph
 import com.moneymanager.ui.theme.MoneyManagerTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -15,7 +18,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             MoneyManagerTheme {
-                NavGraph()
+                NavGraph(rememberNavController())
             }
         }
     }

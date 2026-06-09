@@ -99,12 +99,7 @@ def get_duplicate_staging_ids(
     """
     Return the set of staging row IDs whose (date, amount, description) triple
     already exists in Transaction rows belonging to the given Period.
-
-    Match key: (Transaction.date == staging.original_date)
-              AND (Transaction.real_amount == staging.amount)
-              AND (Transaction.description == staging.description)
     """
-    # Build a set of (date, amount, description) tuples already in the ledger
     existing = set(
         Transaction.objects.filter(budget_item__period=period)
         .values_list('date', 'real_amount', 'description')
@@ -124,19 +119,6 @@ def get_duplicate_staging_ids(
 # ─────────────────────────────────────────────
 
 def parse_scotiabank_statement(file_obj, source_filename: str = '') -> dict:
-    """
-    Parse a Scotiabank .dat / .csv bank statement and bulk-insert
-    StagingTransaction records (is_processed=False).
-
-    Returns:
-        {
-            'count':          int,   # rows staged
-            'skipped':        int,   # rows ignored (zero-amount, bad date, etc.)
-            'account_number': str,
-            'date_from':      str,
-            'date_to':        str,
-        }
-    """
     if hasattr(file_obj, 'read'):
         raw = file_obj.read()
         if isinstance(raw, bytes):
@@ -255,20 +237,6 @@ def _get_or_create_budget_item(period: Period, category: Category, tx_type: str)
 
 @db_transaction.atomic
 def process_staging_batch(staging_ids_with_categories: list[dict], remove_ids: set[int] | None = None) -> int:
-    """
-    Accept: [{'staging_id': int, 'category_id': int}, ...]
-    remove_ids: set of StagingTransaction PKs marked "remove" by the user
-                (duplicate rows the user chose to discard).
-
-    For each entry:
-      - Finds the Period whose date range contains original_date.
-      - Creates a Transaction linked to the correct BudgetItem.
-      - Marks StagingTransaction.is_processed = True.
-
-    Rows in remove_ids are deleted from staging without creating a Transaction.
-    Rows with no matching Period are silently skipped.
-    Returns count of committed transactions.
-    """
     if remove_ids:
         StagingTransaction.objects.filter(id__in=remove_ids, is_processed=False).delete()
 
@@ -424,17 +392,6 @@ def _parse_cc_header(rows: list[list[str]]) -> dict:
 
 
 def parse_scotiabank_cc_statement(file_obj, source_filename: str = '') -> dict:
-    """
-    Parse a Scotiabank credit card statement in .xls format.
-    Returns:
-        {
-            'count':          int,
-            'skipped':        int,
-            'card_number':    str,
-            'card_holder':    str,
-            'statement_date': date | None,
-        }
-    """
     import csv as csv_mod
     import io as io_mod
     import subprocess
@@ -587,10 +544,6 @@ def process_cc_staging_batch(
     staging_ids_with_categories: list[dict],
     remove_ids: set[int] | None = None,
 ) -> int:
-    """
-    Same logic as process_staging_batch but for StagingCCTransaction.
-    remove_ids: CC staging PKs the user chose to discard (duplicate → remove).
-    """
     if remove_ids:
         StagingCCTransaction.objects.filter(id__in=remove_ids, is_processed=False).delete()
 
@@ -658,7 +611,7 @@ def calculate_safe_to_spend(period_id: int) -> dict:
     ti_real = transaction_totals['real_in']
     te_real = transaction_totals['real_out']
 
-    safe_to_spend  = ti_real - te_real
+    safe_to_spend   = ti_real - te_real
     total_projected = ti_proj - te_proj
     burn_rate = (te_real / ti_real * 100) if ti_real > Decimal('0.00') else Decimal('0.00')
 
@@ -672,3 +625,306 @@ def calculate_safe_to_spend(period_id: int) -> dict:
         'burn_rate':                burn_rate,
         'projection':               total_projected,
     }
+
+
+# ─────────────────────────────────────────────
+# PDF Export
+# ─────────────────────────────────────────────
+
+def _clp(amount: Decimal) -> str:
+    """Format a Decimal as Chilean peso string: $1.234.567"""
+    sign = '-' if amount < 0 else ''
+    raw = f'{abs(amount):,.0f}'.replace(',', '.')
+    return f'{sign}${raw}'
+
+
+def generate_dashboard_pdf(period_id: int) -> bytes:
+    """
+    Build and return PDF bytes for the Dashboard projected budget report.
+
+    Content:
+      - Report header (title + generated timestamp)
+      - Period info block (name, date range)
+      - KPI summary row: Projected Income / Projected Expenses / Net Projection
+      - Budget table: Category | Group | Type | Projected Amount
+        - Income rows first, then Expense rows
+        - Section subtotals, grand net at the bottom
+    """
+    from io import BytesIO
+    from datetime import datetime as dt
+
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+    from reportlab.lib.units import cm
+    from reportlab.platypus import (
+        HRFlowable, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle,
+    )
+
+    # ── Palette (matches Tailwind dark theme values printed on white paper) ──
+    C_DARK       = colors.HexColor('#18181B')   # zinc-900
+    C_MID        = colors.HexColor('#3F3F46')   # zinc-700
+    C_LIGHT      = colors.HexColor('#A1A1AA')   # zinc-400
+    C_EMERALD    = colors.HexColor('#10B981')   # emerald-500
+    C_RED        = colors.HexColor('#EF4444')   # red-500
+    C_EMERALD_BG = colors.HexColor('#D1FAE5')   # emerald-100
+    C_RED_BG     = colors.HexColor('#FEE2E2')   # red-100
+    C_HEADER_BG  = colors.HexColor('#F4F4F5')   # zinc-100
+    C_ROW_ALT    = colors.HexColor('#FAFAFA')   # near-white
+
+    # ── Data fetch ────────────────────────────────────────────────────────────
+    stats = calculate_safe_to_spend(period_id)
+    period: Period = stats['period']
+
+    items = (
+        BudgetItem.objects.filter(period=period)
+        .select_related('category')
+        .order_by('type', 'category__group', 'category__name')
+    )
+
+    # ── Document setup ────────────────────────────────────────────────────────
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize        = A4,
+        leftMargin      = 2 * cm,
+        rightMargin     = 2 * cm,
+        topMargin       = 2 * cm,
+        bottomMargin    = 2 * cm,
+        title           = f'Budget — {period.name}',
+        author          = 'Money Manager',
+    )
+
+    styles = getSampleStyleSheet()
+
+    s_title = ParagraphStyle(
+        'MMTitle',
+        fontName  = 'Helvetica-Bold',
+        fontSize  = 18,
+        textColor = C_DARK,
+        spaceAfter = 4,
+    )
+    s_subtitle = ParagraphStyle(
+        'MMSubtitle',
+        fontName  = 'Helvetica',
+        fontSize  = 10,
+        textColor = C_LIGHT,
+        spaceAfter = 2,
+    )
+    s_section = ParagraphStyle(
+        'MMSection',
+        fontName   = 'Helvetica-Bold',
+        fontSize   = 9,
+        textColor  = C_MID,
+        spaceBefore = 14,
+        spaceAfter  = 4,
+        leading    = 12,
+    )
+    s_label = ParagraphStyle(
+        'MMLabel',
+        fontName  = 'Helvetica',
+        fontSize  = 7,
+        textColor = C_LIGHT,
+    )
+    s_kpi = ParagraphStyle(
+        'MMKpi',
+        fontName  = 'Helvetica-Bold',
+        fontSize  = 14,
+        leading   = 16,
+    )
+
+    story = []
+
+    # ── Header ────────────────────────────────────────────────────────────────
+    story.append(Paragraph('Money Manager', s_title))
+    story.append(Paragraph('Projected Budget Report', s_subtitle))
+    story.append(Paragraph(
+        f'Generated {dt.now().strftime("%d %b %Y, %H:%M")}',
+        s_subtitle,
+    ))
+    story.append(HRFlowable(width='100%', thickness=1, color=C_MID, spaceAfter=10))
+
+    # ── Period block ──────────────────────────────────────────────────────────
+    story.append(Paragraph('PERIOD', s_section))
+    period_data = [
+        [
+            Paragraph(period.name, ParagraphStyle('pn', fontName='Helvetica-Bold', fontSize=13, textColor=C_DARK)),
+            Paragraph(
+                f'{period.start_date.strftime("%d %b %Y")} &rarr; {period.end_date.strftime("%d %b %Y")}',
+                ParagraphStyle('pd', fontName='Helvetica', fontSize=10, textColor=C_LIGHT, alignment=2),
+            ),
+        ]
+    ]
+    period_tbl = Table(period_data, colWidths=['60%', '40%'])
+    period_tbl.setStyle(TableStyle([
+        ('VALIGN',      (0, 0), (-1, -1), 'MIDDLE'),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ('TOPPADDING',    (0, 0), (-1, -1), 6),
+    ]))
+    story.append(period_tbl)
+    story.append(Spacer(1, 6))
+
+    # ── KPI summary cards ─────────────────────────────────────────────────────
+    proj_income  = stats['total_income_projected']
+    proj_expense = stats['total_expense_projected']
+    net          = stats['projection']
+    net_color    = C_EMERALD if net >= 0 else C_RED
+    net_bg       = C_EMERALD_BG if net >= 0 else C_RED_BG
+
+    kpi_data = [
+        [
+            Paragraph('PROJECTED INCOME', s_label),
+            Paragraph('PROJECTED EXPENSES', s_label),
+            Paragraph('NET PROJECTION', s_label),
+        ],
+        [
+            Paragraph(_clp(proj_income),  ParagraphStyle('ki', fontName='Helvetica-Bold', fontSize=14, textColor=C_EMERALD)),
+            Paragraph(_clp(proj_expense), ParagraphStyle('ke', fontName='Helvetica-Bold', fontSize=14, textColor=C_RED)),
+            Paragraph(_clp(net),          ParagraphStyle('kn', fontName='Helvetica-Bold', fontSize=14, textColor=net_color)),
+        ],
+    ]
+    kpi_tbl = Table(kpi_data, colWidths=['33%', '33%', '34%'])
+    kpi_tbl.setStyle(TableStyle([
+        ('BACKGROUND',    (0, 0), (1, -1), C_HEADER_BG),
+        ('BACKGROUND',    (2, 0), (2, -1), net_bg),
+        ('TOPPADDING',    (0, 0), (-1, -1), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
+        ('LEFTPADDING',   (0, 0), (-1, -1), 12),
+        ('RIGHTPADDING',  (0, 0), (-1, -1), 12),
+        ('VALIGN',        (0, 0), (-1, -1), 'TOP'),
+        ('LINEAFTER',     (0, 0), (1, -1), 0.5, C_MID),
+        ('ROUNDEDCORNERS', [4]),
+    ]))
+    story.append(kpi_tbl)
+    story.append(Spacer(1, 16))
+
+    # ── Budget table ──────────────────────────────────────────────────────────
+    story.append(HRFlowable(width='100%', thickness=0.5, color=C_MID, spaceAfter=8))
+    story.append(Paragraph('PROJECTED BUDGET', s_section))
+
+    col_widths = ['34%', '28%', '10%', '28%']
+
+    header_style = ParagraphStyle(
+        'TH', fontName='Helvetica-Bold', fontSize=8, textColor=C_DARK,
+    )
+    cell_style = ParagraphStyle(
+        'TD', fontName='Helvetica', fontSize=9, textColor=C_DARK,
+    )
+    amount_style = ParagraphStyle(
+        'TA', fontName='Helvetica-Bold', fontSize=9, textColor=C_DARK, alignment=2,
+    )
+    subtotal_style = ParagraphStyle(
+        'TS', fontName='Helvetica-Bold', fontSize=9, textColor=C_DARK, alignment=2,
+    )
+    group_style = ParagraphStyle(
+        'TG', fontName='Helvetica', fontSize=8, textColor=C_LIGHT,
+    )
+
+    table_rows = [[
+        Paragraph('Category',  header_style),
+        Paragraph('Group',     header_style),
+        Paragraph('Type',      header_style),
+        Paragraph('Projected', ParagraphStyle('THA', fontName='Helvetica-Bold', fontSize=8, textColor=C_DARK, alignment=2)),
+    ]]
+    table_style_cmds = [
+        ('BACKGROUND',    (0, 0), (-1, 0), C_HEADER_BG),
+        ('TOPPADDING',    (0, 0), (-1, 0), 7),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 7),
+        ('LEFTPADDING',   (0, 0), (-1, -1), 8),
+        ('RIGHTPADDING',  (0, 0), (-1, -1), 8),
+        ('LINEBELOW',     (0, 0), (-1, 0), 0.75, C_MID),
+        ('VALIGN',        (0, 0), (-1, -1), 'MIDDLE'),
+    ]
+
+    income_items  = [i for i in items if i.type == 'IN']
+    expense_items = [i for i in items if i.type == 'OUT']
+
+    def add_section(section_items, label: str, type_color):
+        if not section_items:
+            return
+        # Section label row
+        row_idx = len(table_rows)
+        table_rows.append([
+            Paragraph(label, ParagraphStyle('SL', fontName='Helvetica-Bold', fontSize=8,
+                                            textColor=type_color, spaceBefore=4)),
+            '', '', '',
+        ])
+        table_style_cmds.append(('SPAN',       (0, row_idx), (-1, row_idx)))
+        table_style_cmds.append(('BACKGROUND', (0, row_idx), (-1, row_idx), C_ROW_ALT))
+        table_style_cmds.append(('TOPPADDING',    (0, row_idx), (-1, row_idx), 8))
+        table_style_cmds.append(('BOTTOMPADDING', (0, row_idx), (-1, row_idx), 4))
+
+        subtotal = Decimal('0.00')
+        for idx, item in enumerate(section_items):
+            row_idx = len(table_rows)
+            bg = colors.white if idx % 2 == 0 else C_ROW_ALT
+            table_rows.append([
+                Paragraph(item.category.name, cell_style),
+                Paragraph(item.category.get_group_display(), group_style),
+                Paragraph(item.type, ParagraphStyle(
+                    'TT', fontName='Helvetica', fontSize=8, textColor=type_color,
+                )),
+                Paragraph(_clp(item.projected_amount), amount_style),
+            ])
+            table_style_cmds.append(('BACKGROUND', (0, row_idx), (-1, row_idx), bg))
+            table_style_cmds.append(('TOPPADDING',    (0, row_idx), (-1, row_idx), 5))
+            table_style_cmds.append(('BOTTOMPADDING', (0, row_idx), (-1, row_idx), 5))
+            subtotal += item.projected_amount
+
+        # Subtotal row
+        row_idx = len(table_rows)
+        table_rows.append([
+            Paragraph(f'{label} Subtotal', ParagraphStyle(
+                'STL', fontName='Helvetica-Bold', fontSize=8, textColor=type_color,
+            )),
+            '', '',
+            Paragraph(_clp(subtotal), ParagraphStyle(
+                'STA', fontName='Helvetica-Bold', fontSize=9, textColor=type_color, alignment=2,
+            )),
+        ])
+        table_style_cmds.append(('SPAN',       (0, row_idx), (2, row_idx)))
+        table_style_cmds.append(('LINEABOVE',  (0, row_idx), (-1, row_idx), 0.5, C_MID))
+        table_style_cmds.append(('TOPPADDING',    (0, row_idx), (-1, row_idx), 6))
+        table_style_cmds.append(('BOTTOMPADDING', (0, row_idx), (-1, row_idx), 6))
+        table_style_cmds.append(('BACKGROUND', (0, row_idx), (-1, row_idx), C_HEADER_BG))
+        return subtotal
+
+    income_total  = add_section(income_items,  'Income',   C_EMERALD) or Decimal('0.00')
+    expense_total = add_section(expense_items, 'Expenses', C_RED)     or Decimal('0.00')
+
+    # Net total row
+    net_total = income_total - expense_total
+    net_row_color = C_EMERALD if net_total >= 0 else C_RED
+    row_idx = len(table_rows)
+    table_rows.append([
+        Paragraph('Net Projection', ParagraphStyle(
+            'NL', fontName='Helvetica-Bold', fontSize=10, textColor=net_row_color,
+        )),
+        '', '',
+        Paragraph(_clp(net_total), ParagraphStyle(
+            'NA', fontName='Helvetica-Bold', fontSize=10, textColor=net_row_color, alignment=2,
+        )),
+    ])
+    table_style_cmds.extend([
+        ('SPAN',       (0, row_idx), (2, row_idx)),
+        ('LINEABOVE',  (0, row_idx), (-1, row_idx), 1.0, C_DARK),
+        ('TOPPADDING',    (0, row_idx), (-1, row_idx), 8),
+        ('BOTTOMPADDING', (0, row_idx), (-1, row_idx), 8),
+        ('BACKGROUND', (0, row_idx), (-1, row_idx),
+         C_EMERALD_BG if net_total >= 0 else C_RED_BG),
+    ])
+
+    budget_tbl = Table(table_rows, colWidths=col_widths, repeatRows=1)
+    budget_tbl.setStyle(TableStyle(table_style_cmds))
+    story.append(budget_tbl)
+
+    # ── Footer note ───────────────────────────────────────────────────────────
+    story.append(Spacer(1, 16))
+    story.append(HRFlowable(width='100%', thickness=0.5, color=C_LIGHT, spaceAfter=6))
+    story.append(Paragraph(
+        'This report contains projected amounts only. Real expenses are not included.',
+        ParagraphStyle('FN', fontName='Helvetica-Oblique', fontSize=7, textColor=C_LIGHT),
+    ))
+
+    doc.build(story)
+    return buffer.getvalue()

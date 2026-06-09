@@ -1,33 +1,44 @@
 package com.moneymanager.ui.theme
 
-import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-private val Green   = Color(0xFF2E7D32)
-private val Amber   = Color(0xFFF57F17)
-private val Red     = Color(0xFFC62828)
-private val Surface = Color(0xFFF5F5F5)
+// ── Brand palette (mirrors Tailwind dark theme) ───────────────────────────────
+val Emerald500  = Color(0xFF10B981)
+val Emerald900  = Color(0xFF064E3B)
+val Red500      = Color(0xFFEF4444)
+val Red900      = Color(0xFF7F1D1D)
+val Zinc950     = Color(0xFF09090B)
+val Zinc900     = Color(0xFF18181B)
+val Zinc800     = Color(0xFF27272A)
+val Zinc700     = Color(0xFF3F3F46)
+val Zinc400     = Color(0xFFA1A1AA)
+val Zinc200     = Color(0xFFE4E4E7)
+val Violet500   = Color(0xFF8B5CF6)
+val Amber400    = Color(0xFFFBBF24)
+val Amber950    = Color(0xFF451A03)
 
-val BudgetGreen = Green
-val BudgetAmber = Amber
-val BudgetRed   = Red
-
-private val LightColors = lightColorScheme(
-    primary         = Color(0xFF1565C0),
-    onPrimary       = Color.White,
-    secondary       = Color(0xFF00695C),
+private val DarkColors = darkColorScheme(
+    primary         = Emerald500,
+    onPrimary       = Color.Black,
+    primaryContainer   = Emerald900,
+    onPrimaryContainer = Emerald500,
+    secondary       = Violet500,
     onSecondary     = Color.White,
-    error           = Red,
-    background      = Surface,
-    surface         = Color.White,
+    error           = Red500,
+    onError         = Color.White,
+    background      = Zinc950,
+    onBackground    = Zinc200,
+    surface         = Zinc900,
+    onSurface       = Zinc200,
+    surfaceVariant  = Zinc800,
+    onSurfaceVariant = Zinc400,
+    outline         = Zinc700,
 )
 
 @Composable
 fun MoneyManagerTheme(content: @Composable () -> Unit) {
-    MaterialTheme(
-        colorScheme = LightColors,
-        typography  = Typography(),
-        content     = content,
-    )
+    MaterialTheme(colorScheme = DarkColors, content = content)
 }
