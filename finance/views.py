@@ -3,9 +3,10 @@ from decimal import Decimal
 from django.contrib import messages
 from django.db.models import F, Sum, Value, Case, When
 from django.db.models.functions import Coalesce
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
+from django.views.decorators.http import require_POST
 from django.views.generic import (
     CreateView, DeleteView, FormView, ListView, TemplateView, UpdateView, View,
 )
@@ -71,12 +72,6 @@ class DashboardView(TemplateView):
 # ─────────────────────────────────────────────
 
 class DashboardPDFView(View):
-    """
-    GET /dashboard/pdf/?period=<id>
-    Returns a PDF of the projected budget for the selected (or active) period.
-    No template — pure binary response.
-    """
-
     def get(self, request, *args, **kwargs):
         period_id = request.GET.get('period')
 
@@ -198,6 +193,12 @@ class PeriodDeleteView(DeleteView):
     model         = Period
     template_name = 'finance/confirm_delete.html'
     success_url   = reverse_lazy('finance:period_list')
+
+
+class PeriodDuplicateBudgetView(View):
+    """Stub — implement as needed."""
+    def post(self, request, pk, *args, **kwargs):
+        return redirect('finance:period_list')
 
 
 # ─────────────────────────────────────────────
@@ -346,6 +347,7 @@ class StagingReviewView(TemplateView):
         ctx['pending_count'] = qs.count()
         ctx['duplicate_ids'] = duplicate_ids
         ctx['active_period'] = period
+        ctx['delete_url']    = 'finance:staging_delete'
         return ctx
 
     def post(self, request, *args, **kwargs):
@@ -384,6 +386,42 @@ class StagingReviewView(TemplateView):
         ctx['formset']       = formset
         ctx['duplicate_ids'] = duplicate_ids
         return self.render_to_response(ctx)
+
+
+# ─────────────────────────────────────────────
+# Staging Delete (Debit)
+# ─────────────────────────────────────────────
+
+class StagingDeleteView(View):
+    """
+    POST /staging/delete/
+    Body (form-encoded):
+      ids   – one or more staging IDs to hard-delete (unprocessed only)
+      all   – if present and truthy, delete ALL unprocessed staging rows
+
+    Responds with JSON so the template can remove rows without a page reload,
+    or redirects normally when JS is unavailable.
+    """
+
+    def post(self, request, *args, **kwargs):
+        delete_all = request.POST.get('all')
+        if delete_all:
+            deleted, _ = StagingTransaction.objects.filter(is_processed=False).delete()
+            n = deleted
+        else:
+            raw_ids = request.POST.getlist('ids')
+            ids = [int(i) for i in raw_ids if i.isdigit()]
+            deleted, _ = StagingTransaction.objects.filter(
+                id__in=ids, is_processed=False
+            ).delete()
+            n = deleted
+
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'deleted': n})
+
+        if n:
+            messages.success(request, f'{n} staged transaction{"s" if n != 1 else ""} deleted.')
+        return redirect('finance:staging_review')
 
 
 # ─────────────────────────────────────────────
@@ -448,6 +486,7 @@ class CCStagingReviewView(TemplateView):
         ctx['pending_count'] = qs.count()
         ctx['duplicate_ids'] = duplicate_ids
         ctx['active_period'] = period
+        ctx['delete_url']    = 'finance:cc_staging_delete'
         first = qs.first()
         ctx['card_number'] = first.card_number if first else ''
         ctx['card_holder'] = first.card_holder if first else ''
@@ -489,3 +528,34 @@ class CCStagingReviewView(TemplateView):
         ctx['formset']       = formset
         ctx['duplicate_ids'] = duplicate_ids
         return self.render_to_response(ctx)
+
+
+# ─────────────────────────────────────────────
+# CC Staging Delete
+# ─────────────────────────────────────────────
+
+class CCStagingDeleteView(View):
+    """
+    POST /cc/staging/delete/
+    Same contract as StagingDeleteView but operates on StagingCCTransaction.
+    """
+
+    def post(self, request, *args, **kwargs):
+        delete_all = request.POST.get('all')
+        if delete_all:
+            deleted, _ = StagingCCTransaction.objects.filter(is_processed=False).delete()
+            n = deleted
+        else:
+            raw_ids = request.POST.getlist('ids')
+            ids = [int(i) for i in raw_ids if i.isdigit()]
+            deleted, _ = StagingCCTransaction.objects.filter(
+                id__in=ids, is_processed=False
+            ).delete()
+            n = deleted
+
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'deleted': n})
+
+        if n:
+            messages.success(request, f'{n} CC staged transaction{"s" if n != 1 else ""} deleted.')
+        return redirect('finance:cc_staging_review')

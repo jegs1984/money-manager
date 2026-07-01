@@ -26,6 +26,9 @@
         </td>
         <td class="px-4 py-3 text-right">
           <div class="flex justify-end gap-3">
+            <a href="{% url 'finance:period_duplicate_budget' p.pk %}"
+               title="Copy budget items to another period"
+               class="text-xs text-zinc-500 hover:text-emerald-400">duplicate budget</a>
             <a href="{% url 'finance:period_update' p.pk %}" class="text-xs text-zinc-500 hover:text-zinc-300">edit</a>
             <a href="{% url 'finance:period_delete' p.pk %}" class="text-xs text-zinc-500 hover:text-red-400">delete</a>
           </div>
