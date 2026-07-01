@@ -1,0 +1,75 @@
+# =============================================================================
+# Money Manager — Docker Compose
+# =============================================================================
+# Services:
+#   db   — PostgreSQL 16 with a named volume for data persistence
+#   web  — Django app (dev server on port 8765, matching the Mac installer)
+#
+# Usage:
+#   docker compose up           # start (builds image on first run)
+#   docker compose up --build   # force rebuild
+#   docker compose down         # stop and remove containers
+#   docker compose down -v      # also wipe the DB volume
+# =============================================================================
+
+services:
+
+  # ── PostgreSQL ──────────────────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    container_name: money_manager_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       money_manager
+      POSTGRES_USER:     money_manager_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-mm_docker_secret}
+    volumes:
+      # Persistent data volume — survives container restarts / upgrades
+      - postgres_data:/var/lib/postgresql/data
+      # Init scripts: run once when the data directory is first created.
+      # PostgreSQL runs *.sql files in this directory in filename order.
+      - ./sql/init_db.sql:/docker-entrypoint-initdb.d/01_init_db.sql:ro
+      - ./sql/migrate_add_cc_staging.sql:/docker-entrypoint-initdb.d/02_migrate_add_cc_staging.sql:ro
+      - ./sql/categories.sql:/docker-entrypoint-initdb.d/03_categories.sql:ro
+    ports:
+      - "5433:5432"   # exposed on 5433 to avoid clashing with a local Postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U money_manager_user -d money_manager"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ── Django web app ──────────────────────────────────────────────────────────
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: money_manager_web
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    entrypoint: ["/app/docker/entrypoint.sh"]
+    command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+    ports:
+      - "${APP_PORT:-8765}:8000"
+    environment:
+      DJANGO_SECRET_KEY:    ${DJANGO_SECRET_KEY:-docker-insecure-change-me}
+      DJANGO_DEBUG:         ${DJANGO_DEBUG:-True}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-127.0.0.1 localhost}
+      DB_NAME:              money_manager
+      DB_USER:              money_manager_user
+      DB_PASSWORD:          ${DB_PASSWORD:-mm_docker_secret}
+      DB_HOST:              db
+      DB_PORT:              5432
+    volumes:
+      # Mount source for live-reload during development
+      - .:/app
+      # Keep the collected static inside the container (not overwritten by the mount)
+      - static_files:/app/staticfiles
+
+volumes:
+  postgres_data:
+    name: money_manager_postgres_data
+  static_files:
+    name: money_manager_static_files
