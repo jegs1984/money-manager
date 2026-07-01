@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Max
 
 
 class Period(models.Model):
@@ -20,6 +21,7 @@ class Category(models.Model):
         ('AhorroeInversion', 'Ahorro e Inversión'),
         ('Alimentación', 'Alimentación'),
         ('Cuenta', 'Cuenta'),
+        ('CuentaVina', 'Cuenta Viña'),
         ('Deuda', 'Deuda'),
         ('Gastos', 'Gastos'),
         ('GastosExtraordinarios', 'Gastos Extraordinarios'),
@@ -38,6 +40,15 @@ class Category(models.Model):
         db_table = 'finance_category'
         ordering = ['group', 'name']
         verbose_name_plural = 'categories'
+
+    def save(self, *args, **kwargs):
+        # Only determine the ID if this is a brand-new object (no ID assigned yet)
+        if not self.pk:
+            max_id = Category.objects.aggregate(Max('id'))['id__max']
+            # If the table is completely empty, start at 1; otherwise, use max + 1
+            self.id = (max_id + 1) if max_id is not None else 1
+            
+        super(Category, self).save(*args, **kwargs)
 
     def __str__(self):
         return self.name

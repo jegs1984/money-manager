@@ -344,6 +344,51 @@ def rollover_period_balance(source_period_id: int, target_period_id: int) -> Dec
 
 
 # ─────────────────────────────────────────────
+# Public: Duplicate period budget items
+# ─────────────────────────────────────────────
+
+@db_transaction.atomic
+def duplicate_period_budget_items(source_period_id: int, target_period_id: int) -> dict:
+    """
+    Copy all BudgetItems from source_period into target_period, preserving
+    category, type, and projected_amount.
+
+    - Items whose (period, category) pair already exist in target are skipped
+      (no overwrite — the user may have already set amounts manually).
+    - No transactions are copied; only the budget skeleton is cloned.
+
+    Returns:
+        {'created': int, 'skipped': int}
+    """
+    source = Period.objects.get(id=source_period_id)
+    target = Period.objects.get(id=target_period_id)
+
+    source_items = BudgetItem.objects.filter(period=source).select_related('category')
+
+    existing_category_ids: set[int] = set(
+        BudgetItem.objects.filter(period=target).values_list('category_id', flat=True)
+    )
+
+    to_create: list[BudgetItem] = []
+    skipped = 0
+
+    for item in source_items:
+        if item.category_id in existing_category_ids:
+            skipped += 1
+            continue
+        to_create.append(BudgetItem(
+            period=target,
+            category=item.category,
+            type=item.type,
+            projected_amount=item.projected_amount,
+        ))
+
+    BudgetItem.objects.bulk_create(to_create)
+
+    return {'created': len(to_create), 'skipped': skipped}
+
+
+# ─────────────────────────────────────────────
 # Credit Card XLS parser
 # ─────────────────────────────────────────────
 
