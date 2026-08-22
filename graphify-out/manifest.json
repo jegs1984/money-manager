@@ -185,8 +185,8 @@
     "semantic_hash": ""
   },
   "finance/services.py": {
-    "mtime": 1787440991.8143563,
-    "ast_hash": "fcd6f7329b37f88cfb74adae828c72f1",
+    "mtime": 1787441298.3987322,
+    "ast_hash": "6d4e9b08c062434715cce9b994e64255",
     "semantic_hash": ""
   },
   "finance/urls.py": {
@@ -505,13 +505,13 @@
     "semantic_hash": ""
   },
   "docs/BACKUP_AND_RECOVERY.md": {
-    "mtime": 1787439563.666457,
-    "ast_hash": "6633942948461d3ecf505b43117a6de9",
+    "mtime": 1787441329.3087356,
+    "ast_hash": "dd6096062ccf8b48193882aed5c818ea",
     "semantic_hash": ""
   },
   "docs/DEVELOPMENT.md": {
-    "mtime": 1787439563.6673286,
-    "ast_hash": "13a34168a1284270b150785e58aef537",
+    "mtime": 1787441352.8957114,
+    "ast_hash": "950dfa609146ba9bb8a29c00c40dad54",
     "semantic_hash": ""
   },
   "docs/INSTALLATION.md": {
@@ -525,8 +525,8 @@
     "semantic_hash": ""
   },
   "docs/USER_GUIDE.md": {
-    "mtime": 1787439541.2144883,
-    "ast_hash": "79590f767fb5259407b25ea38c9351b4",
+    "mtime": 1787441329.3081887,
+    "ast_hash": "d42e274e02690925fae9de1c3f6297f1",
     "semantic_hash": ""
   },
   "templates/finance/account_list.html": {
@@ -547,6 +547,11 @@
   "templates/finance/simple_list.html": {
     "mtime": 1787440925.157618,
     "ast_hash": "9b48850e7cf0749f5e731865077d69c9",
+    "semantic_hash": ""
+  },
+  ".github/workflows/ci.yml": {
+    "mtime": 1787441352.8950214,
+    "ast_hash": "5c95a145462e1a36a66f4f244cd8d8fa",
     "semantic_hash": ""
   }
 }
