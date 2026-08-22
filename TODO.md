@@ -48,13 +48,13 @@ Keep these principles intact in every change:
 - [x] **Improve duplicate decisions.** Duplicate warnings now identify the matching ledger date, category, amount, and imported-source provenance next to the staged row.
 - [x] **Use Chilean money formatting consistently.** The shared `clp` template formatter renders whole pesos as `$1.234.567` across templates instead of generic `floatformat` currency output.
 - [x] **Use labels, not cryptic abbreviations.** Review and dashboard tables use explicit Spanish headings such as Tipo and Uso del presupuesto, with visible action text.
-- [ ] **Do not rely on colour alone.** Pair green/amber/red states with labels and icons; ensure readable contrast in the dark theme.
+- [x] **Do not rely on colour alone.** Income, expense, duplicate, and budget states include explicit text labels and counts alongside high-contrast colours/icons.
 - [x] **Make row actions always available.** Dashboard and group-table edit/delete controls are always visible, while review controls are persistent buttons with accessible names.
 - [x] **Use safer destructive confirmations.** Bulk deletion names the current batch and exact row count and requires typing `ELIMINAR`; individual staged rows remain explicitly removable from the review surface.
-- [ ] **Improve empty states.** Explain the next useful action and link directly to it, especially for no period, no budget, no import, and no staged rows.
-- [ ] **Localise intentionally.** The product data and audience are Chilean/Spanish but parts of the UI are English. Choose a primary language and make terminology consistent.
+- [x] **Improve empty states.** Dashboard, budget, and staging empty states explain the next step and link directly to period, budget, or import creation.
+- [x] **Localise intentionally.** Spanish (Chile) is the primary locale; navigation, review terminology, money formatting, and new planning views use Chilean Spanish.
 - [x] **Remove runtime styling dependencies for offline use.** Tailwind is compiled into a local static stylesheet and the UI uses system fonts; no runtime styling or font CDN is required.
-- [ ] **Add accessibility basics.** Visible focus states, semantic buttons/labels, keyboard navigation, screen-reader labels for icons, and responsive table alternatives.
+- [x] **Add accessibility basics.** Local styles provide visible focus, navigation supports keyboard/Escape and `aria` state, controls have labels, and wide tables scroll responsively.
 - [x] **Add merchant rules and bulk categorisation.** Merchant rules provide transparent review-only suggestions and the review controls apply a selected category across checked rows.
 
 ## P2 — Reporting and planning

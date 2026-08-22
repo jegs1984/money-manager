@@ -144,7 +144,7 @@
             <td class="px-4 py-2.5">
               <span class="rounded px-1.5 py-0.5 font-mono text-xs
                 {% if form.instance.type == 'IN' %}bg-emerald-900/50 text-emerald-300{% else %}bg-red-900/50 text-red-300{% endif %}">
-                {{ form.instance.type }}
+                {{ form.instance.type|direction_label }}
               </span>
             </td>
             <td class="px-4 py-3">

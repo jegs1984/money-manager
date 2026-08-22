@@ -20,3 +20,8 @@ def clp(value):
 @register.filter
 def get_item(mapping, key):
     return mapping.get(key) if mapping else None
+
+
+@register.filter
+def direction_label(value):
+    return {'IN': 'Ingreso', 'OUT': 'Gasto'}.get(value, value)

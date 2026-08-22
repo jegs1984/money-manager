@@ -124,3 +124,7 @@ Las tablas usan encabezados completos y las acciones Editar/Eliminar se mantiene
 # Necesita atención
 
 El inicio resume filas sin categoría, posibles duplicados y categorías cerca o sobre su presupuesto. Cada tarjeta abre la revisión o el análisis correspondiente; los colores siempre van acompañados de texto y un contador.
+
+# Accesibilidad e idioma
+
+La interfaz principal usa español de Chile. Puedes recorrer controles con Tab: el foco visible, etiquetas de botones y el menú móvil con Escape están pensados para teclado y lectores de pantalla. Los estados de ingreso, gasto, advertencia y exceso siempre incluyen texto, no solo color.
