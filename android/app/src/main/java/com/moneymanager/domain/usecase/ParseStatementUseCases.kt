@@ -64,7 +64,7 @@ class ParseDebitStatementUseCase @Inject constructor() {
 
             val cargo = parseAmount(cols.getOrElse(3) { "" })
             val abono = parseAmount(cols.getOrElse(4) { "" })
-            val balance = cols.getOrElse(5) { "" }.trim().takeIf { it.isNotEmpty() }?.let { parseAmount(it) }
+            val balance = cols.getOrElse(5) { "" }.trim().takeIf { it.isNotEmpty() }?.let { parseSignedAmount(it) }
 
             val (type, amount) = when {
                 cargo > BigDecimal.ZERO && abono > BigDecimal.ZERO -> "OUT" to cargo
@@ -117,6 +117,11 @@ class ParseDebitStatementUseCase @Inject constructor() {
     private fun parseAmount(raw: String): BigDecimal {
         val s = raw.trim().trimStart('+', '-').replace(',', '.').replace(Regex("[^\\d.]"), "")
         return if (s.isEmpty()) BigDecimal.ZERO else runCatching { BigDecimal(s).setScale(2) }.getOrDefault(BigDecimal.ZERO)
+    }
+
+    private fun parseSignedAmount(raw: String): BigDecimal {
+        val amount = parseAmount(raw)
+        return if (raw.trim().startsWith('-')) amount.negate() else amount
     }
 }
 
