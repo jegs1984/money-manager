@@ -102,3 +102,7 @@ Al confirmar una compra de tarjeta en cuotas, Money Manager conserva la compra o
 # Moneda
 
 Todos los importes se muestran como pesos chilenos sin decimales, por ejemplo `$1.234.567`. Los valores exactos se conservan internamente para los cálculos y las importaciones.
+
+# Navegación
+
+En computadores se muestra la barra lateral. En teléfonos, usa el botón de menú para abrirla o la barra inferior para ir a Inicio, Importar y Revisar. La revisión muestra siempre el paso actual de la importación.

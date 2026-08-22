@@ -16,6 +16,7 @@
 {% endblock %}
 
 {% block content %}
+<ol class="mb-4 flex flex-wrap gap-2 text-xs text-zinc-400" aria-label="Progreso de importación"><li>1. Cargar</li><li aria-hidden="true">→</li><li>2. Validar</li><li aria-hidden="true">→</li><li class="font-semibold text-emerald-300">3. Categorizar</li><li aria-hidden="true">→</li><li>4. Confirmar</li></ol>
 {# Hidden delete form — shared by per-row and bulk delete #}
 <form id="delete-form" method="post" action="{% url 'finance:staging_delete' %}" class="hidden">
   {% csrf_token %}
