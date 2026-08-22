@@ -177,6 +177,19 @@ class GroupDashboardView(TemplateView):
         return ctx
 
 
+class TrendView(TemplateView):
+    template_name = 'finance/trend.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        rows = []
+        for period in Period.objects.order_by('start_date'):
+            stats = calculate_safe_to_spend(period.pk)
+            rows.append({'period': period, **stats})
+        context['rows'] = rows
+        return context
+
+
 # ─────────────────────────────────────────────
 # Period CRUD
 # ─────────────────────────────────────────────

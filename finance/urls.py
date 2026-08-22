@@ -7,6 +7,7 @@ urlpatterns = [
     path('',                              views.DashboardView.as_view(),       name='dashboard'),
     path('dashboard/pdf/',                views.DashboardPDFView.as_view(),    name='dashboard_pdf'),
     path('groups/',                       views.GroupDashboardView.as_view(),  name='group_dashboard'),
+    path('trend/',                        views.TrendView.as_view(),           name='trend'),
 
     path('periods/',                      views.PeriodListView.as_view(),      name='period_list'),
     path('periods/create/',               views.PeriodCreateView.as_view(),    name='period_create'),
