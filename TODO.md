@@ -11,9 +11,9 @@ Keep these principles intact in every change:
 
 ## P0 — Make data safe and the apps buildable
 
-- [ ] **Fix budget direction integrity.** A category must not silently reuse an expense budget item for an income transaction (or vice versa). Decide and enforce either separate `(period, category, type)` budget lines or a signed-ledger model before adding more reporting.
-- [ ] **Prevent overlapping periods.** A transaction date must resolve to exactly one period; add PostgreSQL range validation and matching application validation.
-- [ ] **Make committed imports traceable and idempotent.** Link each committed transaction to its staging/source record (or an immutable source fingerprint) and enforce that a source row cannot be committed twice.
+- [x] **Fix budget direction integrity.** Budget lines are distinct by `(period, category, type)` in Django and Android.
+- [x] **Prevent overlapping periods.** PostgreSQL range validation and application validation ensure one period per transaction date.
+- [x] **Make committed imports traceable and idempotent.** Ledger rows retain an immutable staging source and source fingerprint.
 - [ ] **Make Django migrations authoritative.** Reconcile `finance/models.py`, `finance/migrations/`, and `sql/`; add a corrective migration instead of relying on raw SQL schema setup.
 - [ ] **Add database integrity rules.** Enforce `Period.start_date <= end_date`, a well-defined single active period policy, and a transaction date that belongs to its budget item's period.
 - [ ] **Remove manual primary-key allocation from `Category.save()`.** Let PostgreSQL sequences generate IDs; add a safe data migration if seeded data needs sequence repair.
@@ -34,8 +34,8 @@ Keep these principles intact in every change:
 - [ ] **Harden XLS handling.** Declare every required dependency, clean temporary files/directories reliably, validate file content server-side, and show actionable parse diagnostics.
 - [ ] **Complete or remove unfinished period actions.** Implement the visible duplicate-budget/rollover flow with a preview and confirmation; do not leave a no-op route.
 - [ ] **Add a correction workflow.** Let users reverse or edit committed transactions with a clear history rather than relying on destructive deletes.
-- [ ] **Model accounts and transfers.** Add checking, savings, cash, and credit-card accounts; ensure transfers and card payments do not inflate income or expense totals.
-- [ ] **Close and reconcile periods.** Compare statement and ledger balances, surface unmatched items, and lock a closed period while retaining explicit adjustment history.
+- [x] **Model accounts and transfers.** Accounts and off-budget transfers prevent transfers from inflating income or expense totals.
+- [x] **Close and reconcile periods.** Account reconciliation, immutable reversals, and closed-period guards are available.
 - [ ] **Use installments for forward planning.** Turn captured credit-card installment data into future-period obligations and remaining-balance views.
 
 ## P1 — Usability and visual design
@@ -55,17 +55,17 @@ Keep these principles intact in every change:
 - [ ] **Localise intentionally.** The product data and audience are Chilean/Spanish but parts of the UI are English. Choose a primary language and make terminology consistent.
 - [ ] **Remove runtime styling dependencies for offline use.** Bundle Tailwind output and fonts locally rather than loading them from CDNs, consistent with the local-first promise.
 - [ ] **Add accessibility basics.** Visible focus states, semantic buttons/labels, keyboard navigation, screen-reader labels for icons, and responsive table alternatives.
-- [ ] **Add merchant rules and bulk categorisation.** Learn only from confirmed assignments, suggest categories transparently, and let users apply a category to selected staged rows before review/commit.
+- [ ] **Add merchant rules and bulk categorisation.** Merchant rules now provide transparent suggestions; bulk review actions remain.
 
 ## P2 — Reporting and planning
 
 - [ ] Add an at-a-glance “needs attention” section: uncategorised rows, unreviewed duplicates, categories near budget, and categories over budget.
 - [ ] Make group dashboards expandable and link each group total to its transactions.
-- [ ] Add date-range and category filters to transaction history, plus CSV export for user-owned backups.
+- [ ] Add date-range and category filters to transaction history, plus CSV export for user-owned backups. CSV export is available; filters remain.
 - [ ] Add a planned-versus-actual trend view across periods without changing the current period-based budgeting model.
-- [ ] Add an offline, versioned, encrypted export/import bundle if the web and Android apps need to exchange data. Do not make cloud sync a requirement.
-- [ ] Add recurring income/expense plans, upcoming-bill reminders, and a daily cash-flow forecast.
-- [ ] Add goals and sinking funds for non-monthly spending such as insurance, travel, and emergency savings.
+- [x] Add an offline, versioned, encrypted export/import bundle if the web and Android apps need to exchange data. Do not make cloud sync a requirement.
+- [ ] Add recurring income/expense plans, upcoming-bill reminders, and a daily cash-flow forecast. Recurring plans are available; reminders and forecast remain.
+- [x] Add goals and sinking funds for non-monthly spending such as insurance, travel, and emergency savings.
 
 ## P2 — Quality and delivery
 
