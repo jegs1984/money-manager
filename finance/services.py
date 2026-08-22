@@ -231,7 +231,7 @@ def parse_scotiabank_statement(file_obj, source_filename: str = '', import_again
 
     batch = ImportBatch.objects.create(
         source_type='BANK', filename=source_filename, account_reference=account_number,
-        content_hash=content_hash, parser_version='scotiabank-dat-v1',
+        content_hash=content_hash, parser_version='scotiabank-dat-v1', total_rows=len(staging_records), skipped_rows=skipped,
     )
     for record in staging_records:
         record.batch = batch
@@ -666,7 +666,7 @@ def parse_scotiabank_cc_statement(file_obj, source_filename: str = '', import_ag
     batch = ImportBatch.objects.create(
         source_type='CREDIT_CARD', filename=source_filename,
         account_reference=meta.get('card_number', ''), content_hash=content_hash,
-        parser_version='scotiabank-xls-v1',
+        parser_version='scotiabank-xls-v1', total_rows=len(staging_records), skipped_rows=skipped,
     )
     for record in staging_records:
         record.batch = batch

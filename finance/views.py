@@ -596,6 +596,17 @@ class StagingReviewView(TemplateView):
         ctx['active_period'] = period
         ctx['delete_url']    = 'finance:staging_delete'
         ctx['batch'] = qs.first().batch if qs.first() else None
+        if ctx['batch']:
+            batch = ctx['batch']
+            ctx['batch_summary'] = {
+                'total': batch.total_rows or batch.staging_transactions.count(),
+                'duplicates': len(duplicate_ids),
+                'assigned': qs.exclude(assigned_category__isnull=True).count(),
+                'skipped': batch.skipped_rows,
+                'committed': batch.staging_transactions.filter(is_processed=True).count(),
+                'from_date': batch.staging_transactions.order_by('original_date').values_list('original_date', flat=True).first(),
+                'to_date': batch.staging_transactions.order_by('-original_date').values_list('original_date', flat=True).first(),
+            }
         return ctx
 
     def post(self, request, *args, **kwargs):
@@ -752,6 +763,17 @@ class CCStagingReviewView(TemplateView):
         first = qs.first()
         ctx['card_number'] = first.card_number if first else ''
         ctx['card_holder'] = first.card_holder if first else ''
+        if ctx['batch']:
+            batch = ctx['batch']
+            ctx['batch_summary'] = {
+                'total': batch.total_rows or batch.staging_cc_transactions.count(),
+                'duplicates': len(duplicate_ids),
+                'assigned': qs.exclude(assigned_category__isnull=True).count(),
+                'skipped': batch.skipped_rows,
+                'committed': batch.staging_cc_transactions.filter(is_processed=True).count(),
+                'from_date': batch.staging_cc_transactions.order_by('original_date').values_list('original_date', flat=True).first(),
+                'to_date': batch.staging_cc_transactions.order_by('-original_date').values_list('original_date', flat=True).first(),
+            }
         return ctx
 
     def post(self, request, *args, **kwargs):

@@ -294,6 +294,8 @@ class ImportBatch(models.Model):
     imported_at = models.DateTimeField(auto_now_add=True)
     parser_version = models.CharField(max_length=40, default='1')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='STAGED')
+    total_rows = models.PositiveIntegerField(default=0)
+    skipped_rows = models.PositiveIntegerField(default=0)
 
     class Meta:
         db_table = 'finance_import_batch'

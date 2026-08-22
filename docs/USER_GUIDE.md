@@ -106,3 +106,7 @@ Todos los importes se muestran como pesos chilenos sin decimales, por ejemplo `$
 # Navegación
 
 En computadores se muestra la barra lateral. En teléfonos, usa el botón de menú para abrirla o la barra inferior para ir a Inicio, Importar y Revisar. La revisión muestra siempre el paso actual de la importación.
+
+# Alcance de una importación
+
+La cabecera de revisión identifica el lote que estás viendo: archivo, cuenta o tarjeta, fechas cubiertas, hora de carga y contadores de filas. Revisa esos datos antes de confirmar para no mezclar movimientos de dos cartolas.

@@ -40,6 +40,7 @@
 {% else %}
 
 {% if batch %}
+<div class="mb-4 grid gap-2 rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3 text-xs text-zinc-300 sm:grid-cols-3 lg:grid-cols-4"><span><strong>Archivo:</strong> {{ batch.filename }}</span><span><strong>Tarjeta:</strong> {{ batch.account_reference|default:"Sin tarjeta" }}</span><span><strong>Fechas:</strong> {{ batch_summary.from_date|date:"d/m/Y" }}–{{ batch_summary.to_date|date:"d/m/Y" }}</span><span><strong>Importado:</strong> {{ batch.imported_at|date:"d/m/Y H:i" }}</span><span><strong>Filas:</strong> {{ batch_summary.total }}</span><span><strong>Duplicados:</strong> {{ batch_summary.duplicates }}</span><span><strong>Asignadas:</strong> {{ batch_summary.assigned }}</span><span><strong>Omitidas/confirmadas:</strong> {{ batch_summary.skipped }}/{{ batch_summary.committed }}</span></div>
 <div class="mb-4 grid gap-2 rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3 text-xs text-zinc-400 sm:grid-cols-3">
   <span><strong class="text-zinc-200">Batch:</strong> {{ batch.filename|default:"Notification import" }}</span>
   <span><strong class="text-zinc-200">Card:</strong> {{ batch.account_reference|default:"—" }}</span>
