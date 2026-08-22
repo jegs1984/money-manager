@@ -72,7 +72,7 @@ Keep these principles intact in every change:
 - [x] Add Django tests for imports, malformed rows, signed balances, duplicate decisions, batch commits, dashboard totals, constraints, and PDF generation.
 - [x] Add Android tests for statement parsers, notification parsing, Room migrations, duplicate logic, and staging commits.
 - [x] Keep sanitised bank-statement fixtures with expected results; never commit real financial data.
-- [ ] Add CI checks for Django migrations, Django tests, Android compilation, Android tests, and schema parity documentation.
+- [x] Add CI checks for Django migrations, Django tests, Android compilation, Android tests, and schema parity documentation.
 - [ ] Document a backup/restore procedure and a recovery process for failed imports.
 
 ## Suggested delivery order

@@ -78,6 +78,8 @@ Android unit/debug builds for every push and pull request. Keep schema-parity
 notes in the migration and Room-migration comments whenever a shared field
 changes.
 
+See [schema parity](SCHEMA_PARITY.md) for the explicit web/Android change checklist.
+
 ## Fixtures bancarios
 
 `finance/tests/fixtures/` contiene cartolas sintéticas y sus resultados esperados. Úsalas para pruebas de parser; no agregues cuentas, comercios, montos o cartolas reales al repositorio.
