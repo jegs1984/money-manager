@@ -1,6 +1,8 @@
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.db.models import Q
+from django.contrib.postgres.constraints import ExclusionConstraint
+from django.contrib.postgres.fields import DateRangeField, RangeOperators
 
 
 class Period(models.Model):
@@ -23,10 +25,32 @@ class Period(models.Model):
                 condition=Q(is_active=True),
                 name='finance_period_single_active',
             ),
+            ExclusionConstraint(
+                name='finance_period_dates_do_not_overlap',
+                expressions=[
+                    (
+                        models.Func(
+                            'start_date', 'end_date', models.Value('[]'),
+                            function='DATERANGE', output_field=DateRangeField(),
+                        ),
+                        RangeOperators.OVERLAPS,
+                    ),
+                ],
+            ),
         ]
 
     def __str__(self):
         return self.name
+
+    def clean(self):
+        super().clean()
+        if self.start_date and self.end_date and self.start_date > self.end_date:
+            raise ValidationError({'end_date': 'The end date must be on or after the start date.'})
+        if self.start_date and self.end_date and Period.objects.exclude(pk=self.pk).filter(
+            start_date__lte=self.end_date,
+            end_date__gte=self.start_date,
+        ).exists():
+            raise ValidationError('Periods may not overlap. Each transaction date must map to one period.')
 
 
 class Category(models.Model):
@@ -76,8 +100,8 @@ class BudgetItem(models.Model):
                 name='finance_budget_item_projected_amount_gte_0',
             ),
             models.UniqueConstraint(
-                fields=['period', 'category'],
-                name='finance_budget_item_period_category_unique',
+                fields=['period', 'category', 'type'],
+                name='finance_budget_item_period_category_type_unique',
             ),
         ]
 
@@ -95,21 +119,41 @@ class Transaction(models.Model):
     real_amount = models.DecimalField(max_digits=10, decimal_places=2, db_column='real_amount')
     description = models.CharField(max_length=255, db_column='description')
     notes       = models.TextField(null=True, blank=True, db_column='notes')
+    source_staging_transaction = models.OneToOneField(
+        'StagingTransaction', on_delete=models.PROTECT,
+        related_name='committed_transaction', null=True, blank=True,
+    )
+    source_staging_cc_transaction = models.OneToOneField(
+        'StagingCCTransaction', on_delete=models.PROTECT,
+        related_name='committed_transaction', null=True, blank=True,
+    )
+    source_fingerprint = models.CharField(max_length=160, blank=True, db_index=True)
 
     class Meta:
         db_table = 'finance_transaction'
         ordering = ['-date']
         indexes = [models.Index(fields=['date'], name='transaction_date_idx'), models.Index(fields=['budget_item'], name='transaction_budget_item_idx')]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['source_fingerprint'],
+                condition=~Q(source_fingerprint=''),
+                name='finance_transaction_source_fingerprint_unique',
+            ),
+        ]
 
     def __str__(self):
         return f'{self.date} {self.description}'
 
     def clean(self):
         super().clean()
+        if not self.budget_item_id:
+            raise ValidationError({'budget_item': 'Every new transaction must belong to a budget item.'})
         if self.budget_item_id and not (
             self.budget_item.period.start_date <= self.date <= self.budget_item.period.end_date
         ):
             raise ValidationError({'date': 'Transaction date must belong to the budget item period.'})
+        if self.source_staging_transaction_id and self.source_staging_cc_transaction_id:
+            raise ValidationError('A transaction can have only one staging source.')
 
 
 class ImportBatch(models.Model):

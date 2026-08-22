@@ -61,6 +61,13 @@ class TransactionForm(forms.ModelForm):
         }
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['budget_item'].required = True
+        self.fields['budget_item'].queryset = BudgetItem.objects.select_related(
+            'period', 'category'
+        ).order_by('-period__start_date', 'category__name', 'type')
+        self.fields['budget_item'].label_from_instance = lambda item: (
+            f'{item.period.name} · {item.category.name} ({item.type})'
+        )
         # Only set the default if this is a new form (not editing an existing instance)
         if not self.instance.pk and 'date' in self.fields:
             self.fields['date'].initial = timezone.now().date()

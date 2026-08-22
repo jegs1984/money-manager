@@ -243,8 +243,7 @@ def _get_or_create_unplanned_category() -> Category:
 
 def _get_or_create_budget_item(period: Period, category: Category, tx_type: str) -> BudgetItem:
     item, _ = BudgetItem.objects.get_or_create(
-        period=period,
-        category=category,
+        period=period, category=category, type=tx_type,
         defaults={'type': tx_type, 'projected_amount': Decimal('0.00')},
     )
     return item
@@ -295,6 +294,8 @@ def process_staging_batch(staging_ids_with_categories: list[dict], remove_ids: s
             real_amount=stx.amount,
             description=stx.description,
             notes=None,
+            source_staging_transaction=stx,
+            source_fingerprint=f'bank-staging:{stx.pk}',
         )
 
         stx.is_processed     = True
@@ -668,6 +669,8 @@ def process_cc_staging_batch(
             real_amount=stx.amount,
             description=stx.description,
             notes=f'[CC] {stx.card_number or ""} {stx.location or ""}'.strip() or None,
+            source_staging_cc_transaction=stx,
+            source_fingerprint=f'cc-staging:{stx.pk}',
         )
 
         stx.is_processed      = True
