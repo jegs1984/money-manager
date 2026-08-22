@@ -41,7 +41,7 @@ Keep these principles intact in every change:
 ## P1 — Usability and visual design
 
 - [x] **Build responsive navigation.** The desktop sidebar becomes an accessible mobile drawer with compact bottom navigation; content and review controls no longer depend on a fixed sidebar offset.
-- [ ] **Make the current location unmistakable.** Add an active navigation state, page breadcrumbs where useful, and clear import/review progress: `Upload → Validate → Categorise → Confirm`.
+- [x] **Make the current location unmistakable.** Primary navigation exposes active and `aria-current` states, and staging review shows `Cargar → Validar → Categorizar → Confirmar` progress.
 - [ ] **Scope staging visually.** Show batch name, account/card, covered dates, import time, total rows, duplicates, assigned rows, skipped rows, and committed count at the top of review.
 - [ ] **Make review fast for real statements.** Add search, date/type/category filters, sortable columns, pagination/virtualisation, multi-select, and “apply category to selected” actions.
 - [ ] **Retain manual approval while adding suggestions.** Offer a preselected category based on previously confirmed merchant rules; mark it as a suggestion and require review before commit.
