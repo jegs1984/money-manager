@@ -20,7 +20,7 @@ Keep these principles intact in every change:
 - [x] **Fix the `Unplanned/Extra` category group.** The helper creates it in `Gastos`.
 - [x] **Consolidate Android into one architecture.** A single Room repository, Compose UI, and navigation graph now expose the dashboard and both staging review screens; unused legacy presentation paths were removed.
 - [x] **Repair Android notification ingestion.** `BankNotificationParser` is the single pure parser used by the notification listener, staging writer, and JVM tests; notifications create review-only staging rows.
-- [ ] **Remove Room destructive migrations.** Implement and test real migrations so an app update cannot erase financial history.
+- [x] **Remove Room destructive migrations.** Explicit, tested Room migrations preserve the upgrade path; destructive fallback is prohibited and versioned schemas are exported for review.
 - [x] **Restrict local deployments by default.** Docker binds to loopback and production settings require login/secure cookies.
 - [x] **Correct `.env.example`.** It uses the Django secret-key and database variable names consumed by settings.
 

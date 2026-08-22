@@ -170,3 +170,8 @@ committed to the ledger until the user reviews and confirms them.
 `BankNotificationParser` is a pure parser used by the notification listener, the
 repository staging writer, and JVM tests. The listener stores no transaction itself:
 it hands the raw notification to the repository, which writes a review-only row.
+
+Room uses explicit, append-only migrations in `RoomMigrations.kt`. The database
+builder intentionally has no destructive fallback; an unsupported upgrade fails
+safely instead of erasing financial history. Versioned Room schemas are exported
+to `app/schemas/` for migration review.
