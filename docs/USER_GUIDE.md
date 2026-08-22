@@ -83,7 +83,8 @@ The **Encrypted backup** page creates a versioned `.mmbundle` file encrypted
 with AES-GCM and a passphrase of your choice. Keep the passphrase separately:
 it cannot be recovered. Importing the same bundle again does not duplicate its
 transactions. The transaction list also provides CSV export for spreadsheet
-analysis or user-owned backups.
+analysis or user-owned backups. Use its text, category, and date filters to
+audit a merchant, budget category, or statement period before exporting.
 
 ## Good practices
 
