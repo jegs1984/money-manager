@@ -60,7 +60,7 @@ Keep these principles intact in every change:
 ## P2 — Reporting and planning
 
 - [x] Add an at-a-glance “needs attention” section: uncategorised rows, unreviewed duplicates, categories near budget, and categories over budget.
-- [ ] Make group dashboards expandable and link each group total to its transactions.
+- [x] Make group dashboards expandable and link each group total to its transactions.
 - [ ] Add date-range and category filters to transaction history, plus CSV export for user-owned backups. CSV export is available; filters remain.
 - [x] Add a planned-versus-actual trend view across periods without changing the current period-based budgeting model.
 - [x] Add an offline, versioned, encrypted export/import bundle if the web and Android apps need to exchange data. Do not make cloud sync a requirement.

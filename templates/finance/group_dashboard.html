@@ -109,7 +109,7 @@
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
       </svg>
       <span class="font-mono text-xs text-zinc-500 uppercase tracking-widest">Income ·</span>
-      <span class="font-semibold text-emerald-300 text-sm">{{ grp.group }}</span>
+      <a href="{% url 'finance:transaction_list' %}?group={{ grp.group|urlencode }}" class="font-semibold text-emerald-300 text-sm underline">{{ grp.group }}</a>
     </div>
     <div class="flex items-center gap-6 font-mono text-xs">
       <span class="text-zinc-500">Projected <span class="text-zinc-300">{{ grp.projected|clp }}</span></span>
@@ -134,7 +134,7 @@
       <tbody class="divide-y divide-zinc-800/40">
         {% for item in grp.items %}
         <tr class="group hover:bg-zinc-800/30 transition-colors">
-          <td class="px-5 py-2.5 font-medium text-zinc-200">{{ item.category.name }}</td>
+          <td class="px-5 py-2.5 font-medium text-zinc-200"><a class="underline hover:text-emerald-300" href="{% url 'finance:transaction_list' %}?category={{ item.category_id }}">{{ item.category.name }}</a></td>
           <td class="px-4 py-2.5 text-right font-mono text-zinc-400">{{ item.projected_amount|clp }}</td>
           <td class="px-4 py-2.5 text-right font-mono text-emerald-400">{{ item.total_real|clp }}</td>
           <td class="px-4 py-2.5 text-right font-mono text-xs {% if item.diff >= 0 %}text-emerald-400{% else %}text-red-400{% endif %}">
@@ -175,7 +175,7 @@
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
       </svg>
       <span class="font-mono text-xs text-zinc-500 uppercase tracking-widest">Expense ·</span>
-      <span class="font-semibold text-red-300 text-sm">{{ grp.group }}</span>
+      <a href="{% url 'finance:transaction_list' %}?group={{ grp.group|urlencode }}" class="font-semibold text-red-300 text-sm underline">{{ grp.group }}</a>
     </div>
     <div class="flex items-center gap-6 font-mono text-xs">
       <span class="text-zinc-500">Projected <span class="text-zinc-300">{{ grp.projected|clp }}</span></span>
@@ -200,7 +200,7 @@
       <tbody class="divide-y divide-zinc-800/40">
         {% for item in grp.items %}
         <tr class="group hover:bg-zinc-800/30 transition-colors">
-          <td class="px-5 py-2.5 font-medium text-zinc-200">{{ item.category.name }}</td>
+          <td class="px-5 py-2.5 font-medium text-zinc-200"><a class="underline hover:text-emerald-300" href="{% url 'finance:transaction_list' %}?category={{ item.category_id }}">{{ item.category.name }}</a></td>
           <td class="px-4 py-2.5 text-right font-mono text-zinc-400">{{ item.projected_amount|clp }}</td>
           <td class="px-4 py-2.5 text-right font-mono text-zinc-100">{{ item.total_real|clp }}</td>
           <td class="px-4 py-2.5 text-right font-mono text-xs {% if item.diff >= 0 %}text-emerald-400{% else %}text-red-400{% endif %}">

@@ -451,6 +451,7 @@ class TransactionListView(ListView):
         queryset = Transaction.objects.select_related('budget_item__category', 'budget_item__period', 'account')
         query = self.request.GET.get('q', '').strip()
         category_id = self.request.GET.get('category')
+        group = self.request.GET.get('group', '').strip()
         date_from = self.request.GET.get('from')
         date_to = self.request.GET.get('to')
         if query:
@@ -458,6 +459,8 @@ class TransactionListView(ListView):
             queryset = queryset.filter(Q(description__icontains=query) | Q(notes__icontains=query))
         if category_id and category_id.isdigit():
             queryset = queryset.filter(budget_item__category_id=category_id)
+        if group:
+            queryset = queryset.filter(budget_item__category__group=group)
         if date_from:
             queryset = queryset.filter(date__gte=date_from)
         if date_to:
