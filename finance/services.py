@@ -510,6 +510,7 @@ def parse_scotiabank_cc_statement(file_obj, source_filename: str = '', import_ag
     import subprocess
     import tempfile
     import os
+    import shutil
 
     if hasattr(file_obj, 'read'):
         raw_bytes = file_obj.read()
@@ -523,6 +524,8 @@ def parse_scotiabank_cc_statement(file_obj, source_filename: str = '', import_ag
                 'card_number': existing_batch.account_reference, 'card_holder': '', 'statement_date': None}
 
     csv_text = None
+    tmp_path = None
+    out_dir = None
 
     try:
         import xlrd  # noqa: F401
@@ -560,12 +563,17 @@ def parse_scotiabank_cc_statement(file_obj, source_filename: str = '', import_ag
                         break
                     except UnicodeDecodeError:
                         continue
-            try:
-                os.unlink(tmp_path)
-            except OSError:
-                pass
         except Exception:
             pass
+
+        finally:
+            if tmp_path:
+                try:
+                    os.unlink(tmp_path)
+                except OSError:
+                    pass
+            if out_dir:
+                shutil.rmtree(out_dir, ignore_errors=True)
 
     if csv_text is None:
         raise ValueError(
