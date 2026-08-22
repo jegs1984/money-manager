@@ -25,13 +25,17 @@ Abono > 0  → type IN  (money entering account)
 import csv
 import hashlib
 import io
+import json
 import re
+import secrets
+import uuid
 from datetime import date, datetime, timedelta
 from decimal import Decimal, InvalidOperation
 
 from django.db import transaction as db_transaction
 from django.db.models import Sum, Value, Q
 from django.db.models.functions import Coalesce
+from django.core.serializers.json import DjangoJSONEncoder
 
 from .models import (
     Account, BudgetItem, Category, Goal, ImportBatch, MerchantRule, Period, Reconciliation,
@@ -877,6 +881,99 @@ def contribute_to_goal(goal_id: int, amount: Decimal) -> Goal:
     goal.is_complete = goal.saved_amount >= goal.target_amount
     goal.save(update_fields=['saved_amount', 'is_complete'])
     return goal
+
+
+# ─────────────────────────────────────────────
+# Public: encrypted offline exchange
+# ─────────────────────────────────────────────
+
+_BUNDLE_MAGIC = b'MMB1'
+
+
+def _bundle_key(password: str, salt: bytes) -> bytes:
+    if not password:
+        raise ValueError('A bundle passphrase is required.')
+    return hashlib.scrypt(password.encode('utf-8'), salt=salt, n=2**14, r=8, p=1, dklen=32)
+
+
+def export_finance_bundle(password: str) -> bytes:
+    """Create a versioned AES-GCM encrypted backup/exchange bundle."""
+    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+    payload = {
+        'version': 1,
+        'bundle_id': str(uuid.uuid4()),
+        'categories': list(Category.objects.values('name', 'group')),
+        'periods': list(Period.objects.values('name', 'start_date', 'end_date', 'is_active', 'closed_at')),
+        'accounts': list(Account.objects.values('name', 'kind', 'external_reference', 'opening_balance', 'is_active')),
+        'budget_items': list(BudgetItem.objects.values('period__name', 'category__name', 'type', 'projected_amount')),
+        'transactions': list(Transaction.objects.values('id', 'account__name', 'budget_item__period__name', 'budget_item__category__name', 'budget_item__type', 'date', 'real_amount', 'description', 'notes')),
+        'transfers': list(Transfer.objects.values('source_account__name', 'destination_account__name', 'date', 'amount', 'description')),
+        'merchant_rules': list(MerchantRule.objects.values('description_pattern', 'category__name', 'transaction_type', 'is_active')),
+        'recurring_plans': list(RecurringPlan.objects.values('name', 'category__name', 'account__name', 'transaction_type', 'amount', 'frequency', 'next_date', 'description', 'is_active')),
+        'goals': list(Goal.objects.values('name', 'target_amount', 'saved_amount', 'target_date', 'notes', 'is_complete')),
+    }
+    raw = json.dumps(payload, cls=DjangoJSONEncoder, separators=(',', ':')).encode('utf-8')
+    salt, nonce = secrets.token_bytes(16), secrets.token_bytes(12)
+    encrypted = AESGCM(_bundle_key(password, salt)).encrypt(nonce, raw, _BUNDLE_MAGIC)
+    return _BUNDLE_MAGIC + salt + nonce + encrypted
+
+
+@db_transaction.atomic
+def import_finance_bundle(bundle: bytes, password: str) -> dict:
+    from cryptography.exceptions import InvalidTag
+    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+    if len(bundle) < 4 + 16 + 12 or not bundle.startswith(_BUNDLE_MAGIC):
+        raise ValueError('This is not a Money Manager encrypted bundle.')
+    salt, nonce, encrypted = bundle[4:20], bundle[20:32], bundle[32:]
+    try:
+        payload = json.loads(AESGCM(_bundle_key(password, salt)).decrypt(nonce, encrypted, _BUNDLE_MAGIC))
+    except (InvalidTag, ValueError, json.JSONDecodeError) as exc:
+        raise ValueError('The bundle could not be decrypted. Check its passphrase.') from exc
+    if payload.get('version') != 1 or not payload.get('bundle_id'):
+        raise ValueError('Unsupported bundle version.')
+
+    categories = {}
+    for row in payload.get('categories', []):
+        category, _ = Category.objects.get_or_create(name=row['name'], defaults={'group': row['group']})
+        categories[category.name] = category
+    periods = {}
+    for row in payload.get('periods', []):
+        period, _ = Period.objects.get_or_create(
+            name=row['name'], defaults={'start_date': row['start_date'], 'end_date': row['end_date'], 'is_active': False}
+        )
+        periods[period.name] = period
+    accounts = {}
+    for row in payload.get('accounts', []):
+        account, _ = Account.objects.get_or_create(
+            name=row['name'], defaults={k: row[k] for k in ('kind', 'external_reference', 'opening_balance', 'is_active')}
+        )
+        accounts[account.name] = account
+    budget_items = {}
+    for row in payload.get('budget_items', []):
+        period, category = periods.get(row['period__name']), categories.get(row['category__name'])
+        if period and category:
+            item, _ = BudgetItem.objects.get_or_create(
+                period=period, category=category, type=row['type'], defaults={'projected_amount': row['projected_amount']}
+            )
+            budget_items[(period.name, category.name, item.type)] = item
+    imported_transactions = 0
+    for row in payload.get('transactions', []):
+        item = budget_items.get((row['budget_item__period__name'], row['budget_item__category__name'], row['budget_item__type']))
+        if not item:
+            continue
+        fingerprint = f"bundle:{payload['bundle_id']}:transaction:{row['id']}"
+        _, created = Transaction.objects.get_or_create(
+            source_fingerprint=fingerprint,
+            defaults={
+                'account': accounts.get(row.get('account__name')),
+                'budget_item': item, 'date': row['date'], 'real_amount': row['real_amount'],
+                'description': row['description'], 'notes': row.get('notes') or '',
+            },
+        )
+        imported_transactions += int(created)
+    return {'transactions': imported_transactions, 'bundle_id': payload['bundle_id']}
 
 
 def calculate_safe_to_spend(period_id: int) -> dict:

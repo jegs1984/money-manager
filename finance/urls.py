@@ -41,6 +41,9 @@ urlpatterns = [
     path('transactions/<int:pk>/edit/',   views.TransactionUpdateView.as_view(), name='transaction_update'),
     path('transactions/<int:pk>/delete/', views.TransactionDeleteView.as_view(), name='transaction_delete'),
     path('transactions/<int:pk>/reverse/', views.TransactionReverseView.as_view(), name='transaction_reverse'),
+    path('transactions/export.csv',        views.TransactionCSVExportView.as_view(), name='transaction_csv_export'),
+    path('bundle/export/',                 views.BundleExportView.as_view(), name='bundle_export'),
+    path('bundle/import/',                 views.BundleImportView.as_view(), name='bundle_import'),
 
     path('upload/',          views.StatementUploadView.as_view(),      name='statement_upload'),
     path('staging/',         views.StagingReviewView.as_view(),        name='staging_review'),

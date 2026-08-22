@@ -1,3 +1,4 @@
+import csv
 from decimal import Decimal
 
 from django.contrib import messages
@@ -12,7 +13,7 @@ from django.views.generic import (
 )
 
 from .forms import (
-    AccountForm, BudgetItemForm, CategoryForm, GoalForm, MerchantRuleForm, PeriodForm, ReconciliationForm, RecurringPlanForm, TransferForm,
+    AccountForm, BudgetItemForm, BundleExportForm, BundleImportForm, CategoryForm, GoalForm, MerchantRuleForm, PeriodForm, ReconciliationForm, RecurringPlanForm, TransferForm,
     StagingReviewFormset, StatementUploadForm, TransactionForm,
     CCStatementUploadForm, StagingCCReviewFormset,
 )
@@ -23,7 +24,7 @@ from .services import (
     parse_scotiabank_cc_statement, process_cc_staging_batch,
     calculate_account_balance, close_period_service, reconcile_account_service,
     record_transfer_service, reverse_transaction_service,
-    materialize_recurring_plans,
+    export_finance_bundle, import_finance_bundle, materialize_recurring_plans,
 )
 
 
@@ -452,6 +453,51 @@ class TransactionReverseView(View):
         else:
             messages.success(request, 'A compensating reversal was added; the original transaction is preserved.')
         return redirect('finance:transaction_list')
+
+
+class TransactionCSVExportView(View):
+    def get(self, request, *args, **kwargs):
+        response = HttpResponse(content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = 'attachment; filename="money-manager-transactions.csv"'
+        writer = csv.writer(response)
+        writer.writerow(['date', 'description', 'amount', 'type', 'category', 'period', 'account', 'notes'])
+        for tx in Transaction.objects.select_related('budget_item__category', 'budget_item__period', 'account').order_by('date', 'pk'):
+            writer.writerow([
+                tx.date, tx.description, tx.real_amount, tx.budget_item.type if tx.budget_item else '',
+                tx.budget_item.category.name if tx.budget_item else '', tx.budget_item.period.name if tx.budget_item else '',
+                tx.account.name if tx.account else '', tx.notes or '',
+            ])
+        return response
+
+
+class BundleExportView(FormView):
+    template_name = 'finance/bundle_form.html'
+    form_class = BundleExportForm
+
+    def form_valid(self, form):
+        try:
+            data = export_finance_bundle(form.cleaned_data['passphrase'])
+        except ImportError:
+            form.add_error(None, 'Encrypted bundles need the cryptography package. Reinstall dependencies first.')
+            return self.form_invalid(form)
+        response = HttpResponse(data, content_type='application/octet-stream')
+        response['Content-Disposition'] = 'attachment; filename="money-manager.mmbundle"'
+        return response
+
+
+class BundleImportView(FormView):
+    template_name = 'finance/bundle_form.html'
+    form_class = BundleImportForm
+    success_url = reverse_lazy('finance:dashboard')
+
+    def form_valid(self, form):
+        try:
+            result = import_finance_bundle(form.cleaned_data['bundle'].read(), form.cleaned_data['passphrase'])
+        except (ImportError, ValueError) as exc:
+            form.add_error(None, str(exc))
+            return self.form_invalid(form)
+        messages.success(self.request, f"Imported {result['transactions']} transaction(s) from an encrypted bundle.")
+        return super().form_valid(form)
 
 
 # ─────────────────────────────────────────────

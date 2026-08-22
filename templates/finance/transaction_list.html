@@ -2,6 +2,7 @@
 {% block title %}Transactions — Money Manager{% endblock %}
 {% block page_title %}Transactions{% endblock %}
 {% block header_actions %}
+  <a href="{% url 'finance:transaction_csv_export' %}" class="btn-secondary text-xs">CSV</a>
   <a href="{% url 'finance:budgetitem_create' %}" class="btn-primary text-xs">+ Budget Item</a>
   <a href="{% url 'finance:transaction_create' %}" class="btn-primary text-xs">+ Log Transaction</a>
 {% endblock %}

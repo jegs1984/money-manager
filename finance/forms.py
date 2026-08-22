@@ -100,6 +100,14 @@ class GoalForm(forms.ModelForm):
             'notes': forms.Textarea(attrs={'class': 'form-input', 'rows': 3}),
         }
 
+
+class BundleExportForm(forms.Form):
+    passphrase = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-input'}), min_length=12)
+
+
+class BundleImportForm(BundleExportForm):
+    bundle = forms.FileField(widget=forms.ClearableFileInput(attrs={'class': 'form-input', 'accept': '.mmbundle'}))
+
 class BudgetItemForm(forms.ModelForm):
     class Meta:
         model  = BudgetItem
