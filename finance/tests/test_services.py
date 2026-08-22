@@ -1,5 +1,8 @@
 from datetime import date
 from decimal import Decimal
+from io import StringIO
+from pathlib import Path
+import json
 
 from django.test import TestCase
 
@@ -8,6 +11,7 @@ from finance.services import (
     _get_or_create_budget_item,
     process_cc_staging_batch,
     process_staging_batch,
+    parse_scotiabank_statement,
     reverse_transaction_service,
     suggest_category,
 )
@@ -65,3 +69,19 @@ class LedgerServiceTests(TestCase):
         self.assertEqual(obligation.remaining_installments, 2)
         self.assertEqual(obligation.remaining_amount, Decimal('200.00'))
         self.assertEqual(obligation.next_due_date, date(2026, 2, 15))
+
+    def test_sanitized_statement_fixture_preserves_signed_balances_and_batch_counts(self):
+        fixture_dir = Path(__file__).parent / 'fixtures'
+        expected = json.loads((fixture_dir / 'scotiabank_sanitized.expected.json').read_text())
+        result = parse_scotiabank_statement(StringIO((fixture_dir / 'scotiabank_sanitized.dat').read_text()), 'fixture.dat')
+        self.assertEqual(result['count'], expected['transactions'])
+        self.assertEqual(result['skipped'], expected['skipped'])
+        staged = list(StagingTransaction.objects.filter(batch_id=result['batch_id']).order_by('original_date'))
+        self.assertEqual(str(staged[0].balance), expected['first']['balance'])
+        self.assertEqual(staged[1].type, expected['second']['type'])
+
+    def test_malformed_statement_rows_are_skipped_without_creating_ledger_entries(self):
+        result = parse_scotiabank_statement(StringIO('Fecha;Descripcion;NroDoc.;Cargos;Abonos;Saldo\nnot-a-date;broken\n'), 'bad.dat')
+        self.assertEqual(result['count'], 0)
+        self.assertEqual(result['skipped'], 1)
+        self.assertEqual(Transaction.objects.count(), 0)
