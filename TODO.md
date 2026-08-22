@@ -50,7 +50,7 @@ Keep these principles intact in every change:
 - [ ] **Use labels, not cryptic abbreviations.** Replace table headings such as `T`, `Cap.`, and `—` with readable text or tooltips that work on touch devices.
 - [ ] **Do not rely on colour alone.** Pair green/amber/red states with labels and icons; ensure readable contrast in the dark theme.
 - [ ] **Make row actions always available.** Hover-only edit/delete controls are inaccessible on touch and awkward with keyboards. Use visible compact actions or an accessible overflow menu.
-- [ ] **Use safer destructive confirmations.** “Delete all staged” should name the batch and number of rows, then require an explicit confirmation step; offer undo for individual removals where practical.
+- [x] **Use safer destructive confirmations.** Bulk deletion names the current batch and exact row count and requires typing `ELIMINAR`; individual staged rows remain explicitly removable from the review surface.
 - [ ] **Improve empty states.** Explain the next useful action and link directly to it, especially for no period, no budget, no import, and no staged rows.
 - [ ] **Localise intentionally.** The product data and audience are Chilean/Spanish but parts of the UI are English. Choose a primary language and make terminology consistent.
 - [x] **Remove runtime styling dependencies for offline use.** Tailwind is compiled into a local static stylesheet and the UI uses system fonts; no runtime styling or font CDN is required.

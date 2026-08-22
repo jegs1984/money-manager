@@ -114,3 +114,5 @@ La cabecera de revisión identifica el lote que estás viendo: archivo, cuenta o
 # Revisión rápida
 
 Filtra la cartola por texto, tipo o categoría. Puedes seleccionar varias filas y aplicarles la categoría elegida; cada fila sigue visible y editable antes de confirmar el lote.
+
+Para eliminar todo un lote, la aplicación muestra su nombre y el número de filas y pide escribir `ELIMINAR`. Es una acción permanente: usa las decisiones por fila cuando quieras conservar el resto del lote.
