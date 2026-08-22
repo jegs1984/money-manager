@@ -25,6 +25,12 @@ urlpatterns = [
     path('accounts/<int:pk>/edit/',       views.AccountUpdateView.as_view(),     name='account_update'),
     path('transfers/create/',             views.TransferCreateView.as_view(),    name='transfer_create'),
     path('reconciliations/create/',       views.ReconciliationCreateView.as_view(), name='reconciliation_create'),
+    path('merchant-rules/',               views.MerchantRuleListView.as_view(), name='merchant_rule_list'),
+    path('merchant-rules/create/',        views.MerchantRuleCreateView.as_view(), name='merchant_rule_create'),
+    path('recurring/',                    views.RecurringPlanListView.as_view(), name='recurring_plan_list'),
+    path('recurring/create/',             views.RecurringPlanCreateView.as_view(), name='recurring_plan_create'),
+    path('goals/',                        views.GoalListView.as_view(), name='goal_list'),
+    path('goals/create/',                 views.GoalCreateView.as_view(), name='goal_create'),
 
     path('budget-items/create/',          views.BudgetItemCreateView.as_view(),  name='budgetitem_create'),
     path('budget-items/<int:pk>/edit/',   views.BudgetItemUpdateView.as_view(),  name='budgetitem_update'),

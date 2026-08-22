@@ -2,7 +2,7 @@ from django import forms
 from django.forms import modelformset_factory
 from django.utils import timezone
 
-from .models import Account, BudgetItem, Category, Period, Reconciliation, StagingCCTransaction, StagingTransaction, Transaction, Transfer
+from .models import Account, BudgetItem, Category, Goal, MerchantRule, Period, Reconciliation, RecurringPlan, StagingCCTransaction, StagingTransaction, Transaction, Transfer
 
 
 class PeriodForm(forms.ModelForm):
@@ -61,6 +61,42 @@ class ReconciliationForm(forms.ModelForm):
             'account': forms.Select(attrs={'class': 'form-select'}),
             'statement_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-input'}),
             'statement_balance': forms.NumberInput(attrs={'class': 'form-input', 'step': '0.01'}),
+            'notes': forms.Textarea(attrs={'class': 'form-input', 'rows': 3}),
+        }
+
+
+class MerchantRuleForm(forms.ModelForm):
+    class Meta:
+        model = MerchantRule
+        fields = ['description_pattern', 'category', 'transaction_type', 'is_active']
+        widgets = {
+            'description_pattern': forms.TextInput(attrs={'class': 'form-input'}),
+            'category': forms.Select(attrs={'class': 'form-select'}),
+            'transaction_type': forms.Select(attrs={'class': 'form-select'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-checkbox'}),
+        }
+
+
+class RecurringPlanForm(forms.ModelForm):
+    class Meta:
+        model = RecurringPlan
+        fields = ['name', 'category', 'account', 'transaction_type', 'amount', 'frequency', 'next_date', 'description', 'is_active']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-input'}), 'category': forms.Select(attrs={'class': 'form-select'}),
+            'account': forms.Select(attrs={'class': 'form-select'}), 'transaction_type': forms.Select(attrs={'class': 'form-select'}),
+            'amount': forms.NumberInput(attrs={'class': 'form-input', 'step': '0.01', 'min': '0.01'}), 'frequency': forms.Select(attrs={'class': 'form-select'}),
+            'next_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-input'}), 'description': forms.TextInput(attrs={'class': 'form-input'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-checkbox'}),
+        }
+
+
+class GoalForm(forms.ModelForm):
+    class Meta:
+        model = Goal
+        fields = ['name', 'target_amount', 'saved_amount', 'target_date', 'notes']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-input'}), 'target_amount': forms.NumberInput(attrs={'class': 'form-input', 'step': '0.01', 'min': '0.01'}),
+            'saved_amount': forms.NumberInput(attrs={'class': 'form-input', 'step': '0.01', 'min': '0'}), 'target_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-input'}),
             'notes': forms.Textarea(attrs={'class': 'form-input', 'rows': 3}),
         }
 

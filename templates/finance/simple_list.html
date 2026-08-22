@@ -1,0 +1,8 @@
+{% extends "finance/base.html" %}
+{% block page_title %}Planning{% endblock %}
+{% block content %}
+<div class="card space-y-3">
+  {% if 'merchant-rules' in request.path %}<a class="btn-primary text-xs" href="{% url 'finance:merchant_rule_create' %}">+ Merchant rule</a>{% elif 'recurring' in request.path %}<div class="flex gap-2"><form method="post">{% csrf_token %}<button class="btn-secondary text-xs" type="submit">Add due entries</button></form><a class="btn-primary text-xs" href="{% url 'finance:recurring_plan_create' %}">+ Recurring plan</a></div>{% else %}<a class="btn-primary text-xs" href="{% url 'finance:goal_create' %}">+ Goal</a>{% endif %}
+  {% for row in rows %}<div class="border-b border-zinc-800 pb-3 text-sm text-zinc-200">{{ row }}{% if row.progress_percent != None %}<span class="ml-2 font-mono text-emerald-400">{{ row.progress_percent|floatformat:0 }}%</span>{% endif %}</div>{% empty %}<p class="text-sm text-zinc-500">Nothing configured yet.</p>{% endfor %}
+</div>
+{% endblock %}

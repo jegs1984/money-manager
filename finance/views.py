@@ -12,17 +12,18 @@ from django.views.generic import (
 )
 
 from .forms import (
-    AccountForm, BudgetItemForm, CategoryForm, PeriodForm, ReconciliationForm, TransferForm,
+    AccountForm, BudgetItemForm, CategoryForm, GoalForm, MerchantRuleForm, PeriodForm, ReconciliationForm, RecurringPlanForm, TransferForm,
     StagingReviewFormset, StatementUploadForm, TransactionForm,
     CCStatementUploadForm, StagingCCReviewFormset,
 )
-from .models import Account, BudgetItem, Category, ImportBatch, Period, StagingCCTransaction, StagingTransaction, Transaction
+from .models import Account, BudgetItem, Category, Goal, ImportBatch, MerchantRule, Period, RecurringPlan, StagingCCTransaction, StagingTransaction, Transaction
 from .services import (
     calculate_safe_to_spend, generate_dashboard_pdf, get_duplicate_staging_ids,
     parse_scotiabank_statement, process_staging_batch,
     parse_scotiabank_cc_statement, process_cc_staging_batch,
     calculate_account_balance, close_period_service, reconcile_account_service,
     record_transfer_service, reverse_transaction_service,
+    materialize_recurring_plans,
 )
 
 
@@ -338,6 +339,50 @@ class ReconciliationCreateView(FormView):
         difference = reconciliation.statement_balance - reconciliation.calculated_balance
         messages.success(self.request, f'Reconciliation saved. Difference: ${difference:,.0f}.')
         return super().form_valid(form)
+
+
+class MerchantRuleListView(ListView):
+    model = MerchantRule
+    template_name = 'finance/simple_list.html'
+    context_object_name = 'rows'
+
+
+class MerchantRuleCreateView(CreateView):
+    model = MerchantRule
+    form_class = MerchantRuleForm
+    template_name = 'finance/financial_form.html'
+    success_url = reverse_lazy('finance:merchant_rule_list')
+
+
+class RecurringPlanListView(ListView):
+    model = RecurringPlan
+    template_name = 'finance/simple_list.html'
+    context_object_name = 'rows'
+
+    def post(self, request, *args, **kwargs):
+        created = materialize_recurring_plans()
+        messages.success(request, f'{created} recurring transaction(s) added for review in the ledger.')
+        return redirect('finance:recurring_plan_list')
+
+
+class RecurringPlanCreateView(CreateView):
+    model = RecurringPlan
+    form_class = RecurringPlanForm
+    template_name = 'finance/financial_form.html'
+    success_url = reverse_lazy('finance:recurring_plan_list')
+
+
+class GoalListView(ListView):
+    model = Goal
+    template_name = 'finance/simple_list.html'
+    context_object_name = 'rows'
+
+
+class GoalCreateView(CreateView):
+    model = Goal
+    form_class = GoalForm
+    template_name = 'finance/financial_form.html'
+    success_url = reverse_lazy('finance:goal_list')
 
 
 # ─────────────────────────────────────────────

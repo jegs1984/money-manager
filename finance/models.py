@@ -229,6 +229,60 @@ class Reconciliation(models.Model):
         ]
 
 
+class MerchantRule(models.Model):
+    description_pattern = models.CharField(max_length=120, unique=True)
+    category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name='merchant_rules')
+    transaction_type = models.CharField(max_length=3, choices=BudgetItem.TYPE_CHOICES, blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'finance_merchant_rule'
+        ordering = ['description_pattern']
+
+    def __str__(self):
+        return f'{self.description_pattern} → {self.category}'
+
+
+class RecurringPlan(models.Model):
+    FREQUENCY_CHOICES = [('MONTHLY', 'Monthly'), ('WEEKLY', 'Weekly')]
+
+    name = models.CharField(max_length=100, unique=True)
+    category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name='recurring_plans')
+    account = models.ForeignKey(Account, on_delete=models.SET_NULL, null=True, blank=True, related_name='recurring_plans')
+    transaction_type = models.CharField(max_length=3, choices=BudgetItem.TYPE_CHOICES)
+    amount = models.DecimalField(max_digits=14, decimal_places=2)
+    frequency = models.CharField(max_length=10, choices=FREQUENCY_CHOICES, default='MONTHLY')
+    next_date = models.DateField()
+    description = models.CharField(max_length=255)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = 'finance_recurring_plan'
+        ordering = ['next_date', 'name']
+
+
+class Goal(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    target_amount = models.DecimalField(max_digits=14, decimal_places=2)
+    saved_amount = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    target_date = models.DateField(null=True, blank=True)
+    notes = models.TextField(blank=True)
+    is_complete = models.BooleanField(default=False)
+
+    class Meta:
+        db_table = 'finance_goal'
+        ordering = ['is_complete', 'target_date', 'name']
+        constraints = [
+            models.CheckConstraint(check=Q(target_amount__gt=0), name='finance_goal_target_amount_gt_0'),
+            models.CheckConstraint(check=Q(saved_amount__gte=0), name='finance_goal_saved_amount_gte_0'),
+        ]
+
+    @property
+    def progress_percent(self):
+        return min(100, (self.saved_amount / self.target_amount * 100) if self.target_amount else 0)
+
+
 class ImportBatch(models.Model):
     SOURCE_CHOICES = [('BANK', 'Bank statement'), ('CREDIT_CARD', 'Credit card statement'), ('NOTIFICATION', 'Notification')]
     STATUS_CHOICES = [('STAGED', 'Staged'), ('COMMITTED', 'Committed'), ('DISCARDED', 'Discarded')]

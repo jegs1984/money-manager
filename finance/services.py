@@ -26,7 +26,7 @@ import csv
 import hashlib
 import io
 import re
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from decimal import Decimal, InvalidOperation
 
 from django.db import transaction as db_transaction
@@ -34,7 +34,8 @@ from django.db.models import Sum, Value, Q
 from django.db.models.functions import Coalesce
 
 from .models import (
-    Account, BudgetItem, Category, ImportBatch, Period, Reconciliation,
+    Account, BudgetItem, Category, Goal, ImportBatch, MerchantRule, Period, Reconciliation,
+    RecurringPlan,
     StagingCCTransaction, StagingTransaction, Transaction, Transfer,
 )
 
@@ -60,6 +61,17 @@ def _parse_signed_balance(raw: str) -> Decimal:
     negative = raw.strip().startswith('-')
     amount = _parse_amount(raw)
     return -amount if negative else amount
+
+
+def suggest_category(description: str, transaction_type: str) -> Category | None:
+    """Return a reviewable category suggestion from a user-confirmed merchant rule."""
+    normalized = description.casefold()
+    for rule in MerchantRule.objects.filter(is_active=True).select_related('category'):
+        if rule.transaction_type and rule.transaction_type != transaction_type:
+            continue
+        if rule.description_pattern.casefold() in normalized:
+            return rule.category
+    return None
 
 
 def _parse_header(lines: list[str]) -> dict:
@@ -209,7 +221,7 @@ def parse_scotiabank_statement(file_obj, source_filename: str = '', import_again
                 balance=balance,
                 type=tx_type,
                 is_processed=False,
-                assigned_category=None,
+                assigned_category=suggest_category(description, tx_type),
             )
         )
 
@@ -627,7 +639,7 @@ def parse_scotiabank_cc_statement(file_obj, source_filename: str = '', import_ag
                 installment_value=abs(installment_value) if installment_value else None,
                 type=tx_type,
                 is_processed=False,
-                assigned_category=None,
+                assigned_category=suggest_category(description, tx_type),
             )
         )
 
@@ -818,6 +830,53 @@ def close_period_service(period_id: int) -> Period:
     period.is_active = False
     period.save(update_fields=['closed_at', 'is_active'])
     return period
+
+
+def _advance_recurring_date(current: date, frequency: str) -> date:
+    if frequency == 'WEEKLY':
+        return current + timedelta(days=7)
+    import calendar
+    year = current.year + (current.month // 12)
+    month = current.month % 12 + 1
+    return current.replace(year=year, month=month, day=min(current.day, calendar.monthrange(year, month)[1]))
+
+
+@db_transaction.atomic
+def materialize_recurring_plans(until: date | None = None) -> int:
+    """Create due recurring ledger entries once, retaining a stable source fingerprint."""
+    until = until or date.today()
+    created = 0
+    for plan in RecurringPlan.objects.select_for_update().filter(is_active=True, next_date__lte=until):
+        while plan.next_date <= until:
+            period = Period.objects.filter(start_date__lte=plan.next_date, end_date__gte=plan.next_date).first()
+            fingerprint = f'recurring:{plan.pk}:{plan.next_date.isoformat()}'
+            if period and not Transaction.objects.filter(source_fingerprint=fingerprint).exists():
+                _assert_period_open(period)
+                item = _get_or_create_budget_item(period, plan.category, plan.transaction_type)
+                Transaction.objects.create(
+                    account=plan.account,
+                    budget_item=item,
+                    date=plan.next_date,
+                    real_amount=plan.amount,
+                    description=plan.description,
+                    notes=f'Recurring plan: {plan.name}',
+                    source_fingerprint=fingerprint,
+                )
+                created += 1
+            plan.next_date = _advance_recurring_date(plan.next_date, plan.frequency)
+        plan.save(update_fields=['next_date'])
+    return created
+
+
+@db_transaction.atomic
+def contribute_to_goal(goal_id: int, amount: Decimal) -> Goal:
+    if amount <= 0:
+        raise ValueError('A goal contribution must be greater than zero.')
+    goal = Goal.objects.select_for_update().get(pk=goal_id)
+    goal.saved_amount += amount
+    goal.is_complete = goal.saved_amount >= goal.target_amount
+    goal.save(update_fields=['saved_amount', 'is_complete'])
+    return goal
 
 
 def calculate_safe_to_spend(period_id: int) -> dict:
