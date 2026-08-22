@@ -65,3 +65,13 @@ After a restore, start the app, sign in if login is enabled, and confirm that
 periods, categories, budget items, and recent transactions appear as expected.
 Run `python manage.py migrate` (or start the Docker web service) so the restored
 database has all current migrations applied.
+
+## Recovering a failed import
+
+Imports are staged first. A parser failure does not write ledger transactions;
+correct the source file and upload it again. If a review is interrupted, return
+to **Staging Review** and select the same batch—the unprocessed rows remain
+there. Review duplicate warnings before confirming. To discard a bad batch, use
+the batch-scoped deletion control, which names the batch and requires an explicit
+confirmation. If any rows were already confirmed, do not delete ledger history:
+use the reversal workflow and retain the original imported row as audit evidence.
