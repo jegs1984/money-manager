@@ -14,26 +14,26 @@ Keep these principles intact in every change:
 - [x] **Fix budget direction integrity.** Budget lines are distinct by `(period, category, type)` in Django and Android.
 - [x] **Prevent overlapping periods.** PostgreSQL range validation and application validation ensure one period per transaction date.
 - [x] **Make committed imports traceable and idempotent.** Ledger rows retain an immutable staging source and source fingerprint.
-- [ ] **Make Django migrations authoritative.** Reconcile `finance/models.py`, `finance/migrations/`, and `sql/`; add a corrective migration instead of relying on raw SQL schema setup.
-- [ ] **Add database integrity rules.** Enforce `Period.start_date <= end_date`, a well-defined single active period policy, and a transaction date that belongs to its budget item's period.
-- [ ] **Remove manual primary-key allocation from `Category.save()`.** Let PostgreSQL sequences generate IDs; add a safe data migration if seeded data needs sequence repair.
-- [ ] **Fix the `Unplanned/Extra` category group.** Use a valid current group (`Gastos`) rather than the obsolete `LIFESTYLE` value.
+- [x] **Make Django migrations authoritative.** `finance/migrations/` is the schema history; `sql/` is reference-only.
+- [x] **Add database integrity rules.** Period validity/activeness and transaction-period integrity are enforced in Django and PostgreSQL.
+- [x] **Remove manual primary-key allocation from `Category.save()`.** Category identifiers are database-generated and the existing migration repairs the PostgreSQL sequence.
+- [x] **Fix the `Unplanned/Extra` category group.** The helper creates it in `Gastos`.
 - [ ] **Consolidate Android into one architecture.** Choose one set of entities, DAOs, screens, and ViewModels; remove the stale duplicate implementation and make all desired screens reachable from one navigation graph.
 - [ ] **Repair Android notification ingestion.** One pure parser should be used by `BankNotificationService`, the staging writer, and unit tests. Keep the outcome in staging only.
 - [ ] **Remove Room destructive migrations.** Implement and test real migrations so an app update cannot erase financial history.
-- [ ] **Restrict local deployments by default.** Bind Docker web/database ports to loopback, fix production settings, and add authentication before any non-local deployment.
-- [ ] **Correct `.env.example`.** Align its variable names with `DJANGO_SECRET_KEY` and `DB_*` settings.
+- [x] **Restrict local deployments by default.** Docker binds to loopback and production settings require login/secure cookies.
+- [x] **Correct `.env.example`.** It uses the Django secret-key and database variable names consumed by settings.
 
 ## P1 — Make reconciliation dependable
 
-- [ ] **Introduce `ImportBatch`.** Store source type, filename, account/card reference, content hash, import time, parser version, and status; associate staging rows with a batch.
-- [ ] **Review one batch at a time.** Do not mix unprocessed rows from different files, accounts, or notification imports in one review screen.
-- [ ] **Detect duplicates against each row's target period.** A batch can cross period boundaries; the active dashboard period must not determine duplicate status.
-- [ ] **Add idempotent import protection.** Warn when an identical file hash has already been staged or committed, while preserving an explicit “import again” choice for legitimate cases.
-- [ ] **Preserve signed balances.** Separate signed balance parsing from positive debit/credit amount parsing in both web and Android parsers.
-- [ ] **Harden XLS handling.** Declare every required dependency, clean temporary files/directories reliably, validate file content server-side, and show actionable parse diagnostics.
-- [ ] **Complete or remove unfinished period actions.** Implement the visible duplicate-budget/rollover flow with a preview and confirmation; do not leave a no-op route.
-- [ ] **Add a correction workflow.** Let users reverse or edit committed transactions with a clear history rather than relying on destructive deletes.
+- [x] **Introduce `ImportBatch`.** Source metadata, hashes, status, and staging associations are stored.
+- [x] **Review one batch at a time.** The review views default to the newest batch and accept explicit batch scope.
+- [x] **Detect duplicates against each row's target period.** Web and Android find the period by the staged row date.
+- [x] **Add idempotent import protection.** Content hashes warn by default, re-import is explicit, and commits retain unique source fingerprints.
+- [x] **Preserve signed balances.** Debit parsing separates signed balances from positive debit/credit amounts.
+- [x] **Harden XLS handling.** Dependencies are declared, temporary files are cleaned, and parser failures are actionable.
+- [x] **Complete or remove unfinished period actions.** Budget duplication has preview/confirmation and rollover is implemented as a service.
+- [x] **Add a correction workflow.** Reversals preserve the original transaction and provide an audit trail.
 - [x] **Model accounts and transfers.** Accounts and off-budget transfers prevent transfers from inflating income or expense totals.
 - [x] **Close and reconcile periods.** Account reconciliation, immutable reversals, and closed-period guards are available.
 - [ ] **Use installments for forward planning.** Turn captured credit-card installment data into future-period obligations and remaining-balance views.
