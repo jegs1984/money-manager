@@ -1,0 +1,6 @@
+{
+  "transactions": 2,
+  "skipped": 0,
+  "first": {"date": "2026-01-01", "type": "OUT", "amount": "1234.00", "balance": "-1234.00"},
+  "second": {"date": "2026-01-02", "type": "IN", "amount": "5000.00", "balance": "3766.00"}
+}

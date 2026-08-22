@@ -77,6 +77,10 @@ GitHub Actions repeats Django migration checks/tests against PostgreSQL and
 Android unit/debug builds for every push and pull request. Keep schema-parity
 notes in the migration and Room-migration comments whenever a shared field
 changes.
+
+## Fixtures bancarios
+
+`finance/tests/fixtures/` contiene cartolas sintéticas y sus resultados esperados. Úsalas para pruebas de parser; no agregues cuentas, comercios, montos o cartolas reales al repositorio.
 # Estilos locales
 
 Las plantillas usan `static/finance/tailwind.css`, no una CDN. Después de cambiar las clases de las plantillas o `static/finance/tailwind-input.css`, recompila el archivo versionado con:
