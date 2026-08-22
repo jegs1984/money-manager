@@ -127,7 +127,7 @@
           <th class="px-4 py-2 text-right font-mono text-xs text-zinc-600 uppercase tracking-widest">Projected</th>
           <th class="px-4 py-2 text-right font-mono text-xs text-zinc-600 uppercase tracking-widest">Actual</th>
           <th class="px-4 py-2 text-right font-mono text-xs text-zinc-600 uppercase tracking-widest">Diff</th>
-          <th class="px-4 py-2 font-mono text-xs text-zinc-600 uppercase tracking-widest w-28">Cap.</th>
+          <th class="px-4 py-2 font-mono text-xs text-zinc-600 uppercase tracking-widest w-28">Uso del presupuesto</th>
           <th class="px-4 py-2 text-right font-mono text-xs text-zinc-600 uppercase tracking-widest w-20">—</th>
         </tr>
       </thead>
@@ -150,7 +150,7 @@
             {% else %}<span class="font-mono text-xs text-zinc-700">—</span>{% endif %}
           </td>
           <td class="px-4 py-2.5 text-right">
-            <div class="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div class="flex justify-end gap-3 flex">
               <a href="{% url 'finance:budgetitem_update' item.pk %}" class="text-xs text-zinc-500 hover:text-zinc-300">edit</a>
               <a href="{% url 'finance:budgetitem_delete' item.pk %}" class="text-xs text-zinc-500 hover:text-red-400">del</a>
             </div>
@@ -193,7 +193,7 @@
           <th class="px-4 py-2 text-right font-mono text-xs text-zinc-600 uppercase tracking-widest">Projected</th>
           <th class="px-4 py-2 text-right font-mono text-xs text-zinc-600 uppercase tracking-widest">Actual</th>
           <th class="px-4 py-2 text-right font-mono text-xs text-zinc-600 uppercase tracking-widest">Diff</th>
-          <th class="px-4 py-2 font-mono text-xs text-zinc-600 uppercase tracking-widest w-28">Cap.</th>
+          <th class="px-4 py-2 font-mono text-xs text-zinc-600 uppercase tracking-widest w-28">Uso del presupuesto</th>
           <th class="px-4 py-2 text-right font-mono text-xs text-zinc-600 uppercase tracking-widest w-20">—</th>
         </tr>
       </thead>
@@ -216,7 +216,7 @@
             {% else %}<span class="font-mono text-xs text-zinc-700">—</span>{% endif %}
           </td>
           <td class="px-4 py-2.5 text-right">
-            <div class="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div class="flex justify-end gap-3 flex">
               <a href="{% url 'finance:budgetitem_update' item.pk %}" class="text-xs text-zinc-500 hover:text-zinc-300">edit</a>
               <a href="{% url 'finance:budgetitem_delete' item.pk %}" class="text-xs text-zinc-500 hover:text-red-400">del</a>
             </div>

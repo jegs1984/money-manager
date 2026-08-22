@@ -47,9 +47,9 @@ Keep these principles intact in every change:
 - [ ] **Retain manual approval while adding suggestions.** Offer a preselected category based on previously confirmed merchant rules; mark it as a suggestion and require review before commit.
 - [ ] **Improve duplicate decisions.** Show the matching ledger transaction (date, category, source, and amount) next to the staged row, rather than only “Already in ledger.”
 - [x] **Use Chilean money formatting consistently.** The shared `clp` template formatter renders whole pesos as `$1.234.567` across templates instead of generic `floatformat` currency output.
-- [ ] **Use labels, not cryptic abbreviations.** Replace table headings such as `T`, `Cap.`, and `—` with readable text or tooltips that work on touch devices.
+- [x] **Use labels, not cryptic abbreviations.** Review and dashboard tables use explicit Spanish headings such as Tipo and Uso del presupuesto, with visible action text.
 - [ ] **Do not rely on colour alone.** Pair green/amber/red states with labels and icons; ensure readable contrast in the dark theme.
-- [ ] **Make row actions always available.** Hover-only edit/delete controls are inaccessible on touch and awkward with keyboards. Use visible compact actions or an accessible overflow menu.
+- [x] **Make row actions always available.** Dashboard and group-table edit/delete controls are always visible, while review controls are persistent buttons with accessible names.
 - [x] **Use safer destructive confirmations.** Bulk deletion names the current batch and exact row count and requires typing `ELIMINAR`; individual staged rows remain explicitly removable from the review surface.
 - [ ] **Improve empty states.** Explain the next useful action and link directly to it, especially for no period, no budget, no import, and no staged rows.
 - [ ] **Localise intentionally.** The product data and audience are Chilean/Spanish but parts of the UI are English. Choose a primary language and make terminology consistent.
