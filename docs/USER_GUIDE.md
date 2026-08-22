@@ -118,3 +118,7 @@ Filtra la cartola por texto, tipo o categoría. Puedes seleccionar varias filas 
 Para eliminar todo un lote, la aplicación muestra su nombre y el número de filas y pide escribir `ELIMINAR`. Es una acción permanente: usa las decisiones por fila cuando quieras conservar el resto del lote.
 
 Las tablas usan encabezados completos y las acciones Editar/Eliminar se mantienen visibles tanto con teclado como en pantallas táctiles.
+
+# Necesita atención
+
+El inicio resume filas sin categoría, posibles duplicados y categorías cerca o sobre su presupuesto. Cada tarjeta abre la revisión o el análisis correspondiente; los colores siempre van acompañados de texto y un contador.

@@ -65,6 +65,14 @@ class DashboardView(TemplateView):
             )
             ctx.update(stats)
             ctx['budget_items'] = items
+            item_list = list(items)
+            ctx['needs_attention'] = {
+                'uncategorised': StagingTransaction.objects.filter(is_processed=False, assigned_category__isnull=True).count()
+                    + StagingCCTransaction.objects.filter(is_processed=False, assigned_category__isnull=True).count(),
+                'duplicates': len(get_duplicate_staging_ids(active_period, StagingTransaction.objects.filter(is_processed=False))),
+                'near_budget': sum(1 for item in item_list if item.type == 'OUT' and item.projected_amount and item.total_real >= item.projected_amount * Decimal('0.80') and item.total_real < item.projected_amount),
+                'over_budget': sum(1 for item in item_list if item.type == 'OUT' and item.total_real > item.projected_amount),
+            }
 
         ctx['active_period'] = active_period
         ctx['all_periods']   = all_periods

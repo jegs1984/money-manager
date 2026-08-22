@@ -25,6 +25,16 @@
 </div>
 {% else %}
 
+<section class="mb-6 card" aria-labelledby="needs-attention-title">
+  <div class="mb-3 flex items-center justify-between"><h2 id="needs-attention-title" class="font-mono text-xs uppercase tracking-widest text-zinc-300">Necesita atención</h2><span class="text-xs text-zinc-400">Revisa antes de cerrar el período</span></div>
+  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <a class="rounded border border-zinc-800 p-3 hover:border-amber-600" href="{% url 'finance:staging_review' %}"><strong class="text-amber-300">{{ needs_attention.uncategorised }}</strong><span class="ml-1 text-sm">sin categoría</span></a>
+    <a class="rounded border border-zinc-800 p-3 hover:border-amber-600" href="{% url 'finance:staging_review' %}"><strong class="text-amber-300">{{ needs_attention.duplicates }}</strong><span class="ml-1 text-sm">duplicados por decidir</span></a>
+    <a class="rounded border border-zinc-800 p-3 hover:border-amber-600" href="#budget-analysis"><strong class="text-amber-300">{{ needs_attention.near_budget }}</strong><span class="ml-1 text-sm">categorías cerca del límite</span></a>
+    <a class="rounded border border-zinc-800 p-3 hover:border-red-500" href="#budget-analysis"><strong class="text-red-300">{{ needs_attention.over_budget }}</strong><span class="ml-1 text-sm">categorías sobre presupuesto</span></a>
+  </div>
+</section>
+
 <!-- Period selector + info bar -->
 <div class="mb-5 flex flex-wrap items-end gap-4">
   <div>
@@ -105,7 +115,7 @@
 
 <!-- Budget item analysis -->
 {% if budget_items %}
-<div class="card overflow-hidden p-0">
+<div id="budget-analysis" class="card overflow-hidden p-0">
   <div class="px-5 py-3 border-b border-zinc-800 flex items-center justify-between">
     <span class="font-mono text-xs text-zinc-500 uppercase tracking-widest">Budget Analysis</span>
     <a href="{% url 'finance:dashboard_pdf' %}?period={{ active_period.id }}"
