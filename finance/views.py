@@ -17,7 +17,7 @@ from .forms import (
     StagingReviewFormset, StatementUploadForm, TransactionForm,
     CCStatementUploadForm, StagingCCReviewFormset,
 )
-from .models import Account, BudgetItem, Category, Goal, ImportBatch, MerchantRule, Period, RecurringPlan, StagingCCTransaction, StagingTransaction, Transaction
+from .models import Account, BudgetItem, Category, Goal, ImportBatch, InstallmentObligation, MerchantRule, Period, RecurringPlan, StagingCCTransaction, StagingTransaction, Transaction
 from .services import (
     calculate_safe_to_spend, generate_dashboard_pdf, get_duplicate_staging_ids,
     parse_scotiabank_statement, process_staging_batch,
@@ -384,6 +384,12 @@ class GoalCreateView(CreateView):
     form_class = GoalForm
     template_name = 'finance/financial_form.html'
     success_url = reverse_lazy('finance:goal_list')
+
+
+class InstallmentObligationListView(ListView):
+    model = InstallmentObligation
+    template_name = 'finance/installment_list.html'
+    context_object_name = 'obligations'
 
 
 # ─────────────────────────────────────────────

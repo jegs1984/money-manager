@@ -95,3 +95,6 @@ audit a merchant, budget category, or statement period before exporting.
   private storage.
 - Back up before deleting data, rebuilding the Docker database volume, or making
   a substantial upgrade. See [Backup and recovery](BACKUP_AND_RECOVERY.md).
+# Cuotas de tarjeta
+
+Al confirmar una compra de tarjeta en cuotas, Money Manager conserva la compra original y crea una obligación futura. Revísala en **Cuotas pendientes** para ver la siguiente fecha, número de cuotas restantes y saldo por pagar. La obligación es una ayuda de planificación: no agrega movimientos al libro sin revisión.

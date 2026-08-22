@@ -38,7 +38,7 @@ from django.db.models.functions import Coalesce
 from django.core.serializers.json import DjangoJSONEncoder
 
 from .models import (
-    Account, BudgetItem, Category, Goal, ImportBatch, MerchantRule, Period, Reconciliation,
+    Account, BudgetItem, Category, Goal, ImportBatch, InstallmentObligation, MerchantRule, Period, Reconciliation,
     RecurringPlan,
     StagingCCTransaction, StagingTransaction, Transaction, Transfer,
 )
@@ -286,6 +286,14 @@ def _get_or_create_import_account(reference: str | None, kind: str) -> Account |
     return account
 
 
+def _add_months(value: date, months: int) -> date:
+    """Move a date forward without invalid month-end dates."""
+    import calendar
+    month_index = value.month - 1 + months
+    year, month = value.year + month_index // 12, month_index % 12 + 1
+    return value.replace(year=year, month=month, day=min(value.day, calendar.monthrange(year, month)[1]))
+
+
 # ─────────────────────────────────────────────
 # Public: Staging batch processor
 # ─────────────────────────────────────────────
@@ -402,7 +410,7 @@ def rollover_period_balance(source_period_id: int, target_period_id: int) -> Dec
     if rollover_total != Decimal('0.00'):
         cat         = _get_or_create_unplanned_category()
         target_item = _get_or_create_budget_item(target, cat, 'IN')
-        Transaction.objects.create(
+        committed_transaction = Transaction.objects.create(
             budget_item=target_item,
             date=target.start_date,
             real_amount=abs(rollover_total),
@@ -715,7 +723,7 @@ def process_cc_staging_batch(
         budget_item = _get_or_create_budget_item(period, category, stx.type)
         account = _get_or_create_import_account(stx.card_number, 'CREDIT_CARD')
 
-        Transaction.objects.create(
+        committed_transaction = Transaction.objects.create(
             budget_item=budget_item,
             date=stx.original_date,
             real_amount=stx.amount,
@@ -725,6 +733,22 @@ def process_cc_staging_batch(
             source_fingerprint=f'cc-staging:{stx.pk}',
             account=account,
         )
+
+        if (
+            stx.type == 'OUT' and stx.installment_total and stx.installment_current
+            and stx.installment_total > stx.installment_current
+        ):
+            value = stx.installment_value or stx.amount
+            remaining = stx.installment_total - stx.installment_current
+            InstallmentObligation.objects.create(
+                source_transaction=committed_transaction,
+                category=category,
+                description=stx.description,
+                next_due_date=_add_months(stx.original_date, 1),
+                remaining_installments=remaining,
+                installment_value=value,
+                remaining_amount=value * remaining,
+            )
 
         stx.is_processed      = True
         stx.assigned_category = category
@@ -746,7 +770,7 @@ def process_cc_staging_batch(
 
 @db_transaction.atomic
 def reverse_transaction_service(transaction_id: int, notes: str = '') -> Transaction:
-    original = Transaction.objects.select_for_update().select_related(
+    original = Transaction.objects.select_for_update(of=('self',)).select_related(
         'budget_item__period', 'budget_item__category'
     ).get(pk=transaction_id)
     if original.reversal_of_id or hasattr(original, 'reversal'):

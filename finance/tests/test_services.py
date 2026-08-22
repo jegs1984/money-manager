@@ -3,9 +3,10 @@ from decimal import Decimal
 
 from django.test import TestCase
 
-from finance.models import Category, MerchantRule, Period, StagingTransaction, Transaction
+from finance.models import Category, InstallmentObligation, MerchantRule, Period, StagingCCTransaction, StagingTransaction, Transaction
 from finance.services import (
     _get_or_create_budget_item,
+    process_cc_staging_batch,
     process_staging_batch,
     reverse_transaction_service,
     suggest_category,
@@ -47,3 +48,15 @@ class LedgerServiceTests(TestCase):
         MerchantRule.objects.create(description_pattern='market', category=self.category, transaction_type='OUT')
         self.assertEqual(suggest_category('Market purchase', 'OUT'), self.category)
         self.assertIsNone(suggest_category('Market refund', 'IN'))
+
+    def test_credit_card_installment_creates_future_obligation(self):
+        staging = StagingCCTransaction.objects.create(
+            original_date=date(2026, 1, 15), description='Laptop', amount=Decimal('100.00'),
+            type='OUT', installment_current=1, installment_total=3,
+            installment_value=Decimal('100.00'),
+        )
+        self.assertEqual(process_cc_staging_batch([{'staging_id': staging.pk, 'category_id': self.category.pk}]), 1)
+        obligation = InstallmentObligation.objects.get()
+        self.assertEqual(obligation.remaining_installments, 2)
+        self.assertEqual(obligation.remaining_amount, Decimal('200.00'))
+        self.assertEqual(obligation.next_due_date, date(2026, 2, 15))

@@ -36,7 +36,7 @@ Keep these principles intact in every change:
 - [x] **Add a correction workflow.** Reversals preserve the original transaction and provide an audit trail.
 - [x] **Model accounts and transfers.** Accounts and off-budget transfers prevent transfers from inflating income or expense totals.
 - [x] **Close and reconcile periods.** Account reconciliation, immutable reversals, and closed-period guards are available.
-- [ ] **Use installments for forward planning.** Turn captured credit-card installment data into future-period obligations and remaining-balance views.
+- [x] **Use installments for forward planning.** Confirmed credit-card installment purchases create immutable future obligations with next due date, remaining installments, and outstanding balance views.
 
 ## P1 — Usability and visual design
 

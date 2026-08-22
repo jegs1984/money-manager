@@ -31,6 +31,7 @@ urlpatterns = [
     path('recurring/create/',             views.RecurringPlanCreateView.as_view(), name='recurring_plan_create'),
     path('goals/',                        views.GoalListView.as_view(), name='goal_list'),
     path('goals/create/',                 views.GoalCreateView.as_view(), name='goal_create'),
+    path('installments/',                  views.InstallmentObligationListView.as_view(), name='installment_list'),
 
     path('budget-items/create/',          views.BudgetItemCreateView.as_view(),  name='budgetitem_create'),
     path('budget-items/<int:pk>/edit/',   views.BudgetItemUpdateView.as_view(),  name='budgetitem_update'),

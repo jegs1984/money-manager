@@ -366,3 +366,26 @@ class StagingCCTransaction(models.Model):
 
     def __str__(self):
         return f'[CC] {self.original_date} {self.description}'
+
+
+class InstallmentObligation(models.Model):
+    """Future credit-card installments derived from a reviewed purchase."""
+    source_transaction = models.OneToOneField(
+        Transaction, on_delete=models.PROTECT, related_name='installment_obligation'
+    )
+    category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name='installment_obligations')
+    description = models.CharField(max_length=255)
+    next_due_date = models.DateField()
+    remaining_installments = models.PositiveSmallIntegerField()
+    installment_value = models.DecimalField(max_digits=14, decimal_places=2)
+    remaining_amount = models.DecimalField(max_digits=14, decimal_places=2)
+    is_complete = models.BooleanField(default=False)
+
+    class Meta:
+        db_table = 'finance_installment_obligation'
+        ordering = ['is_complete', 'next_due_date', 'description']
+        constraints = [
+            models.CheckConstraint(check=Q(remaining_installments__gte=0), name='finance_installment_remaining_gte_0'),
+            models.CheckConstraint(check=Q(installment_value__gt=0), name='finance_installment_value_gt_0'),
+            models.CheckConstraint(check=Q(remaining_amount__gte=0), name='finance_installment_amount_gte_0'),
+        ]
