@@ -64,7 +64,7 @@ Keep these principles intact in every change:
 - [x] Add date-range and category filters to transaction history, plus CSV export for user-owned backups. Transaction history supports text, date-range, category, and group filters, and CSV export remains available for local backups.
 - [x] Add a planned-versus-actual trend view across periods without changing the current period-based budgeting model.
 - [x] Add an offline, versioned, encrypted export/import bundle if the web and Android apps need to exchange data. Do not make cloud sync a requirement.
-- [ ] Add recurring income/expense plans, upcoming-bill reminders, and a daily cash-flow forecast. Recurring plans are available; reminders and forecast remain.
+- [x] Add recurring income/expense plans, upcoming-bill reminders, and a daily cash-flow forecast. Recurring plans, a 30-day upcoming-bills reminder, and a seven-day cash-flow forecast are available.
 - [x] Add goals and sinking funds for non-monthly spending such as insurance, travel, and emergency savings.
 
 ## P2 — Quality and delivery

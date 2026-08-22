@@ -35,6 +35,11 @@
   </div>
 </section>
 
+<section class="mb-6 grid gap-4 lg:grid-cols-2" aria-label="Próximos compromisos y flujo de caja">
+  <div class="card"><h2 class="mb-3 font-mono text-xs uppercase tracking-widest text-zinc-300">Próximos cobros y pagos</h2><ul class="space-y-2 text-sm">{% for plan in upcoming_bills %}<li class="flex justify-between"><span>{{ plan.next_date|date:"d/m" }} · {{ plan.description }}</span><span>{{ plan.amount|clp }}</span></li>{% endfor %}{% for item in upcoming_installments %}<li class="flex justify-between"><span>{{ item.next_due_date|date:"d/m" }} · cuota {{ item.description }}</span><span>{{ item.installment_value|clp }}</span></li>{% endfor %}{% if not upcoming_bills and not upcoming_installments %}<li class="text-zinc-400">No hay compromisos en los próximos 30 días.</li>{% endif %}</ul></div>
+  <div class="card"><h2 class="mb-3 font-mono text-xs uppercase tracking-widest text-zinc-300">Pronóstico diario (7 días)</h2><div class="space-y-1 text-sm">{% for day in cash_forecast %}<div class="flex justify-between"><span>{{ day.date|date:"D d/m" }}</span><span>{% if day.net < 0 %}Salida{% else %}Disponible{% endif %} {{ day.net|clp }}</span></div>{% endfor %}</div></div>
+</section>
+
 <!-- Period selector + info bar -->
 <div class="mb-5 flex flex-wrap items-end gap-4">
   <div>

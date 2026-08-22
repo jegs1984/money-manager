@@ -1,5 +1,6 @@
 import csv
 from decimal import Decimal
+from datetime import timedelta
 
 from django.contrib import messages
 from django.db.models import F, Sum, Value, Case, When
@@ -8,6 +9,7 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.views.decorators.http import require_POST
+from django.utils import timezone
 from django.views.generic import (
     CreateView, DeleteView, FormView, ListView, TemplateView, UpdateView, View,
 )
@@ -76,6 +78,17 @@ class DashboardView(TemplateView):
 
         ctx['active_period'] = active_period
         ctx['all_periods']   = all_periods
+        today = timezone.localdate()
+        ctx['upcoming_bills'] = list(RecurringPlan.objects.filter(is_active=True, next_date__gte=today, next_date__lte=today + timedelta(days=30)).select_related('category').order_by('next_date'))
+        ctx['upcoming_installments'] = list(InstallmentObligation.objects.filter(is_complete=False, next_due_date__gte=today, next_due_date__lte=today + timedelta(days=30)).select_related('category').order_by('next_due_date'))
+        forecast = []
+        for offset in range(7):
+            forecast_date = today + timedelta(days=offset)
+            income = sum((plan.amount for plan in ctx['upcoming_bills'] if plan.next_date == forecast_date and plan.transaction_type == 'IN'), Decimal('0'))
+            expenses = sum((plan.amount for plan in ctx['upcoming_bills'] if plan.next_date == forecast_date and plan.transaction_type == 'OUT'), Decimal('0'))
+            expenses += sum((item.installment_value for item in ctx['upcoming_installments'] if item.next_due_date == forecast_date), Decimal('0'))
+            forecast.append({'date': forecast_date, 'income': income, 'expenses': expenses, 'net': income - expenses})
+        ctx['cash_forecast'] = forecast
         return ctx
 
 
