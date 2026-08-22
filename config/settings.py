@@ -6,10 +6,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'dev-insecure-change-me-in-production')
 
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
+REQUIRE_LOGIN = os.environ.get('DJANGO_REQUIRE_LOGIN', str(not DEBUG)) == 'True'
+LOGIN_URL = '/accounts/login/'
 
 ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '127.0.0.1 localhost').split()
 
+if not DEBUG and SECRET_KEY == 'dev-insecure-change-me-in-production':
+    raise RuntimeError('DJANGO_SECRET_KEY must be set when DJANGO_DEBUG=False.')
+
 INSTALLED_APPS = [
+    'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.staticfiles',
     'django.contrib.messages',
@@ -20,11 +26,19 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'config.middleware.LocalDeploymentLoginRequiredMiddleware',
 ]
+
+if not DEBUG:
+    SECURE_SSL_REDIRECT = os.environ.get('SECURE_SSL_REDIRECT', 'True') == 'True'
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31_536_000
 
 ROOT_URLCONF = 'config.urls'
 

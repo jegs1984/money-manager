@@ -26,13 +26,8 @@ services:
     volumes:
       # Persistent data volume — survives container restarts / upgrades
       - postgres_data:/var/lib/postgresql/data
-      # Init scripts: run once when the data directory is first created.
-      # PostgreSQL runs *.sql files in this directory in filename order.
-      - ./sql/init_db.sql:/docker-entrypoint-initdb.d/01_init_db.sql:ro
-      - ./sql/migrate_add_cc_staging.sql:/docker-entrypoint-initdb.d/02_migrate_add_cc_staging.sql:ro
-      - ./sql/categories.sql:/docker-entrypoint-initdb.d/03_categories.sql:ro
     ports:
-      - "5433:5432"   # exposed on 5433 to avoid clashing with a local Postgres
+      - "127.0.0.1:5433:5432"   # local-only; Django migrations own the schema
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U money_manager_user -d money_manager"]
       interval: 5s
@@ -52,7 +47,7 @@ services:
     entrypoint: ["/app/docker/entrypoint.sh"]
     command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
     ports:
-      - "${APP_PORT:-8765}:8000"
+      - "127.0.0.1:${APP_PORT:-8765}:8000"
     environment:
       DJANGO_SECRET_KEY:    ${DJANGO_SECRET_KEY:-docker-insecure-change-me}
       DJANGO_DEBUG:         ${DJANGO_DEBUG:-True}

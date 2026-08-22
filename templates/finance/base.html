@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full">
+<html lang="es-CL" class="h-full">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -37,7 +37,7 @@
 <div class="flex h-full">
 
   <!-- Sidebar -->
-  <aside class="fixed inset-y-0 left-0 z-40 flex w-56 flex-col border-r border-zinc-800 bg-zinc-950">
+  <aside class="fixed inset-y-0 left-0 z-40 hidden w-56 flex-col border-r border-zinc-800 bg-zinc-950 md:flex">
     <div class="flex h-14 shrink-0 items-center border-b border-zinc-800 px-5">
       <span class="font-mono text-sm font-semibold tracking-widest text-emerald-400">₿ LEDGER</span>
     </div>
@@ -105,7 +105,7 @@
   </aside>
 
   <!-- Main -->
-  <div class="flex flex-1 flex-col pl-56 min-h-screen">
+  <div class="flex flex-1 flex-col min-h-screen md:pl-56">
     <header class="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between border-b border-zinc-800 bg-zinc-950/90 backdrop-blur px-6">
       <h1 class="text-sm font-medium text-zinc-300">{% block page_title %}{% endblock %}</h1>
       <div class="flex items-center gap-4">

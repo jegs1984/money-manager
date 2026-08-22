@@ -51,7 +51,11 @@ class ParseDebitStatementUseCase @Inject constructor() {
             if (token in HEADER_TOKENS) continue
             if (cols.size < 5) { skipped++; continue }
 
-            val dateObj = parseDate(firstTrimmed) ?: run { skipped++; return@for }
+            val dateObj = parseDate(firstTrimmed)
+            if (dateObj == null) {
+                skipped++
+                continue
+            }
             val description = cols[1].trim().replace(Regex("\\s+"), " ")
             if (description.isEmpty()) { skipped++; continue }
 
@@ -165,13 +169,21 @@ class ParseCCStatementUseCase @Inject constructor() {
 
             val txDate = runCatching {
                 LocalDate.parse(dateRaw, DateTimeFormatter.ofPattern("dd/MM/yyyy"))
-            }.getOrNull() ?: run { skipped++; continue }
+            }.getOrNull()
+            if (txDate == null) {
+                skipped++
+                continue
+            }
 
             val description = row.getOrElse(22) { "" }.replace(Regex("\\s+"), " ").trim()
             if (description.isEmpty() || description.lowercase() in SKIP) { skipped++; continue }
 
             val amountRaw = row.getOrElse(54) { "" }
-            val amount = parseCLPAmount(amountRaw) ?: run { skipped++; continue }
+            val amount = parseCLPAmount(amountRaw)
+            if (amount == null) {
+                skipped++
+                continue
+            }
 
             val location = row.getOrElse(5) { "" }.replace(Regex("\\s+"), " ").trim()
             val refCode  = row.getOrElse(16) { "" }.trim()

@@ -16,7 +16,7 @@ from .forms import (
     StagingReviewFormset, StatementUploadForm, TransactionForm,
     CCStatementUploadForm, StagingCCReviewFormset,
 )
-from .models import BudgetItem, Category, Period, StagingCCTransaction, StagingTransaction, Transaction
+from .models import BudgetItem, Category, ImportBatch, Period, StagingCCTransaction, StagingTransaction, Transaction
 from .services import (
     calculate_safe_to_spend, generate_dashboard_pdf, get_duplicate_staging_ids,
     parse_scotiabank_statement, process_staging_batch,
@@ -196,8 +196,34 @@ class PeriodDeleteView(DeleteView):
 
 
 class PeriodDuplicateBudgetView(View):
-    """Stub — implement as needed."""
+    """Preview and confirm copying a period's budget skeleton."""
+    def get(self, request, pk, *args, **kwargs):
+        source = Period.objects.get(pk=pk)
+        candidates = Period.objects.exclude(pk=pk).order_by('-start_date')
+        return self.render_to_response({
+            'source': source,
+            'source_item_count': source.budget_items.count(),
+            'candidate_periods': candidates,
+        })
+
+    template_name = 'finance/period_duplicate_budget.html'
+
+    def render_to_response(self, context):
+        from django.shortcuts import render
+        return render(self.request, self.template_name, context)
+
     def post(self, request, pk, *args, **kwargs):
+        from .services import duplicate_period_budget_items
+        target_id = request.POST.get('target_period')
+        if not target_id or not target_id.isdigit() or int(target_id) == pk:
+            messages.error(request, 'Choose a different target period.')
+            return redirect('finance:period_duplicate_budget', pk=pk)
+        try:
+            result = duplicate_period_budget_items(pk, int(target_id))
+        except Period.DoesNotExist:
+            messages.error(request, 'The selected period no longer exists.')
+            return redirect('finance:period_list')
+        messages.success(request, f"Copied {result['created']} budget item(s); {result['skipped']} already existed.")
         return redirect('finance:period_list')
 
 
@@ -299,7 +325,13 @@ class StatementUploadView(FormView):
 
     def form_valid(self, form):
         file_obj = form.cleaned_data['statement_file']
-        result   = parse_scotiabank_statement(file_obj, source_filename=file_obj.name)
+        result   = parse_scotiabank_statement(
+            file_obj, source_filename=file_obj.name,
+            import_again=form.cleaned_data['import_again'],
+        )
+        if result.get('already_imported'):
+            messages.warning(self.request, 'This file was already imported. Tick “import again” to stage another copy.')
+            return redirect('finance:staging_review')
         if result['count']:
             messages.success(
                 self.request,
@@ -314,7 +346,7 @@ class StatementUploadView(FormView):
                 f"No transactions found. {result['skipped']} rows skipped. "
                 "Check the file format.",
             )
-        return redirect('finance:staging_review')
+        return redirect(f"{reverse_lazy('finance:staging_review')}?batch={result['batch_id']}")
 
     def form_invalid(self, form):
         messages.error(self.request, 'Invalid upload. Please select a valid statement file.')
@@ -329,7 +361,12 @@ class StagingReviewView(TemplateView):
     template_name = 'finance/staging_review.html'
 
     def _qs(self):
-        return StagingTransaction.objects.filter(is_processed=False).order_by('original_date')
+        batch_id = self.request.GET.get('batch') or self.request.POST.get('batch')
+        qs = StagingTransaction.objects.filter(is_processed=False)
+        if batch_id and batch_id.isdigit():
+            return qs.filter(batch_id=batch_id).order_by('original_date')
+        batch = qs.exclude(batch__isnull=True).order_by('-batch__imported_at').values_list('batch_id', flat=True).first()
+        return qs.filter(batch_id=batch).order_by('original_date') if batch else qs.filter(batch__isnull=True).order_by('original_date')
 
     def _active_period(self):
         return (
@@ -348,6 +385,7 @@ class StagingReviewView(TemplateView):
         ctx['duplicate_ids'] = duplicate_ids
         ctx['active_period'] = period
         ctx['delete_url']    = 'finance:staging_delete'
+        ctx['batch'] = qs.first().batch if qs.first() else None
         return ctx
 
     def post(self, request, *args, **kwargs):
@@ -368,7 +406,7 @@ class StagingReviewView(TemplateView):
 
                 cat = f.cleaned_data.get('assigned_category')
                 if cat:
-                    entries.append({'staging_id': sid, 'category_id': cat.id})
+                    entries.append({'staging_id': sid, 'category_id': cat.id, 'batch_id': f.instance.batch_id})
 
             processed = process_staging_batch(entries, remove_ids=remove_ids)
             removed   = len(remove_ids)
@@ -378,7 +416,7 @@ class StagingReviewView(TemplateView):
             if removed:
                 msg_parts.append(f'{removed} duplicate{"s" if removed != 1 else ""} removed from staging')
             messages.success(request, '. '.join(msg_parts) + '.')
-            return redirect('finance:dashboard')
+            return redirect('finance:staging_review')
 
         period = self._active_period()
         duplicate_ids = get_duplicate_staging_ids(period, qs) if period else set()
@@ -404,16 +442,18 @@ class StagingDeleteView(View):
     """
 
     def post(self, request, *args, **kwargs):
+        batch_id = request.GET.get('batch') or request.POST.get('batch')
+        qs = StagingTransaction.objects.filter(is_processed=False)
+        if batch_id and batch_id.isdigit():
+            qs = qs.filter(batch_id=batch_id)
         delete_all = request.POST.get('all')
         if delete_all:
-            deleted, _ = StagingTransaction.objects.filter(is_processed=False).delete()
+            deleted, _ = qs.delete()
             n = deleted
         else:
             raw_ids = request.POST.getlist('ids')
             ids = [int(i) for i in raw_ids if i.isdigit()]
-            deleted, _ = StagingTransaction.objects.filter(
-                id__in=ids, is_processed=False
-            ).delete()
+            deleted, _ = qs.filter(id__in=ids).delete()
             n = deleted
 
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -435,11 +475,17 @@ class CCStatementUploadView(FormView):
     def form_valid(self, form):
         file_obj = form.cleaned_data['statement_file']
         try:
-            result = parse_scotiabank_cc_statement(file_obj, source_filename=file_obj.name)
+            result = parse_scotiabank_cc_statement(
+                file_obj, source_filename=file_obj.name,
+                import_again=form.cleaned_data['import_again'],
+            )
         except ValueError as e:
             messages.error(self.request, str(e))
             return self.form_invalid(form)
 
+        if result.get('already_imported'):
+            messages.warning(self.request, 'This file was already imported. Tick “import again” to stage another copy.')
+            return redirect('finance:cc_staging_review')
         if result['count']:
             messages.success(
                 self.request,
@@ -453,7 +499,7 @@ class CCStatementUploadView(FormView):
                 f"No transactions found. {result['skipped']} rows skipped. "
                 "Check the file format.",
             )
-        return redirect('finance:cc_staging_review')
+        return redirect(f"{reverse_lazy('finance:cc_staging_review')}?batch={result['batch_id']}")
 
     def form_invalid(self, form):
         messages.error(self.request, 'Invalid upload. Please select a valid .xls statement file.')
@@ -468,7 +514,12 @@ class CCStagingReviewView(TemplateView):
     template_name = 'finance/cc_staging_review.html'
 
     def _qs(self):
-        return StagingCCTransaction.objects.filter(is_processed=False).order_by('original_date')
+        batch_id = self.request.GET.get('batch') or self.request.POST.get('batch')
+        qs = StagingCCTransaction.objects.filter(is_processed=False)
+        if batch_id and batch_id.isdigit():
+            return qs.filter(batch_id=batch_id).order_by('original_date')
+        batch = qs.exclude(batch__isnull=True).order_by('-batch__imported_at').values_list('batch_id', flat=True).first()
+        return qs.filter(batch_id=batch).order_by('original_date') if batch else qs.filter(batch__isnull=True).order_by('original_date')
 
     def _active_period(self):
         return (
@@ -487,6 +538,7 @@ class CCStagingReviewView(TemplateView):
         ctx['duplicate_ids'] = duplicate_ids
         ctx['active_period'] = period
         ctx['delete_url']    = 'finance:cc_staging_delete'
+        ctx['batch'] = qs.first().batch if qs.first() else None
         first = qs.first()
         ctx['card_number'] = first.card_number if first else ''
         ctx['card_holder'] = first.card_holder if first else ''
@@ -510,7 +562,7 @@ class CCStagingReviewView(TemplateView):
 
                 cat = f.cleaned_data.get('assigned_category')
                 if cat:
-                    entries.append({'staging_id': sid, 'category_id': cat.id})
+                    entries.append({'staging_id': sid, 'category_id': cat.id, 'batch_id': f.instance.batch_id})
 
             processed = process_cc_staging_batch(entries, remove_ids=remove_ids)
             removed   = len(remove_ids)
@@ -541,16 +593,18 @@ class CCStagingDeleteView(View):
     """
 
     def post(self, request, *args, **kwargs):
+        batch_id = request.GET.get('batch') or request.POST.get('batch')
+        qs = StagingCCTransaction.objects.filter(is_processed=False)
+        if batch_id and batch_id.isdigit():
+            qs = qs.filter(batch_id=batch_id)
         delete_all = request.POST.get('all')
         if delete_all:
-            deleted, _ = StagingCCTransaction.objects.filter(is_processed=False).delete()
+            deleted, _ = qs.delete()
             n = deleted
         else:
             raw_ids = request.POST.getlist('ids')
             ids = [int(i) for i in raw_ids if i.isdigit()]
-            deleted, _ = StagingCCTransaction.objects.filter(
-                id__in=ids, is_processed=False
-            ).delete()
+            deleted, _ = qs.filter(id__in=ids).delete()
             n = deleted
 
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':

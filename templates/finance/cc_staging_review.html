@@ -38,6 +38,14 @@
 
 {% else %}
 
+{% if batch %}
+<div class="mb-4 grid gap-2 rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3 text-xs text-zinc-400 sm:grid-cols-3">
+  <span><strong class="text-zinc-200">Batch:</strong> {{ batch.filename|default:"Notification import" }}</span>
+  <span><strong class="text-zinc-200">Card:</strong> {{ batch.account_reference|default:"—" }}</span>
+  <span><strong class="text-zinc-200">Imported:</strong> {{ batch.imported_at|date:"d/m/Y H:i" }} · {{ pending_count }} rows</span>
+</div>
+{% endif %}
+
 {% if card_holder or card_number %}
 <div class="mb-4 flex items-center gap-4 rounded-lg border border-violet-900/40 bg-violet-950/30 px-4 py-3">
   <svg class="h-5 w-5 shrink-0 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -67,6 +75,7 @@
 
 <form method="post" id="cc-staging-form">
   {% csrf_token %}
+  {% if batch %}<input type="hidden" name="batch" value="{{ batch.pk }}">{% endif %}
   {{ formset.management_form }}
 
   <div class="card overflow-hidden p-0 mb-28">
@@ -226,7 +235,7 @@
   </div>
 
   <!-- Sticky action bar -->
-  <div class="fixed bottom-0 left-56 right-0 z-50 border-t border-zinc-800 bg-zinc-950/95 backdrop-blur px-6 py-3">
+  <div class="fixed bottom-0 left-0 right-0 z-50 border-t border-zinc-800 bg-zinc-950/95 backdrop-blur px-3 py-3 md:left-56 md:px-6">
     <div class="flex items-center justify-between">
       <p class="font-mono text-xs text-zinc-500">
         <span id="row-count">{{ pending_count }}</span> CC row{{ pending_count|pluralize }} staged
@@ -265,7 +274,7 @@
 <script>
 (function () {
   const CSRF       = '{{ csrf_token }}';
-  const DELETE_URL = '{% url "finance:cc_staging_delete" %}';
+  const DELETE_URL = '{% url "finance:cc_staging_delete" %}{% if batch %}?batch={{ batch.pk }}{% endif %}';
 
   function showToast(msg) {
     const toast = document.getElementById('delete-toast');

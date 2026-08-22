@@ -1,7 +1,7 @@
 package com.moneymanager.domain.usecase
 
-import com.moneymanager.notifications.BankNotificationService
 import com.moneymanager.notifications.model.RawBankNotification
+import com.moneymanager.notifications.BankNotificationService
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.mapNotNull
 import javax.inject.Inject
@@ -32,82 +32,17 @@ class ParseBankNotificationUseCase @Inject constructor() {
             .mapNotNull { raw -> parse(raw) }
 
     fun parse(raw: RawBankNotification): ParsedTransaction? {
-        val amount = extractAmount(raw.content)
-        // Drop notifications with no parseable amount (OTP codes, balance alerts without
-        // a transaction figure, etc.). Remove this guard to forward all notifications.
-        if (amount == null) return null
+        val parsed = BankNotificationParser.parse(raw) ?: return null
 
         return ParsedTransaction(
             bankAppId  = raw.bankAppId,
             title      = raw.title,
             rawContent = raw.content,
-            amount     = amount,
+            // Keep the legacy presentation contract signed, while staging uses
+            // the parser's exact positive amount plus its explicit direction.
+            amount     = if (raw.content.contains("-$")) -parsed.amount.toDouble() else parsed.amount.toDouble(),
             timestamp  = raw.timestamp,
         )
     }
 
-    // Pattern matches numbers like 1.234,56 or 1,234.56 with an optional leading context.
-    private val amountPattern = Regex(
-        """(-?\s?\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{2})?|-?\s?\d{1,3}(?:[.,]\d{3})*|[.,]\d{1,2})""",
-        RegexOption.IGNORE_CASE
-    )
-
-    /**
-     * Extract a numeric value from string content using a heuristic that handles
-     * both dot-thousands (CLP/EUR) and comma-thousands (USD) formats.
-     */
-    private fun extractAmount(text: String): Double? {
-        val currencySymbols = listOf("$", "£", "€", "CLP", "USD", "EUR", "MXN", "UF")
-        
-        val matches = amountPattern.findAll(text).toList()
-        if (matches.isEmpty()) return null
-
-        // Strategy: find the match with the most "financial" context.
-        val match = matches.find { m ->
-            val index = m.range.first
-            val nearbyText = text.substring(
-                kotlin.math.max(0, index - 5),
-                kotlin.math.min(text.length, index + m.value.length + 5)
-            )
-            currencySymbols.any { nearbyText.contains(it, ignoreCase = true) }
-        } ?: matches.lastOrNull() ?: return null
-        
-        val matchedValue = match.value.trim()
-        val index = match.range.first
-        
-        // Nearby text for context (specifically looking for currency symbols and signs)
-        val contextText = text.substring(
-            kotlin.math.max(0, index - 10),
-            kotlin.math.min(text.length, index + matchedValue.length + 10)
-        )
-        val hasCurrencyNearby = currencySymbols.any { contextText.contains(it, ignoreCase = true) }
-
-        // Security: Ignore plain numbers (likely IDs/OTPs) unless they have currency context nearby.
-        if (matchedValue.replace("-", "").trim().length >= 4 && 
-            !matchedValue.contains(Regex("""[.,]""")) && 
-            !hasCurrencyNearby) {
-            return null
-        }
-
-        // Step 1: Detect if the last separator is a decimal point.
-        val hasCents = matchedValue.contains(Regex("""[.,]\d{2}$"""))
-        // Check for minus sign in the matched value OR just before it in the context text
-        val prefixText = contextText.substringBefore(matchedValue)
-        val isNegative = matchedValue.startsWith("-") || prefixText.trim().endsWith("-")
-        
-        val normalised = if (hasCents) {
-            val cleanDigits = matchedValue.replace("-", "").replace(",", "").replace(".", "").trim()
-            val integerPart = cleanDigits.dropLast(2)
-            val decimalPart = cleanDigits.takeLast(2)
-            val sign = if (isNegative) "-" else ""
-            "$sign${integerPart.ifEmpty { "0" }}.$decimalPart"
-        } else {
-            // No cents detected; strip all separators and treat as a whole number.
-            val cleanDigits = matchedValue.replace("-", "").replace(",", "").replace(".", "").trim()
-            val sign = if (isNegative) "-" else ""
-            "$sign$cleanDigits"
-        }
-
-        return normalised.toDoubleOrNull()
-    }
 }

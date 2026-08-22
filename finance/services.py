@@ -23,6 +23,7 @@ Abono > 0  → type IN  (money entering account)
 """
 
 import csv
+import hashlib
 import io
 import re
 from datetime import date, datetime
@@ -32,7 +33,7 @@ from django.db import transaction as db_transaction
 from django.db.models import Sum, Value, Q
 from django.db.models.functions import Coalesce
 
-from .models import BudgetItem, Category, Period, StagingCCTransaction, StagingTransaction, Transaction
+from .models import BudgetItem, Category, ImportBatch, Period, StagingCCTransaction, StagingTransaction, Transaction
 
 
 # ─────────────────────────────────────────────
@@ -40,6 +41,7 @@ from .models import BudgetItem, Category, Period, StagingCCTransaction, StagingT
 # ─────────────────────────────────────────────
 
 def _parse_amount(raw: str) -> Decimal:
+    """Parse a debit/credit amount, which is always stored as positive."""
     s = raw.strip().lstrip('+').lstrip('-').replace(',', '.').strip()
     s = re.sub(r'[^\d.]', '', s)
     if not s:
@@ -48,6 +50,13 @@ def _parse_amount(raw: str) -> Decimal:
         return Decimal(s).quantize(Decimal('0.01'))
     except InvalidOperation:
         return Decimal('0.00')
+
+
+def _parse_signed_balance(raw: str) -> Decimal:
+    """Parse balances without losing their sign."""
+    negative = raw.strip().startswith('-')
+    amount = _parse_amount(raw)
+    return -amount if negative else amount
 
 
 def _parse_header(lines: list[str]) -> dict:
@@ -92,23 +101,20 @@ _HEADER_TOKENS = {'fecha', 'descripcion', 'nrodoc', 'cargos', 'abonos', 'saldo'}
 # Public: Duplicate detection
 # ─────────────────────────────────────────────
 
-def get_duplicate_staging_ids(
-    period: Period,
-    staging_qs,  # QuerySet[StagingTransaction] | QuerySet[StagingCCTransaction]
-) -> set[int]:
+def get_duplicate_staging_ids(period: Period | None, staging_qs) -> set[int]:
     """
     Return the set of staging row IDs whose (date, amount, description) triple
     already exists in Transaction rows belonging to the given Period.
     """
-    existing = set(
-        Transaction.objects.filter(budget_item__period=period)
-        .values_list('date', 'real_amount', 'description')
-    )
-
     duplicate_ids: set[int] = set()
     for stx in staging_qs:
-        key = (stx.original_date, stx.amount, stx.description)
-        if key in existing:
+        row_period = Period.objects.filter(start_date__lte=stx.original_date, end_date__gte=stx.original_date).first()
+        if not row_period:
+            continue
+        existing = Transaction.objects.filter(budget_item__period=row_period).filter(
+            date=stx.original_date, real_amount=stx.amount, description=stx.description,
+        ).exists()
+        if existing:
             duplicate_ids.add(stx.pk)
 
     return duplicate_ids
@@ -118,7 +124,7 @@ def get_duplicate_staging_ids(
 # Public: Bank ETL
 # ─────────────────────────────────────────────
 
-def parse_scotiabank_statement(file_obj, source_filename: str = '') -> dict:
+def parse_scotiabank_statement(file_obj, source_filename: str = '', import_again: bool = False) -> dict:
     if hasattr(file_obj, 'read'):
         raw = file_obj.read()
         if isinstance(raw, bytes):
@@ -127,6 +133,11 @@ def parse_scotiabank_statement(file_obj, source_filename: str = '') -> dict:
         raw = str(file_obj)
 
     raw = raw.replace('\r\n', '\n').replace('\r', '\n')
+    content_hash = hashlib.sha256(raw.encode('utf-8')).hexdigest()
+    existing_batch = ImportBatch.objects.filter(source_type='BANK', content_hash=content_hash).first()
+    if existing_batch and not import_again:
+        return {'count': 0, 'skipped': 0, 'already_imported': True, 'batch_id': existing_batch.pk,
+                'account_number': existing_batch.account_reference, 'date_from': '', 'date_to': ''}
     lines = raw.split('\n')
 
     meta           = _parse_header(lines)
@@ -172,7 +183,7 @@ def parse_scotiabank_statement(file_obj, source_filename: str = '') -> dict:
         abono = _parse_amount(row[4]) if len(row) > 4 else Decimal('0.00')
 
         balance_raw = row[5].strip() if len(row) > 5 else ''
-        balance = _parse_amount(balance_raw) if balance_raw else None
+        balance = _parse_signed_balance(balance_raw) if balance_raw else None
 
         if cargo > Decimal('0.00') and abono > Decimal('0.00'):
             tx_type, amount = 'OUT', cargo
@@ -199,6 +210,12 @@ def parse_scotiabank_statement(file_obj, source_filename: str = '') -> dict:
             )
         )
 
+    batch = ImportBatch.objects.create(
+        source_type='BANK', filename=source_filename, account_reference=account_number,
+        content_hash=content_hash, parser_version='scotiabank-dat-v1',
+    )
+    for record in staging_records:
+        record.batch = batch
     StagingTransaction.objects.bulk_create(staging_records)
 
     return {
@@ -207,6 +224,8 @@ def parse_scotiabank_statement(file_obj, source_filename: str = '') -> dict:
         'account_number': account_number,
         'date_from':      meta.get('date_from', ''),
         'date_to':        meta.get('date_to', ''),
+        'batch_id':       batch.pk,
+        'already_imported': False,
     }
 
 
@@ -217,7 +236,7 @@ def parse_scotiabank_statement(file_obj, source_filename: str = '') -> dict:
 def _get_or_create_unplanned_category() -> Category:
     cat, _ = Category.objects.get_or_create(
         name='Unplanned/Extra',
-        defaults={'group': 'LIFESTYLE'},
+        defaults={'group': 'Gastos'},
     )
     return cat
 
@@ -282,6 +301,12 @@ def process_staging_batch(staging_ids_with_categories: list[dict], remove_ids: s
         stx.assigned_category = category
         stx.save(update_fields=['is_processed', 'assigned_category'])
         processed += 1
+
+    batch_ids = {entry.get('batch_id') for entry in staging_ids_with_categories if entry.get('batch_id')}
+    for batch in ImportBatch.objects.filter(id__in=batch_ids):
+        if not batch.staging_transactions.filter(is_processed=False).exists():
+            batch.status = 'COMMITTED'
+            batch.save(update_fields=['status'])
 
     return processed
 
@@ -436,7 +461,7 @@ def _parse_cc_header(rows: list[list[str]]) -> dict:
     return meta
 
 
-def parse_scotiabank_cc_statement(file_obj, source_filename: str = '') -> dict:
+def parse_scotiabank_cc_statement(file_obj, source_filename: str = '', import_again: bool = False) -> dict:
     import csv as csv_mod
     import io as io_mod
     import subprocess
@@ -447,6 +472,12 @@ def parse_scotiabank_cc_statement(file_obj, source_filename: str = '') -> dict:
         raw_bytes = file_obj.read()
     else:
         raw_bytes = file_obj
+
+    content_hash = hashlib.sha256(raw_bytes).hexdigest()
+    existing_batch = ImportBatch.objects.filter(source_type='CREDIT_CARD', content_hash=content_hash).first()
+    if existing_batch and not import_again:
+        return {'count': 0, 'skipped': 0, 'already_imported': True, 'batch_id': existing_batch.pk,
+                'card_number': existing_batch.account_reference, 'card_holder': '', 'statement_date': None}
 
     csv_text = None
 
@@ -573,6 +604,13 @@ def parse_scotiabank_cc_statement(file_obj, source_filename: str = '') -> dict:
             )
         )
 
+    batch = ImportBatch.objects.create(
+        source_type='CREDIT_CARD', filename=source_filename,
+        account_reference=meta.get('card_number', ''), content_hash=content_hash,
+        parser_version='scotiabank-xls-v1',
+    )
+    for record in staging_records:
+        record.batch = batch
     StagingCCTransaction.objects.bulk_create(staging_records)
 
     return {
@@ -581,6 +619,8 @@ def parse_scotiabank_cc_statement(file_obj, source_filename: str = '') -> dict:
         'card_number':    meta.get('card_number', ''),
         'card_holder':    meta.get('card_holder', ''),
         'statement_date': meta.get('statement_date'),
+        'batch_id':       batch.pk,
+        'already_imported': False,
     }
 
 
@@ -634,6 +674,12 @@ def process_cc_staging_batch(
         stx.assigned_category = category
         stx.save(update_fields=['is_processed', 'assigned_category'])
         processed += 1
+
+    batch_ids = {entry.get('batch_id') for entry in staging_ids_with_categories if entry.get('batch_id')}
+    for batch in ImportBatch.objects.filter(id__in=batch_ids):
+        if not batch.staging_cc_transactions.filter(is_processed=False).exists():
+            batch.status = 'COMMITTED'
+            batch.save(update_fields=['status'])
 
     return processed
 

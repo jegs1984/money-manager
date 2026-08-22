@@ -124,12 +124,12 @@
         <tr class="border-b border-zinc-800 bg-zinc-900/50">
           <th class="px-4 py-2.5 text-left  font-mono text-xs text-zinc-600 uppercase tracking-widest">Category</th>
           <th class="px-4 py-2.5 text-left  font-mono text-xs text-zinc-600 uppercase tracking-widest">Group</th>
-          <th class="px-4 py-2.5 text-left  font-mono text-xs text-zinc-600 uppercase tracking-widest">T</th>
+          <th class="px-4 py-2.5 text-left  font-mono text-xs text-zinc-600 uppercase tracking-widest">Type</th>
           <th class="px-4 py-2.5 text-right font-mono text-xs text-zinc-600 uppercase tracking-widest">Projected</th>
           <th class="px-4 py-2.5 text-right font-mono text-xs text-zinc-600 uppercase tracking-widest">Actual</th>
           <th class="px-4 py-2.5 text-right font-mono text-xs text-zinc-600 uppercase tracking-widest">Diff</th>
-          <th class="px-4 py-2.5 font-mono text-xs text-zinc-600 uppercase tracking-widest w-28">Cap.</th>
-          <th class="px-4 py-2.5 text-right font-mono text-xs text-zinc-600 uppercase tracking-widest">—</th>
+          <th class="px-4 py-2.5 font-mono text-xs text-zinc-600 uppercase tracking-widest w-28">Progress</th>
+          <th class="px-4 py-2.5 text-right font-mono text-xs text-zinc-600 uppercase tracking-widest">Actions</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-zinc-800/60">
@@ -138,9 +138,8 @@
           <td class="px-4 py-2.5 font-medium text-zinc-200">{{ item.category.name }}</td>
           <td class="px-4 py-2.5">
             <span class="rounded-full px-2 py-0.5 font-mono text-xs
-              {% if item.category.group == 'ESSENTIAL' %}bg-blue-900/50   text-blue-300
-              {% elif item.category.group == 'LIFESTYLE'  %}bg-purple-900/50 text-purple-300
-              {% elif item.category.group == 'SAVINGS'    %}bg-emerald-900/50 text-emerald-300
+              {% if item.category.group == 'Gastos' %}bg-purple-900/50 text-purple-300
+              {% elif item.category.group == 'AhorroeInversion' %}bg-emerald-900/50 text-emerald-300
               {% else %}bg-amber-900/50 text-amber-300{% endif %}">
               {{ item.category.group }}
             </span>

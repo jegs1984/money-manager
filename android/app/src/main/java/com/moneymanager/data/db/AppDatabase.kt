@@ -12,8 +12,9 @@ import androidx.room.TypeConverters
         TransactionEntity::class,
         StagingTransactionEntity::class,
         StagingCCTransactionEntity::class,
+        ImportBatchEntity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)

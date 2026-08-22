@@ -18,9 +18,8 @@
         <td class="px-4 py-3 font-medium text-zinc-200">{{ cat.name }}</td>
         <td class="px-4 py-3">
           <span class="rounded-full px-2 py-0.5 font-mono text-xs
-            {% if cat.group == 'ESSENTIAL' %}bg-blue-900/50 text-blue-300
-            {% elif cat.group == 'LIFESTYLE'  %}bg-purple-900/50 text-purple-300
-            {% elif cat.group == 'SAVINGS'    %}bg-emerald-900/50 text-emerald-300
+            {% if cat.group == 'Gastos' %}bg-purple-900/50 text-purple-300
+            {% elif cat.group == 'AhorroeInversion' %}bg-emerald-900/50 text-emerald-300
             {% else %}bg-amber-900/50 text-amber-300{% endif %}">{{ cat.group }}</span>
         </td>
         <td class="px-4 py-3 text-right">

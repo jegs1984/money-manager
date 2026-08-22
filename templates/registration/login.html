@@ -1,0 +1,10 @@
+{% extends "finance/base.html" %}
+{% block title %}Iniciar sesión — Money Manager{% endblock %}
+{% block page_title %}Iniciar sesión{% endblock %}
+{% block content %}
+<form method="post" class="card mx-auto max-w-sm space-y-4">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button class="btn-primary" type="submit">Iniciar sesión</button>
+</form>
+{% endblock %}

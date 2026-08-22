@@ -1,54 +1,70 @@
-# Money Manager — Mac Installer
+# macOS installer
 
-Self-contained installer for macOS. Sets up all dependencies, the database, and a
-double-clickable `.app` to launch the server and open the browser in one step.
+`setup.sh` prepares a native macOS development installation and creates a
+desktop launcher. It is for local use, not a production deployment.
 
----
+```mermaid
+flowchart TD
+    Start[Run installer/setup.sh] --> Brew[Install or use Homebrew]
+    Brew --> Dependencies[Install Python, PostgreSQL, LibreOffice]
+    Dependencies --> Database[Create local database and user]
+    Database --> Venv[Create venv and install dependencies]
+    Venv --> Migrate[Run Django migrations]
+    Migrate --> Launcher[Create Desktop launcher]
+    Launcher --> Ready[Open http://127.0.0.1:8765]
+```
 
-## Prerequisites (installed automatically if missing)
+## What it installs
 
-| Tool | How |
-|---|---|
-| Homebrew | Downloaded from brew.sh if absent |
-| Python 3.11+ | `brew install python` |
-| PostgreSQL 16 | `brew install postgresql@16` |
-| LibreOffice | `brew install --cask libreoffice` |
+- Homebrew, if necessary
+- Python 3
+- PostgreSQL 16
+- LibreOffice, used as a statement-parsing fallback
+- A project-local Python virtual environment and Django dependencies
 
----
+The installer creates the `money_manager` database and user, writes `.env` only
+when one does not already exist, then runs Django migrations. Django migrations
+are the schema authority; do not apply the historical `sql/` files to a new
+installation.
 
 ## Install
 
+Run from the repository root:
+
 ```bash
-cd installer
-bash setup.sh
+bash installer/setup.sh
 ```
 
-That's it. The script will:
+The script may install packages and create a local database user. Review it and
+allow the prompts only on a machine you control. It creates **Money Manager.app**
+on the Desktop; opening it starts PostgreSQL, starts Django on
+`http://127.0.0.1:8765`, and opens the browser.
 
-1. Install Homebrew (if needed)
-2. Install Python 3, PostgreSQL, LibreOffice via Homebrew
-3. Create a Python virtualenv inside the project
-4. Install Python dependencies
-5. Create the `money_manager` Postgres database and user
-6. Run `init_db.sql` + `categories.sql` to seed the schema
-7. Write a `.env` file with generated secret key
-8. Create `Money Manager.app` on your Desktop
+```mermaid
+sequenceDiagram
+    participant User
+    participant App as Money Manager.app
+    participant PG as Local PostgreSQL
+    participant Django as Django server
+    participant Browser
+    User->>App: Double-click
+    App->>PG: Start if needed
+    App->>Django: Start on 127.0.0.1:8765
+    App->>Browser: Open local URL
+```
 
----
+## Manual launch
 
-## Launch
+```bash
+bash start.sh
+```
 
-Double-click **Money Manager** on your Desktop.
+Or activate the virtual environment and run Django directly:
 
-It will:
-- Start PostgreSQL (if not running)
-- Start the Django dev server on `http://127.0.0.1:8765`
-- Open your browser automatically
-
-To stop the server press **Ctrl-C** in the terminal window that opens,
-or quit the app from the menu bar.
-
----
+```bash
+source venv/bin/activate
+python manage.py runserver 127.0.0.1:8765
+```
 
 ## Uninstall
 
@@ -56,5 +72,7 @@ or quit the app from the menu bar.
 bash installer/uninstall.sh
 ```
 
-Removes the virtualenv, `.env`, and the Desktop app.
-Does **not** drop the database or uninstall Homebrew packages.
+This removes the virtual environment, `.env`, and the Desktop launcher. It does
+not drop the PostgreSQL database or remove Homebrew packages. Back up the
+database first if you might need the data later; see
+[Backup and recovery](../docs/BACKUP_AND_RECOVERY.md).

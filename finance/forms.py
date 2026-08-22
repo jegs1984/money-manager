@@ -71,6 +71,7 @@ class StatementUploadForm(forms.Form):
         label='Bank Statement (.dat / .csv / .txt)',
         widget=forms.ClearableFileInput(attrs={'accept': '.dat,.csv,.txt', 'class': 'hidden', 'id': 'id_statement_file'}),
     )
+    import_again = forms.BooleanField(required=False, label='Import again if this file was already imported')
 
 
 class CategoryModelChoiceField(forms.ModelChoiceField):
@@ -113,6 +114,7 @@ class CCStatementUploadForm(forms.Form):
             attrs={'accept': '.xls,.xlsx', 'class': 'hidden', 'id': 'id_cc_statement_file'}
         ),
     )
+    import_again = forms.BooleanField(required=False, label='Import again if this file was already imported')
 
 
 class StagingCCTransactionReviewForm(forms.ModelForm):

@@ -1,105 +1,87 @@
-# =============================================================================
-# Money Manager — Docker Installer
-# =============================================================================
+# Docker deployment
 
-Runs the full Money Manager stack (Django + PostgreSQL) inside Docker.
-No local Python, PostgreSQL, or Homebrew installation required.
+Docker Compose runs the Django application and PostgreSQL locally. The published
+ports are bound to `127.0.0.1`, so this configuration is intended for a single
+machine and development use.
 
----
+```mermaid
+flowchart LR
+    Browser[Browser] -->|127.0.0.1:8765| Web[Django container]
+    Web -->|Docker network :5432| DB[(PostgreSQL container)]
+    HostTools[Local diagnostic tools] -->|127.0.0.1:5433| DB
+    DB --> Volume[(money_manager_postgres_data)]
+    Web --> Static[(static_files volume)]
+```
 
-## Prerequisites
+## Requirements
 
-| Tool | Install |
-|---|---|
-| Docker Desktop | https://www.docker.com/products/docker-desktop/ |
-
-That's it.
-
----
-
-## Quick Start
+Install and start Docker Desktop, then verify both commands succeed:
 
 ```bash
-# 1. Clone the repo
-git clone https://github.com/jegs1984/money-manager.git
-cd money-manager
-
-# 2. Copy the Docker env template (edit DB_PASSWORD and SECRET_KEY if desired)
-cp .env.docker .env
-
-# 3. Start everything
-docker compose up
+docker --version
+docker compose version
 ```
 
-Open **http://localhost:8765** in your browser.
+## Start the stack
 
-On the **first run**, Docker will:
-1. Pull `postgres:16-alpine` and the Python 3.12 base image
-2. Build the Django application image
-3. Create the database, run `init_db.sql`, `migrate_add_cc_staging.sql`, and seed categories
-4. Run Django migrations
-5. Start the dev server
+From the repository root:
 
-Subsequent starts are fast — the database volume persists between restarts.
+```bash
+cp .env.example .env
+# Edit .env: at minimum set a unique DJANGO_SECRET_KEY and DB_PASSWORD.
+docker compose up --build
+```
 
----
+Open [http://127.0.0.1:8765](http://127.0.0.1:8765). The entrypoint waits for
+PostgreSQL, applies `manage.py migrate`, and collects static files. Django
+migrations—not the legacy `sql/` scripts—own the database schema.
 
-## Common commands
+Run in the background with `docker compose up -d --build`; inspect the app with
+`docker compose logs -f web`.
+
+```mermaid
+sequenceDiagram
+    participant Compose as Docker Compose
+    participant DB as PostgreSQL
+    participant Web as Django entrypoint
+    Compose->>DB: Start and health-check
+    DB-->>Compose: Healthy
+    Compose->>Web: Start container
+    Web->>DB: Wait for connection
+    Web->>DB: Apply Django migrations
+    Web->>Web: Collect static files
+    Web-->>Compose: Run development server
+```
+
+## Daily operations
 
 | Task | Command |
-|---|---|
-| Start in background | `docker compose up -d` |
-| View logs | `docker compose logs -f web` |
-| Stop | `docker compose down` |
-| Rebuild after code change | `docker compose up --build` |
-| Open Django shell | `docker compose exec web python manage.py shell` |
-| **Wipe DB and start fresh** | `docker compose down -v` then `docker compose up` |
+| --- | --- |
+| Stop containers and preserve data | `docker compose down` |
+| Rebuild after dependency or Dockerfile changes | `docker compose up --build` |
+| Open a Django shell | `docker compose exec web python manage.py shell` |
+| Apply migrations explicitly | `docker compose exec web python manage.py migrate` |
+| Check configuration without starting services | `docker compose config --quiet` |
 
----
+The web app uses host port `8765` by default; override it with `APP_PORT` in
+`.env`. PostgreSQL is available only on `127.0.0.1:5433` for local diagnostic
+tools.
 
-## Port mapping
+## Persistence and safety
 
-| Service | Container port | Host port |
-|---|---|---|
-| Django dev server | 8000 | **8765** |
-| PostgreSQL | 5432 | **5433** (avoids clash with local Postgres) |
+The named `money_manager_postgres_data` volume survives `docker compose down`.
+Back up before upgrades; see [Backup and recovery](../docs/BACKUP_AND_RECOVERY.md).
 
-The host port can be changed via the `APP_PORT` variable in `.env`.
+`docker compose down -v` destroys that volume and all database data. Only run it
+when you deliberately want an empty database and have a verified backup.
 
----
+## Environment variables
 
-## Data persistence
-
-PostgreSQL data is stored in a named Docker volume:
-
-```
-money_manager_postgres_data
-```
-
-This volume survives `docker compose down`. Use `docker compose down -v` to delete it
-(this **permanently deletes all your financial data**).
-
----
-
-## Environment variables (`.env`)
-
-| Variable | Default | Description |
-|---|---|---|
-| `DJANGO_SECRET_KEY` | `docker-insecure-…` | Django secret key — change in production |
-| `DJANGO_DEBUG` | `True` | Set `False` in production |
-| `DJANGO_ALLOWED_HOSTS` | `127.0.0.1 localhost` | Space-separated allowed hosts |
-| `DB_PASSWORD` | `mm_docker_secret` | Postgres password |
-| `APP_PORT` | `8765` | Host port for the web UI |
-
----
-
-## vs. Mac native installer
-
-| | Docker | Mac native (`installer/setup.sh`) |
-|---|---|---|
-| Requires Homebrew | ✗ | ✓ |
-| Requires Python locally | ✗ | ✓ |
-| Requires Postgres locally | ✗ | ✓ |
-| Works on Linux / Windows | ✓ | ✗ |
-| Double-click `.app` | ✗ | ✓ |
-| LibreOffice (CC parsing) | ✗ (planned) | ✓ |
+| Variable | Purpose |
+| --- | --- |
+| `DJANGO_SECRET_KEY` | Unique secret for Django sessions and cryptographic signing |
+| `DJANGO_DEBUG` | Keep `True` for local development; set `False` only with production-ready settings |
+| `DJANGO_ALLOWED_HOSTS` | Space-separated hosts accepted by Django |
+| `DJANGO_REQUIRE_LOGIN` | Set `True` to require authenticated access even in local debug mode |
+| `DB_PASSWORD` | Password for the Compose PostgreSQL user |
+| `APP_PORT` | Local web port; defaults to `8765` |
