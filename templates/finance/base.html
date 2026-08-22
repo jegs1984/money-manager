@@ -1,43 +1,21 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="es-CL" class="h-full">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>{% block title %}Money Manager{% endblock %}</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
-    body { font-family: 'IBM Plex Sans', sans-serif; }
-    .font-mono { font-family: 'IBM Plex Mono', monospace; }
-    .form-input,
-    .form-select {
-      display:block; width:100%;
-      border-radius:.375rem; border:1px solid #3f3f46;
-      background:#18181b; padding:.5rem .75rem;
-      font-size:.875rem; color:#f4f4f5;
-      outline:none;
-    }
-    .form-input:focus, .form-select:focus {
-      border-color:#10b981; box-shadow:0 0 0 1px #10b981;
-    }
-    .form-checkbox { border-radius:.25rem; border-color:#52525b; background:#18181b; color:#10b981; }
-    .btn-primary   { display:inline-flex; align-items:center; gap:.5rem; border-radius:.375rem; background:#10b981; padding:.4rem 1rem; font-size:.875rem; font-weight:500; color:#0a0a0a; transition:background .15s; }
-    .btn-primary:hover  { background:#34d399; }
-    .btn-secondary { display:inline-flex; align-items:center; gap:.5rem; border-radius:.375rem; border:1px solid #3f3f46; padding:.4rem 1rem; font-size:.875rem; font-weight:500; color:#d4d4d8; transition:border-color .15s, color .15s; }
-    .btn-secondary:hover { border-color:#71717a; color:#f4f4f5; }
-    .btn-danger { display:inline-flex; align-items:center; gap:.5rem; border-radius:.375rem; background:#dc2626; padding:.4rem 1rem; font-size:.875rem; font-weight:500; color:#fff; transition:background .15s; }
-    .btn-danger:hover { background:#ef4444; }
-    .card { border-radius:.5rem; border:1px solid #27272a; background:#18181b; padding:1.25rem; }
-    .progress-track { height:6px; width:100%; border-radius:9999px; background:#27272a; overflow:hidden; }
-    .progress-fill  { height:100%; border-radius:9999px; transition:width .5s; }
-  </style>
+  <link rel="stylesheet" href="{% static 'finance/tailwind.css' %}">
   {% block extra_head %}{% endblock %}
 </head>
 <body class="h-full bg-zinc-950 text-zinc-100 antialiased">
-<div class="flex h-full">
+<div class="flex min-h-full">
+
+  <button id="mobile-nav-toggle" type="button" class="fixed left-3 top-3 z-50 rounded-md border border-zinc-700 bg-zinc-900 p-2 text-zinc-100 md:hidden" aria-label="Abrir navegación" aria-controls="mobile-nav" aria-expanded="false">☰</button>
+  <div id="mobile-nav-backdrop" class="fixed inset-0 z-40 hidden bg-black/60 md:hidden"></div>
 
   <!-- Sidebar -->
-  <aside class="fixed inset-y-0 left-0 z-40 hidden w-56 flex-col border-r border-zinc-800 bg-zinc-950 md:flex">
+  <aside id="mobile-nav" class="fixed inset-y-0 left-0 z-50 flex w-64 -translate-x-full flex-col border-r border-zinc-800 bg-zinc-950 transition-transform md:w-56 md:translate-x-0">
     <div class="flex h-14 shrink-0 items-center border-b border-zinc-800 px-5">
       <span class="font-mono text-sm font-semibold tracking-widest text-emerald-400">₿ LEDGER</span>
     </div>
@@ -116,8 +94,8 @@
   </aside>
 
   <!-- Main -->
-  <div class="flex flex-1 flex-col min-h-screen md:pl-56">
-    <header class="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between border-b border-zinc-800 bg-zinc-950/90 backdrop-blur px-6">
+  <div class="flex min-h-screen flex-1 flex-col md:pl-56">
+    <header class="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between border-b border-zinc-800 bg-zinc-950/90 px-5 pl-14 md:px-6">
       <h1 class="text-sm font-medium text-zinc-300">{% block page_title %}{% endblock %}</h1>
       <div class="flex items-center gap-4">
         {% if messages %}
@@ -131,12 +109,18 @@
       </div>
     </header>
 
-    <main class="flex-1 p-6">
+    <main class="flex-1 p-4 pb-20 md:p-6">
       {% block content %}{% endblock %}
     </main>
   </div>
 
 </div>
+<nav class="fixed inset-x-0 bottom-0 z-30 flex justify-around border-t border-zinc-800 bg-zinc-950 p-2 text-xs md:hidden" aria-label="Navegación rápida">
+  <a class="nav-link" href="{% url 'finance:dashboard' %}">Inicio</a><a class="nav-link" href="{% url 'finance:statement_upload' %}">Importar</a><a class="nav-link" href="{% url 'finance:staging_review' %}">Revisar</a>
+</nav>
 {% block extra_js %}{% endblock %}
+<script>
+  (() => { const nav=document.getElementById('mobile-nav'), button=document.getElementById('mobile-nav-toggle'), backdrop=document.getElementById('mobile-nav-backdrop'); const close=()=>{nav.classList.add('-translate-x-full');backdrop.classList.add('hidden');button.setAttribute('aria-expanded','false')}; button.addEventListener('click',()=>{nav.classList.toggle('-translate-x-full'); const open=!nav.classList.contains('-translate-x-full'); backdrop.classList.toggle('hidden', !open);button.setAttribute('aria-expanded', String(open))});backdrop.addEventListener('click',close);document.addEventListener('keydown',e=>{if(e.key==='Escape')close()}) })();
+</script>
 </body>
 </html>

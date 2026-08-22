@@ -77,3 +77,10 @@ GitHub Actions repeats Django migration checks/tests against PostgreSQL and
 Android unit/debug builds for every push and pull request. Keep schema-parity
 notes in the migration and Room-migration comments whenever a shared field
 changes.
+# Estilos locales
+
+Las plantillas usan `static/finance/tailwind.css`, no una CDN. Después de cambiar las clases de las plantillas o `static/finance/tailwind-input.css`, recompila el archivo versionado con:
+
+```bash
+npx --yes tailwindcss@3.4.17 -i static/finance/tailwind-input.css -o static/finance/tailwind.css --content 'templates/**/*.html,finance/**/*.py' --minify
+```

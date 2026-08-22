@@ -53,7 +53,7 @@ Keep these principles intact in every change:
 - [ ] **Use safer destructive confirmations.** “Delete all staged” should name the batch and number of rows, then require an explicit confirmation step; offer undo for individual removals where practical.
 - [ ] **Improve empty states.** Explain the next useful action and link directly to it, especially for no period, no budget, no import, and no staged rows.
 - [ ] **Localise intentionally.** The product data and audience are Chilean/Spanish but parts of the UI are English. Choose a primary language and make terminology consistent.
-- [ ] **Remove runtime styling dependencies for offline use.** Bundle Tailwind output and fonts locally rather than loading them from CDNs, consistent with the local-first promise.
+- [x] **Remove runtime styling dependencies for offline use.** Tailwind is compiled into a local static stylesheet and the UI uses system fonts; no runtime styling or font CDN is required.
 - [ ] **Add accessibility basics.** Visible focus states, semantic buttons/labels, keyboard navigation, screen-reader labels for icons, and responsive table alternatives.
 - [ ] **Add merchant rules and bulk categorisation.** Merchant rules now provide transparent suggestions; bulk review actions remain.
 
