@@ -124,7 +124,7 @@
             <td class="px-4 py-2.5 font-mono text-xs text-zinc-600 whitespace-nowrap">{{ form.instance.ref_code|default:"—" }}</td>
             <td class="px-4 py-2.5 text-right font-mono text-sm font-semibold whitespace-nowrap
               {% if form.instance.type == 'IN' %}text-emerald-400{% else %}text-red-400{% endif %}">
-              {% if form.instance.type == 'OUT' %}-{% endif %}${{ form.instance.amount|floatformat:0 }}
+              {% if form.instance.type == 'OUT' %}-{% endif %}{{ form.instance.amount|clp }}
             </td>
             <td class="px-4 py-2.5 text-center font-mono text-xs text-zinc-500">
               {% if form.instance.installment_total and form.instance.installment_total > 1 %}
@@ -135,7 +135,7 @@
             </td>
             <td class="px-4 py-2.5 text-right font-mono text-xs text-zinc-500 whitespace-nowrap">
               {% if form.instance.installment_value and form.instance.installment_total > 1 %}
-                ${{ form.instance.installment_value|floatformat:0 }}
+                {{ form.instance.installment_value|clp }}
               {% else %}—{% endif %}
             </td>
             <td class="px-4 py-2.5">
@@ -187,7 +187,7 @@
             <td class="px-4 py-2.5 font-mono text-xs text-zinc-600 whitespace-nowrap">{{ form.instance.ref_code|default:"—" }}</td>
             <td class="px-4 py-2.5 text-right font-mono text-sm font-semibold whitespace-nowrap
               {% if form.instance.type == 'IN' %}text-emerald-400{% else %}text-red-400{% endif %}">
-              {% if form.instance.type == 'OUT' %}-{% endif %}${{ form.instance.amount|floatformat:0 }}
+              {% if form.instance.type == 'OUT' %}-{% endif %}{{ form.instance.amount|clp }}
             </td>
             <td class="px-4 py-2.5 text-center font-mono text-xs text-zinc-500">
               {% if form.instance.installment_total and form.instance.installment_total > 1 %}
@@ -198,7 +198,7 @@
             </td>
             <td class="px-4 py-2.5 text-right font-mono text-xs text-zinc-500 whitespace-nowrap">
               {% if form.instance.installment_value and form.instance.installment_total > 1 %}
-                ${{ form.instance.installment_value|floatformat:0 }}
+                {{ form.instance.installment_value|clp }}
               {% else %}—{% endif %}
             </td>
             <td class="px-4 py-2.5">

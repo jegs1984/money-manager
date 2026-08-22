@@ -11,6 +11,7 @@ from finance.services import (
     reverse_transaction_service,
     suggest_category,
 )
+from finance.templatetags.finance_format import clp
 
 
 class LedgerServiceTests(TestCase):
@@ -19,6 +20,10 @@ class LedgerServiceTests(TestCase):
             name='January 2026', start_date=date(2026, 1, 1), end_date=date(2026, 1, 31)
         )
         self.category = Category.objects.create(name='Food', group='Alimentación')
+
+    def test_chilean_money_formatter_uses_dots_and_no_float_rounding(self):
+        self.assertEqual(clp(Decimal('1234567.49')), '$1.234.567')
+        self.assertEqual(clp(Decimal('-2300')), '-$2.300')
 
     def test_budget_items_keep_income_and_expense_separate(self):
         income = _get_or_create_budget_item(self.period, self.category, 'IN')

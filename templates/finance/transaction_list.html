@@ -39,7 +39,7 @@
         </td>
         <td class="px-4 py-3 text-right font-mono text-sm font-medium
           {% if tx.budget_item and tx.budget_item.type == 'IN' %}text-emerald-400{% else %}text-red-400{% endif %}">
-          ${{ tx.real_amount|floatformat:0 }}
+          {{ tx.real_amount|clp }}
         </td>
         <td class="px-4 py-3 text-right">
           <div class="flex justify-end gap-3">

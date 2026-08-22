@@ -104,10 +104,10 @@
             <td class="px-4 py-2.5 font-mono text-xs text-zinc-600">{{ form.instance.doc_number|default:"—" }}</td>
             <td class="px-4 py-2.5 text-right font-mono text-sm font-semibold whitespace-nowrap
               {% if form.instance.type == 'IN' %}text-emerald-400{% else %}text-red-400{% endif %}">
-              {% if form.instance.type == 'OUT' %}-{% endif %}${{ form.instance.amount|floatformat:0 }}
+              {% if form.instance.type == 'OUT' %}-{% endif %}{{ form.instance.amount|clp }}
             </td>
             <td class="px-4 py-2.5 text-right font-mono text-xs text-zinc-500 whitespace-nowrap">
-              {% if form.instance.balance %}${{ form.instance.balance|floatformat:0 }}{% else %}—{% endif %}
+              {% if form.instance.balance %}{{ form.instance.balance|clp }}{% else %}—{% endif %}
             </td>
             <td class="px-4 py-2.5">
               <span class="rounded px-1.5 py-0.5 font-mono text-xs
@@ -159,10 +159,10 @@
             <td class="px-4 py-2.5 font-mono text-xs text-zinc-600">{{ form.instance.doc_number|default:"—" }}</td>
             <td class="px-4 py-2.5 text-right font-mono text-sm font-semibold whitespace-nowrap
               {% if form.instance.type == 'IN' %}text-emerald-400{% else %}text-red-400{% endif %}">
-              {% if form.instance.type == 'OUT' %}-{% endif %}${{ form.instance.amount|floatformat:0 }}
+              {% if form.instance.type == 'OUT' %}-{% endif %}{{ form.instance.amount|clp }}
             </td>
             <td class="px-4 py-2.5 text-right font-mono text-xs text-zinc-500 whitespace-nowrap">
-              {% if form.instance.balance %}${{ form.instance.balance|floatformat:0 }}{% else %}—{% endif %}
+              {% if form.instance.balance %}{{ form.instance.balance|clp }}{% else %}—{% endif %}
             </td>
             <td class="px-4 py-2.5">
               <span class="rounded px-1.5 py-0.5 font-mono text-xs

@@ -98,3 +98,7 @@ audit a merchant, budget category, or statement period before exporting.
 # Cuotas de tarjeta
 
 Al confirmar una compra de tarjeta en cuotas, Money Manager conserva la compra original y crea una obligación futura. Revísala en **Cuotas pendientes** para ver la siguiente fecha, número de cuotas restantes y saldo por pagar. La obligación es una ayuda de planificación: no agrega movimientos al libro sin revisión.
+
+# Moneda
+
+Todos los importes se muestran como pesos chilenos sin decimales, por ejemplo `$1.234.567`. Los valores exactos se conservan internamente para los cálculos y las importaciones.

@@ -46,7 +46,7 @@ Keep these principles intact in every change:
 - [ ] **Make review fast for real statements.** Add search, date/type/category filters, sortable columns, pagination/virtualisation, multi-select, and “apply category to selected” actions.
 - [ ] **Retain manual approval while adding suggestions.** Offer a preselected category based on previously confirmed merchant rules; mark it as a suggestion and require review before commit.
 - [ ] **Improve duplicate decisions.** Show the matching ledger transaction (date, category, source, and amount) next to the staged row, rather than only “Already in ledger.”
-- [ ] **Use Chilean money formatting consistently.** Add a shared formatter using `$1.234.567`; do not rely on generic `floatformat` output.
+- [x] **Use Chilean money formatting consistently.** The shared `clp` template formatter renders whole pesos as `$1.234.567` across templates instead of generic `floatformat` currency output.
 - [ ] **Use labels, not cryptic abbreviations.** Replace table headings such as `T`, `Cap.`, and `—` with readable text or tooltips that work on touch devices.
 - [ ] **Do not rely on colour alone.** Pair green/amber/red states with labels and icons; ensure readable contrast in the dark theme.
 - [ ] **Make row actions always available.** Hover-only edit/delete controls are inaccessible on touch and awkward with keyboards. Use visible compact actions or an accessible overflow menu.
