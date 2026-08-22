@@ -154,3 +154,15 @@ Losing a signing key prevents updating an already-installed release.
 - [Web installation](../docs/INSTALLATION.md)
 - [Development workflow](../docs/DEVELOPMENT.md)
 - [Web user guide](../docs/USER_GUIDE.md)
+# Android app
+
+The Android client uses one Room-backed architecture:
+
+- `data/` owns the Room entities, DAOs, migrations, and `FinanceRepository`.
+- `domain/usecase/` contains pure statement and notification parsing rules.
+- `ui/` contains the Compose screens and their Hilt ViewModels.
+- `ui/navigation/NavGraph.kt` is the only navigation graph. It exposes the dashboard,
+  bank-statement review, and credit-card-statement review screens.
+
+Imported statements and bank notifications are placed in staging. They are never
+committed to the ledger until the user reviews and confirms them.

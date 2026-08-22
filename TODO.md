@@ -18,7 +18,7 @@ Keep these principles intact in every change:
 - [x] **Add database integrity rules.** Period validity/activeness and transaction-period integrity are enforced in Django and PostgreSQL.
 - [x] **Remove manual primary-key allocation from `Category.save()`.** Category identifiers are database-generated and the existing migration repairs the PostgreSQL sequence.
 - [x] **Fix the `Unplanned/Extra` category group.** The helper creates it in `Gastos`.
-- [ ] **Consolidate Android into one architecture.** Choose one set of entities, DAOs, screens, and ViewModels; remove the stale duplicate implementation and make all desired screens reachable from one navigation graph.
+- [x] **Consolidate Android into one architecture.** A single Room repository, Compose UI, and navigation graph now expose the dashboard and both staging review screens; unused legacy presentation paths were removed.
 - [ ] **Repair Android notification ingestion.** One pure parser should be used by `BankNotificationService`, the staging writer, and unit tests. Keep the outcome in staging only.
 - [ ] **Remove Room destructive migrations.** Implement and test real migrations so an app update cannot erase financial history.
 - [x] **Restrict local deployments by default.** Docker binds to loopback and production settings require login/secure cookies.
