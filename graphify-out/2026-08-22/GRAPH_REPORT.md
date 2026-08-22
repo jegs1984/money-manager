@@ -1,11 +1,11 @@
 # Graph Report - money-manager  (2026-08-22)
 
 ## Corpus Check
-- 77 files · ~44,919 words
+- 76 files · ~44,800 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 705 nodes · 1706 edges · 59 communities (44 shown, 15 thin omitted)
+- 695 nodes · 1687 edges · 58 communities (44 shown, 14 thin omitted)
 - Extraction: 70% EXTRACTED · 30% INFERRED · 0% AMBIGUOUS · INFERRED: 505 edges (avg confidence: 0.51)
 - Token cost: 0 input · 0 output
 
@@ -20,7 +20,6 @@
 - [[_COMMUNITY_Community 3|Community 3]]
 - [[_COMMUNITY_Community 4|Community 4]]
 - [[_COMMUNITY_Community 5|Community 5]]
-- [[_COMMUNITY_Community 6|Community 6]]
 - [[_COMMUNITY_Community 7|Community 7]]
 - [[_COMMUNITY_Community 8|Community 8]]
 - [[_COMMUNITY_Community 9|Community 9]]
@@ -65,8 +64,8 @@
 - [[_COMMUNITY_Community 86|Community 86]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `BudgetItem` - 53 edges
-2. `Transaction` - 52 edges
+1. `BudgetItem` - 51 edges
+2. `Transaction` - 50 edges
 3. `Category` - 48 edges
 4. `Period` - 47 edges
 5. `Transaction` - 47 edges
@@ -91,7 +90,7 @@
 ## Import Cycles
 - 1-file cycle: `finance/services.py -> finance/services.py`
 
-## Communities (59 total, 15 thin omitted)
+## Communities (58 total, 14 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.21
@@ -228,7 +227,7 @@ Nodes (3): RawBankNotification, BankNotificationParser, Result
 ## Knowledge Gaps
 - **189 isolated node(s):** `PreToolUse`, `PreToolUse`, `Bundle`, `PeriodDao`, `CategoryDao` (+184 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **15 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **14 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
@@ -237,8 +236,8 @@ _Questions this graph is uniquely positioned to answer:_
   _High betweenness centrality (0.123) - this node is a cross-community bridge._
 - **Why does `NavGraph()` connect `Community 33` to `Community 11`, `Community 13`?**
   _High betweenness centrality (0.123) - this node is a cross-community bridge._
-- **Why does `Transaction` connect `Community 0` to `Community 2`, `Community 6`, `Community 7`?**
-  _High betweenness centrality (0.099) - this node is a cross-community bridge._
+- **Why does `Transaction` connect `Community 0` to `Community 2`, `Community 7`?**
+  _High betweenness centrality (0.094) - this node is a cross-community bridge._
 - **Are the 39 inferred relationships involving `BudgetItem` (e.g. with `BudgetItem` and `Category`) actually correct?**
   _`BudgetItem` has 39 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 39 inferred relationships involving `Transaction` (e.g. with `BudgetItem` and `Category`) actually correct?**

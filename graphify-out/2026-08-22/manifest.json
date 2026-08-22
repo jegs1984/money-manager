@@ -84,11 +84,6 @@
     "ast_hash": "abdaa92c9646ba3f721f83605b50c6b8",
     "semantic_hash": "abdaa92c9646ba3f721f83605b50c6b8"
   },
-  "android/app/src/main/java/com/moneymanager/ui/navigation/Routes.kt": {
-    "mtime": 1782947058.4066393,
-    "ast_hash": "856eaa8e26d664d01598ec8921ed0cd0",
-    "semantic_hash": "856eaa8e26d664d01598ec8921ed0cd0"
-  },
   "android/app/src/main/java/com/moneymanager/ui/screen/DashboardScreen.kt": {
     "mtime": 1782947058.4102087,
     "ast_hash": "395dec5e1627e274eaa4b396849f661f",
