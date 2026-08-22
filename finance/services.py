@@ -33,7 +33,10 @@ from django.db import transaction as db_transaction
 from django.db.models import Sum, Value, Q
 from django.db.models.functions import Coalesce
 
-from .models import BudgetItem, Category, ImportBatch, Period, StagingCCTransaction, StagingTransaction, Transaction
+from .models import (
+    Account, BudgetItem, Category, ImportBatch, Period, Reconciliation,
+    StagingCCTransaction, StagingTransaction, Transaction, Transfer,
+)
 
 
 # ─────────────────────────────────────────────
@@ -249,6 +252,24 @@ def _get_or_create_budget_item(period: Period, category: Category, tx_type: str)
     return item
 
 
+def _assert_period_open(period: Period) -> None:
+    if period.closed_at:
+        raise ValueError(f'{period.name} is closed. Reopen it before changing its ledger.')
+
+
+def _get_or_create_import_account(reference: str | None, kind: str) -> Account | None:
+    if not reference:
+        return None
+    account, _ = Account.objects.get_or_create(
+        external_reference=reference,
+        defaults={
+            'name': f'{"Card" if kind == "CREDIT_CARD" else "Account"} {reference}',
+            'kind': kind,
+        },
+    )
+    return account
+
+
 # ─────────────────────────────────────────────
 # Public: Staging batch processor
 # ─────────────────────────────────────────────
@@ -285,8 +306,10 @@ def process_staging_batch(staging_ids_with_categories: list[dict], remove_ids: s
 
         if period is None:
             continue
+        _assert_period_open(period)
 
         budget_item = _get_or_create_budget_item(period, category, stx.type)
+        account = _get_or_create_import_account(stx.account_number, 'CHECKING')
 
         Transaction.objects.create(
             budget_item=budget_item,
@@ -296,6 +319,7 @@ def process_staging_batch(staging_ids_with_categories: list[dict], remove_ids: s
             notes=None,
             source_staging_transaction=stx,
             source_fingerprint=f'bank-staging:{stx.pk}',
+            account=account,
         )
 
         stx.is_processed     = True
@@ -330,6 +354,7 @@ def log_transaction_service(
     ).first()
     if period is None:
         raise ValueError(f'No Period covers date {tx_date}. Create one first.')
+    _assert_period_open(period)
     if description.strip() == '-':
         desc = category.name
     else:
@@ -349,6 +374,7 @@ def log_transaction_service(
 def rollover_period_balance(source_period_id: int, target_period_id: int) -> Decimal:
     source = Period.objects.get(id=source_period_id)
     target = Period.objects.get(id=target_period_id)
+    _assert_period_open(target)
     rollover_total = Decimal('0.00')
 
     for item in BudgetItem.objects.filter(period=source).prefetch_related('transactions'):
@@ -391,15 +417,15 @@ def duplicate_period_budget_items(source_period_id: int, target_period_id: int) 
 
     source_items = BudgetItem.objects.filter(period=source).select_related('category')
 
-    existing_category_ids: set[int] = set(
-        BudgetItem.objects.filter(period=target).values_list('category_id', flat=True)
+    existing_keys: set[tuple[int, str]] = set(
+        BudgetItem.objects.filter(period=target).values_list('category_id', 'type')
     )
 
     to_create: list[BudgetItem] = []
     skipped = 0
 
     for item in source_items:
-        if item.category_id in existing_category_ids:
+        if (item.category_id, item.type) in existing_keys:
             skipped += 1
             continue
         to_create.append(BudgetItem(
@@ -660,8 +686,10 @@ def process_cc_staging_batch(
 
         if period is None:
             continue
+        _assert_period_open(period)
 
         budget_item = _get_or_create_budget_item(period, category, stx.type)
+        account = _get_or_create_import_account(stx.card_number, 'CREDIT_CARD')
 
         Transaction.objects.create(
             budget_item=budget_item,
@@ -671,6 +699,7 @@ def process_cc_staging_batch(
             notes=f'[CC] {stx.card_number or ""} {stx.location or ""}'.strip() or None,
             source_staging_cc_transaction=stx,
             source_fingerprint=f'cc-staging:{stx.pk}',
+            account=account,
         )
 
         stx.is_processed      = True
@@ -685,6 +714,110 @@ def process_cc_staging_batch(
             batch.save(update_fields=['status'])
 
     return processed
+
+
+# ─────────────────────────────────────────────
+# Public: financial operations
+# ─────────────────────────────────────────────
+
+@db_transaction.atomic
+def reverse_transaction_service(transaction_id: int, notes: str = '') -> Transaction:
+    original = Transaction.objects.select_for_update().select_related(
+        'budget_item__period', 'budget_item__category'
+    ).get(pk=transaction_id)
+    if original.reversal_of_id or hasattr(original, 'reversal'):
+        raise ValueError('This transaction has already been reversed.')
+    period = original.budget_item.period
+    _assert_period_open(period)
+    reversal_type = 'OUT' if original.budget_item.type == 'IN' else 'IN'
+    reversal_item = _get_or_create_budget_item(period, original.budget_item.category, reversal_type)
+    return Transaction.objects.create(
+        account=original.account,
+        budget_item=reversal_item,
+        date=original.date,
+        real_amount=original.real_amount,
+        description=f'Reversal: {original.description}',
+        notes=notes or f'Reversal of transaction {original.pk}',
+        reversal_of=original,
+        source_fingerprint=f'reversal:{original.pk}',
+    )
+
+
+@db_transaction.atomic
+def record_transfer_service(
+    source_account_id: int,
+    destination_account_id: int,
+    transfer_date: date,
+    amount: Decimal,
+    description: str = '',
+) -> Transfer:
+    source = Account.objects.get(pk=source_account_id)
+    destination = Account.objects.get(pk=destination_account_id)
+    transfer = Transfer(
+        source_account=source,
+        destination_account=destination,
+        date=transfer_date,
+        amount=amount,
+        description=description,
+    )
+    transfer.full_clean()
+    transfer.save()
+    return transfer
+
+
+def calculate_account_balance(account_id: int) -> Decimal:
+    account = Account.objects.get(pk=account_id)
+    transaction_total = Decimal('0.00')
+    for tx in account.transactions.select_related('budget_item').all():
+        transaction_total += tx.real_amount if tx.budget_item.type == 'IN' else -tx.real_amount
+    outgoing = Transfer.objects.filter(source_account=account).aggregate(
+        total=Coalesce(Sum('amount'), Value(Decimal('0.00')))
+    )['total']
+    incoming = Transfer.objects.filter(destination_account=account).aggregate(
+        total=Coalesce(Sum('amount'), Value(Decimal('0.00')))
+    )['total']
+    return account.opening_balance + transaction_total + incoming - outgoing
+
+
+@db_transaction.atomic
+def reconcile_account_service(
+    account_id: int,
+    statement_date: date,
+    statement_balance: Decimal,
+    notes: str = '',
+) -> Reconciliation:
+    calculated_balance = calculate_account_balance(account_id)
+    reconciliation, _ = Reconciliation.objects.update_or_create(
+        account_id=account_id,
+        statement_date=statement_date,
+        defaults={
+            'statement_balance': statement_balance,
+            'calculated_balance': calculated_balance,
+            'notes': notes,
+        },
+    )
+    return reconciliation
+
+
+@db_transaction.atomic
+def close_period_service(period_id: int) -> Period:
+    period = Period.objects.select_for_update().get(pk=period_id)
+    if period.closed_at:
+        return period
+    has_pending = StagingTransaction.objects.filter(
+        is_processed=False,
+        original_date__range=(period.start_date, period.end_date),
+    ).exists() or StagingCCTransaction.objects.filter(
+        is_processed=False,
+        original_date__range=(period.start_date, period.end_date),
+    ).exists()
+    if has_pending:
+        raise ValueError('Review or discard every staged row in this period before closing it.')
+    from django.utils import timezone
+    period.closed_at = timezone.now()
+    period.is_active = False
+    period.save(update_fields=['closed_at', 'is_active'])
+    return period
 
 
 def calculate_safe_to_spend(period_id: int) -> dict:

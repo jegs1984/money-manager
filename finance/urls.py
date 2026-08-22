@@ -12,12 +12,19 @@ urlpatterns = [
     path('periods/create/',               views.PeriodCreateView.as_view(),    name='period_create'),
     path('periods/<int:pk>/edit/',        views.PeriodUpdateView.as_view(),    name='period_update'),
     path('periods/<int:pk>/delete/',      views.PeriodDeleteView.as_view(),    name='period_delete'),
+    path('periods/<int:pk>/close/',       views.PeriodCloseView.as_view(),     name='period_close'),
     path('periods/<int:pk>/duplicate-budget/', views.PeriodDuplicateBudgetView.as_view(), name='period_duplicate_budget'),
 
     path('categories/',                   views.CategoryListView.as_view(),    name='category_list'),
     path('categories/create/',            views.CategoryCreateView.as_view(),  name='category_create'),
     path('categories/<int:pk>/edit/',     views.CategoryUpdateView.as_view(),  name='category_update'),
     path('categories/<int:pk>/delete/',   views.CategoryDeleteView.as_view(),  name='category_delete'),
+
+    path('accounts/',                     views.AccountListView.as_view(),       name='account_list'),
+    path('accounts/create/',              views.AccountCreateView.as_view(),     name='account_create'),
+    path('accounts/<int:pk>/edit/',       views.AccountUpdateView.as_view(),     name='account_update'),
+    path('transfers/create/',             views.TransferCreateView.as_view(),    name='transfer_create'),
+    path('reconciliations/create/',       views.ReconciliationCreateView.as_view(), name='reconciliation_create'),
 
     path('budget-items/create/',          views.BudgetItemCreateView.as_view(),  name='budgetitem_create'),
     path('budget-items/<int:pk>/edit/',   views.BudgetItemUpdateView.as_view(),  name='budgetitem_update'),
@@ -27,6 +34,7 @@ urlpatterns = [
     path('transactions/create/',          views.TransactionCreateView.as_view(), name='transaction_create'),
     path('transactions/<int:pk>/edit/',   views.TransactionUpdateView.as_view(), name='transaction_update'),
     path('transactions/<int:pk>/delete/', views.TransactionDeleteView.as_view(), name='transaction_delete'),
+    path('transactions/<int:pk>/reverse/', views.TransactionReverseView.as_view(), name='transaction_reverse'),
 
     path('upload/',          views.StatementUploadView.as_view(),      name='statement_upload'),
     path('staging/',         views.StagingReviewView.as_view(),        name='staging_review'),

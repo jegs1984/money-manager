@@ -2,7 +2,7 @@ from django import forms
 from django.forms import modelformset_factory
 from django.utils import timezone
 
-from .models import BudgetItem, Category, Period, StagingCCTransaction, StagingTransaction, Transaction
+from .models import Account, BudgetItem, Category, Period, Reconciliation, StagingCCTransaction, StagingTransaction, Transaction, Transfer
 
 
 class PeriodForm(forms.ModelForm):
@@ -24,6 +24,44 @@ class CategoryForm(forms.ModelForm):
         widgets = {
             'name':  forms.TextInput(attrs={'class': 'form-input'}),
             'group': forms.Select(attrs={'class': 'form-select'}),
+        }
+
+
+class AccountForm(forms.ModelForm):
+    class Meta:
+        model = Account
+        fields = ['name', 'kind', 'external_reference', 'opening_balance', 'is_active']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-input'}),
+            'kind': forms.Select(attrs={'class': 'form-select'}),
+            'external_reference': forms.TextInput(attrs={'class': 'form-input'}),
+            'opening_balance': forms.NumberInput(attrs={'class': 'form-input', 'step': '0.01'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-checkbox'}),
+        }
+
+
+class TransferForm(forms.ModelForm):
+    class Meta:
+        model = Transfer
+        fields = ['source_account', 'destination_account', 'date', 'amount', 'description']
+        widgets = {
+            'source_account': forms.Select(attrs={'class': 'form-select'}),
+            'destination_account': forms.Select(attrs={'class': 'form-select'}),
+            'date': forms.DateInput(attrs={'type': 'date', 'class': 'form-input'}),
+            'amount': forms.NumberInput(attrs={'class': 'form-input', 'step': '0.01', 'min': '0.01'}),
+            'description': forms.TextInput(attrs={'class': 'form-input'}),
+        }
+
+
+class ReconciliationForm(forms.ModelForm):
+    class Meta:
+        model = Reconciliation
+        fields = ['account', 'statement_date', 'statement_balance', 'notes']
+        widgets = {
+            'account': forms.Select(attrs={'class': 'form-select'}),
+            'statement_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-input'}),
+            'statement_balance': forms.NumberInput(attrs={'class': 'form-input', 'step': '0.01'}),
+            'notes': forms.Textarea(attrs={'class': 'form-input', 'rows': 3}),
         }
 
 class BudgetItemForm(forms.ModelForm):

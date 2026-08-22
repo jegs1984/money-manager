@@ -10,6 +10,7 @@ class Period(models.Model):
     start_date = models.DateField(db_column='start_date')
     end_date   = models.DateField(db_column='end_date')
     is_active  = models.BooleanField(default=True, db_column='is_active')
+    closed_at  = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         db_table = 'finance_period'
@@ -51,6 +52,35 @@ class Period(models.Model):
             end_date__gte=self.start_date,
         ).exists():
             raise ValidationError('Periods may not overlap. Each transaction date must map to one period.')
+
+
+class Account(models.Model):
+    KIND_CHOICES = [
+        ('CHECKING', 'Checking account'),
+        ('SAVINGS', 'Savings account'),
+        ('CASH', 'Cash'),
+        ('CREDIT_CARD', 'Credit card'),
+    ]
+
+    name = models.CharField(max_length=100, unique=True)
+    kind = models.CharField(max_length=20, choices=KIND_CHOICES)
+    external_reference = models.CharField(max_length=100, blank=True)
+    opening_balance = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = 'finance_account'
+        ordering = ['name']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['external_reference'],
+                condition=~Q(external_reference=''),
+                name='finance_account_external_reference_unique',
+            ),
+        ]
+
+    def __str__(self):
+        return self.name
 
 
 class Category(models.Model):
@@ -110,6 +140,10 @@ class BudgetItem(models.Model):
 
 
 class Transaction(models.Model):
+    account = models.ForeignKey(
+        Account, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='transactions',
+    )
     budget_item = models.ForeignKey(
         BudgetItem, on_delete=models.CASCADE,
         related_name='transactions', db_column='budget_item_id',
@@ -128,6 +162,10 @@ class Transaction(models.Model):
         related_name='committed_transaction', null=True, blank=True,
     )
     source_fingerprint = models.CharField(max_length=160, blank=True, db_index=True)
+    reversal_of = models.OneToOneField(
+        'self', on_delete=models.PROTECT, null=True, blank=True,
+        related_name='reversal',
+    )
 
     class Meta:
         db_table = 'finance_transaction'
@@ -154,6 +192,41 @@ class Transaction(models.Model):
             raise ValidationError({'date': 'Transaction date must belong to the budget item period.'})
         if self.source_staging_transaction_id and self.source_staging_cc_transaction_id:
             raise ValidationError('A transaction can have only one staging source.')
+
+
+class Transfer(models.Model):
+    source_account = models.ForeignKey(Account, on_delete=models.PROTECT, related_name='outgoing_transfers')
+    destination_account = models.ForeignKey(Account, on_delete=models.PROTECT, related_name='incoming_transfers')
+    date = models.DateField()
+    amount = models.DecimalField(max_digits=14, decimal_places=2)
+    description = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'finance_transfer'
+        ordering = ['-date', '-id']
+        constraints = [models.CheckConstraint(check=Q(amount__gt=0), name='finance_transfer_amount_gt_0')]
+
+    def clean(self):
+        super().clean()
+        if self.source_account_id == self.destination_account_id:
+            raise ValidationError('A transfer requires two different accounts.')
+
+
+class Reconciliation(models.Model):
+    account = models.ForeignKey(Account, on_delete=models.PROTECT, related_name='reconciliations')
+    statement_date = models.DateField()
+    statement_balance = models.DecimalField(max_digits=14, decimal_places=2)
+    calculated_balance = models.DecimalField(max_digits=14, decimal_places=2)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'finance_reconciliation'
+        ordering = ['-statement_date', '-id']
+        constraints = [
+            models.UniqueConstraint(fields=['account', 'statement_date'], name='finance_reconciliation_account_date_unique'),
+        ]
 
 
 class ImportBatch(models.Model):

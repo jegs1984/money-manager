@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.db.models import F, Sum, Value, Case, When
 from django.db.models.functions import Coalesce
 from django.http import HttpResponse, JsonResponse
-from django.shortcuts import redirect
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.views.decorators.http import require_POST
 from django.views.generic import (
@@ -12,15 +12,17 @@ from django.views.generic import (
 )
 
 from .forms import (
-    BudgetItemForm, CategoryForm, PeriodForm,
+    AccountForm, BudgetItemForm, CategoryForm, PeriodForm, ReconciliationForm, TransferForm,
     StagingReviewFormset, StatementUploadForm, TransactionForm,
     CCStatementUploadForm, StagingCCReviewFormset,
 )
-from .models import BudgetItem, Category, ImportBatch, Period, StagingCCTransaction, StagingTransaction, Transaction
+from .models import Account, BudgetItem, Category, ImportBatch, Period, StagingCCTransaction, StagingTransaction, Transaction
 from .services import (
     calculate_safe_to_spend, generate_dashboard_pdf, get_duplicate_staging_ids,
     parse_scotiabank_statement, process_staging_batch,
     parse_scotiabank_cc_statement, process_cc_staging_batch,
+    calculate_account_balance, close_period_service, reconcile_account_service,
+    record_transfer_service, reverse_transaction_service,
 )
 
 
@@ -195,6 +197,17 @@ class PeriodDeleteView(DeleteView):
     success_url   = reverse_lazy('finance:period_list')
 
 
+class PeriodCloseView(View):
+    def post(self, request, pk, *args, **kwargs):
+        try:
+            close_period_service(pk)
+        except (Period.DoesNotExist, ValueError) as exc:
+            messages.error(request, str(exc))
+        else:
+            messages.success(request, 'Period closed. Its ledger is now read-only.')
+        return redirect('finance:period_list')
+
+
 class PeriodDuplicateBudgetView(View):
     """Preview and confirm copying a period's budget skeleton."""
     def get(self, request, pk, *args, **kwargs):
@@ -258,6 +271,76 @@ class CategoryDeleteView(DeleteView):
 
 
 # ─────────────────────────────────────────────
+# Accounts, transfers, and reconciliation
+# ─────────────────────────────────────────────
+
+class AccountListView(ListView):
+    model = Account
+    template_name = 'finance/account_list.html'
+    context_object_name = 'accounts'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['accounts_with_balances'] = [
+            (account, calculate_account_balance(account.pk))
+            for account in context['accounts']
+        ]
+        return context
+
+
+class AccountCreateView(CreateView):
+    model = Account
+    form_class = AccountForm
+    template_name = 'finance/financial_form.html'
+    success_url = reverse_lazy('finance:account_list')
+
+
+class AccountUpdateView(UpdateView):
+    model = Account
+    form_class = AccountForm
+    template_name = 'finance/financial_form.html'
+    success_url = reverse_lazy('finance:account_list')
+
+
+class TransferCreateView(FormView):
+    template_name = 'finance/financial_form.html'
+    form_class = TransferForm
+    success_url = reverse_lazy('finance:account_list')
+
+    def form_valid(self, form):
+        try:
+            record_transfer_service(
+                form.cleaned_data['source_account'].pk,
+                form.cleaned_data['destination_account'].pk,
+                form.cleaned_data['date'],
+                form.cleaned_data['amount'],
+                form.cleaned_data['description'],
+            )
+        except ValueError as exc:
+            form.add_error(None, str(exc))
+            return self.form_invalid(form)
+        messages.success(self.request, 'Transfer recorded without changing your budget totals.')
+        return super().form_valid(form)
+
+
+class ReconciliationCreateView(FormView):
+    template_name = 'finance/financial_form.html'
+    form_class = ReconciliationForm
+    success_url = reverse_lazy('finance:account_list')
+
+    def form_valid(self, form):
+        reconciliation = reconcile_account_service(
+            form.cleaned_data['account'].pk,
+            form.cleaned_data['statement_date'],
+            form.cleaned_data['statement_balance'],
+            form.cleaned_data['notes'],
+        )
+        difference = reconciliation.statement_balance - reconciliation.calculated_balance
+        messages.success(self.request, f'Reconciliation saved. Difference: ${difference:,.0f}.')
+        return super().form_valid(form)
+
+
+# ─────────────────────────────────────────────
 # BudgetItem CRUD
 # ─────────────────────────────────────────────
 
@@ -313,6 +396,17 @@ class TransactionDeleteView(DeleteView):
     model         = Transaction
     template_name = 'finance/confirm_delete.html'
     success_url   = reverse_lazy('finance:dashboard')
+
+
+class TransactionReverseView(View):
+    def post(self, request, pk, *args, **kwargs):
+        try:
+            reverse_transaction_service(pk, request.POST.get('notes', ''))
+        except (Transaction.DoesNotExist, ValueError) as exc:
+            messages.error(request, str(exc))
+        else:
+            messages.success(request, 'A compensating reversal was added; the original transaction is preserved.')
+        return redirect('finance:transaction_list')
 
 
 # ─────────────────────────────────────────────
