@@ -1,0 +1,84 @@
+# Money Manager — Product TODO
+
+## Product guardrails
+
+Keep these principles intact in every change:
+
+- **Local first:** no required cloud account or third-party financial-data service.
+- **Review before commit:** imported or detected activity is never silently added to the ledger.
+- **User control:** duplicate warnings and categorisation suggestions assist the user; they do not make decisions for them.
+- **Financial correctness over convenience:** preserve exact amounts, provenance, and an audit trail.
+
+## P0 — Make data safe and the apps buildable
+
+- [ ] **Fix budget direction integrity.** A category must not silently reuse an expense budget item for an income transaction (or vice versa). Decide and enforce either separate `(period, category, type)` budget lines or a signed-ledger model before adding more reporting.
+- [ ] **Prevent overlapping periods.** A transaction date must resolve to exactly one period; add PostgreSQL range validation and matching application validation.
+- [ ] **Make committed imports traceable and idempotent.** Link each committed transaction to its staging/source record (or an immutable source fingerprint) and enforce that a source row cannot be committed twice.
+- [ ] **Make Django migrations authoritative.** Reconcile `finance/models.py`, `finance/migrations/`, and `sql/`; add a corrective migration instead of relying on raw SQL schema setup.
+- [ ] **Add database integrity rules.** Enforce `Period.start_date <= end_date`, a well-defined single active period policy, and a transaction date that belongs to its budget item's period.
+- [ ] **Remove manual primary-key allocation from `Category.save()`.** Let PostgreSQL sequences generate IDs; add a safe data migration if seeded data needs sequence repair.
+- [ ] **Fix the `Unplanned/Extra` category group.** Use a valid current group (`Gastos`) rather than the obsolete `LIFESTYLE` value.
+- [ ] **Consolidate Android into one architecture.** Choose one set of entities, DAOs, screens, and ViewModels; remove the stale duplicate implementation and make all desired screens reachable from one navigation graph.
+- [ ] **Repair Android notification ingestion.** One pure parser should be used by `BankNotificationService`, the staging writer, and unit tests. Keep the outcome in staging only.
+- [ ] **Remove Room destructive migrations.** Implement and test real migrations so an app update cannot erase financial history.
+- [ ] **Restrict local deployments by default.** Bind Docker web/database ports to loopback, fix production settings, and add authentication before any non-local deployment.
+- [ ] **Correct `.env.example`.** Align its variable names with `DJANGO_SECRET_KEY` and `DB_*` settings.
+
+## P1 — Make reconciliation dependable
+
+- [ ] **Introduce `ImportBatch`.** Store source type, filename, account/card reference, content hash, import time, parser version, and status; associate staging rows with a batch.
+- [ ] **Review one batch at a time.** Do not mix unprocessed rows from different files, accounts, or notification imports in one review screen.
+- [ ] **Detect duplicates against each row's target period.** A batch can cross period boundaries; the active dashboard period must not determine duplicate status.
+- [ ] **Add idempotent import protection.** Warn when an identical file hash has already been staged or committed, while preserving an explicit “import again” choice for legitimate cases.
+- [ ] **Preserve signed balances.** Separate signed balance parsing from positive debit/credit amount parsing in both web and Android parsers.
+- [ ] **Harden XLS handling.** Declare every required dependency, clean temporary files/directories reliably, validate file content server-side, and show actionable parse diagnostics.
+- [ ] **Complete or remove unfinished period actions.** Implement the visible duplicate-budget/rollover flow with a preview and confirmation; do not leave a no-op route.
+- [ ] **Add a correction workflow.** Let users reverse or edit committed transactions with a clear history rather than relying on destructive deletes.
+- [ ] **Model accounts and transfers.** Add checking, savings, cash, and credit-card accounts; ensure transfers and card payments do not inflate income or expense totals.
+- [ ] **Close and reconcile periods.** Compare statement and ledger balances, surface unmatched items, and lock a closed period while retaining explicit adjustment history.
+- [ ] **Use installments for forward planning.** Turn captured credit-card installment data into future-period obligations and remaining-balance views.
+
+## P1 — Usability and visual design
+
+- [ ] **Build responsive navigation.** Replace the permanently fixed desktop sidebar with a collapsible mobile drawer and a compact top/bottom navigation. The staging action bar must not assume `left-56` on small screens.
+- [ ] **Make the current location unmistakable.** Add an active navigation state, page breadcrumbs where useful, and clear import/review progress: `Upload → Validate → Categorise → Confirm`.
+- [ ] **Scope staging visually.** Show batch name, account/card, covered dates, import time, total rows, duplicates, assigned rows, skipped rows, and committed count at the top of review.
+- [ ] **Make review fast for real statements.** Add search, date/type/category filters, sortable columns, pagination/virtualisation, multi-select, and “apply category to selected” actions.
+- [ ] **Retain manual approval while adding suggestions.** Offer a preselected category based on previously confirmed merchant rules; mark it as a suggestion and require review before commit.
+- [ ] **Improve duplicate decisions.** Show the matching ledger transaction (date, category, source, and amount) next to the staged row, rather than only “Already in ledger.”
+- [ ] **Use Chilean money formatting consistently.** Add a shared formatter using `$1.234.567`; do not rely on generic `floatformat` output.
+- [ ] **Use labels, not cryptic abbreviations.** Replace table headings such as `T`, `Cap.`, and `—` with readable text or tooltips that work on touch devices.
+- [ ] **Do not rely on colour alone.** Pair green/amber/red states with labels and icons; ensure readable contrast in the dark theme.
+- [ ] **Make row actions always available.** Hover-only edit/delete controls are inaccessible on touch and awkward with keyboards. Use visible compact actions or an accessible overflow menu.
+- [ ] **Use safer destructive confirmations.** “Delete all staged” should name the batch and number of rows, then require an explicit confirmation step; offer undo for individual removals where practical.
+- [ ] **Improve empty states.** Explain the next useful action and link directly to it, especially for no period, no budget, no import, and no staged rows.
+- [ ] **Localise intentionally.** The product data and audience are Chilean/Spanish but parts of the UI are English. Choose a primary language and make terminology consistent.
+- [ ] **Remove runtime styling dependencies for offline use.** Bundle Tailwind output and fonts locally rather than loading them from CDNs, consistent with the local-first promise.
+- [ ] **Add accessibility basics.** Visible focus states, semantic buttons/labels, keyboard navigation, screen-reader labels for icons, and responsive table alternatives.
+- [ ] **Add merchant rules and bulk categorisation.** Learn only from confirmed assignments, suggest categories transparently, and let users apply a category to selected staged rows before review/commit.
+
+## P2 — Reporting and planning
+
+- [ ] Add an at-a-glance “needs attention” section: uncategorised rows, unreviewed duplicates, categories near budget, and categories over budget.
+- [ ] Make group dashboards expandable and link each group total to its transactions.
+- [ ] Add date-range and category filters to transaction history, plus CSV export for user-owned backups.
+- [ ] Add a planned-versus-actual trend view across periods without changing the current period-based budgeting model.
+- [ ] Add an offline, versioned, encrypted export/import bundle if the web and Android apps need to exchange data. Do not make cloud sync a requirement.
+- [ ] Add recurring income/expense plans, upcoming-bill reminders, and a daily cash-flow forecast.
+- [ ] Add goals and sinking funds for non-monthly spending such as insurance, travel, and emergency savings.
+
+## P2 — Quality and delivery
+
+- [ ] Add Django tests for imports, malformed rows, signed balances, duplicate decisions, batch commits, dashboard totals, constraints, and PDF generation.
+- [ ] Add Android tests for statement parsers, notification parsing, Room migrations, duplicate logic, and staging commits.
+- [ ] Keep sanitised bank-statement fixtures with expected results; never commit real financial data.
+- [ ] Add CI checks for Django migrations, Django tests, Android compilation, Android tests, and schema parity documentation.
+- [ ] Document a backup/restore procedure and a recovery process for failed imports.
+
+## Suggested delivery order
+
+1. P0 migration, integrity, Android consolidation, and local-security fixes.
+2. Import batches and scoped reconciliation.
+3. Responsive review UI and fast categorisation tools.
+4. Tests, CI, and backup/export reliability.
+5. Planning/reporting refinements and optional offline web-to-mobile transfer.
