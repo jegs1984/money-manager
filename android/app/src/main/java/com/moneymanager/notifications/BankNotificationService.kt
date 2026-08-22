@@ -4,17 +4,13 @@ import android.app.Notification
 import android.content.Intent
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
-import com.moneymanager.data.db.StagingTransactionEntity
 import com.moneymanager.data.repository.FinanceRepository
-import com.moneymanager.domain.usecase.BankNotificationParser
 import com.moneymanager.notifications.model.RawBankNotification
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import java.time.Instant
-import java.time.ZoneId
 import javax.inject.Inject
 
 /**
@@ -49,20 +45,8 @@ class BankNotificationService : NotificationListenerService() {
         val text  = extras.getCharSequence(Notification.EXTRA_TEXT)?.toString() ?: ""
         val raw = RawBankNotification(sbn.packageName, title, text, sbn.postTime)
         notificationFlow.tryEmit(raw)
-        val parsed = BankNotificationParser.parse(raw) ?: return
-
         scope.launch {
-            repo.insertStagingRows(
-                listOf(
-                    StagingTransactionEntity(
-                        sourceFile   = "notification:${sbn.packageName}",
-                        originalDate = Instant.ofEpochMilli(sbn.postTime).atZone(ZoneId.systemDefault()).toLocalDate(),
-                        description  = parsed.description,
-                        amount       = parsed.amount.toPlainString(),
-                        type         = parsed.type,
-                    )
-                )
-            )
+            repo.stageNotification(raw, "notification:${sbn.packageName}")
         }
     }
 
