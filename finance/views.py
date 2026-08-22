@@ -421,7 +421,26 @@ class TransactionListView(ListView):
     paginate_by         = 50
 
     def get_queryset(self):
-        return Transaction.objects.select_related('budget_item__category', 'budget_item__period')
+        queryset = Transaction.objects.select_related('budget_item__category', 'budget_item__period', 'account')
+        query = self.request.GET.get('q', '').strip()
+        category_id = self.request.GET.get('category')
+        date_from = self.request.GET.get('from')
+        date_to = self.request.GET.get('to')
+        if query:
+            from django.db.models import Q
+            queryset = queryset.filter(Q(description__icontains=query) | Q(notes__icontains=query))
+        if category_id and category_id.isdigit():
+            queryset = queryset.filter(budget_item__category_id=category_id)
+        if date_from:
+            queryset = queryset.filter(date__gte=date_from)
+        if date_to:
+            queryset = queryset.filter(date__lte=date_to)
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['categories'] = Category.objects.order_by('name')
+        return context
 
 
 class TransactionCreateView(CreateView):

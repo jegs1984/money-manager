@@ -7,6 +7,13 @@
   <a href="{% url 'finance:transaction_create' %}" class="btn-primary text-xs">+ Log Transaction</a>
 {% endblock %}
 {% block content %}
+<form method="get" class="card mb-4 grid gap-3 md:grid-cols-5" aria-label="Filter transactions">
+  <input class="form-input" name="q" value="{{ request.GET.q }}" placeholder="Search description or notes">
+  <select class="form-select" name="category"><option value="">All categories</option>{% for category in categories %}<option value="{{ category.pk }}" {% if request.GET.category == category.pk|stringformat:'s' %}selected{% endif %}>{{ category.name }}</option>{% endfor %}</select>
+  <input class="form-input" type="date" name="from" value="{{ request.GET.from }}" aria-label="From date">
+  <input class="form-input" type="date" name="to" value="{{ request.GET.to }}" aria-label="To date">
+  <button class="btn-secondary justify-center" type="submit">Filter</button>
+</form>
 <div class="card overflow-hidden p-0">
   <table class="w-full text-sm">
     <thead>
