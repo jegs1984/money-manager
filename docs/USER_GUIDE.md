@@ -56,6 +56,35 @@ Use the dashboard to inspect actual versus projected totals. Exports and PDF
 reports are snapshots of the records in the selected period; confirm staging
 rows are committed before producing a final report.
 
+## 7. Accounts, corrections, and reconciliation
+
+Use **Accounts** to record checking, savings, cash, and credit-card accounts.
+Transfers are deliberately separate from budget transactions, so moving money
+between your own accounts does not inflate income or spending. Reconcile an
+account against its statement balance to record the difference between the
+statement and the ledger's calculated balance.
+
+Do not delete a transaction merely to correct it. Use **reverse** in the
+transaction list to create an equal and opposite ledger entry while preserving
+the original record. Close a period only after all of its staging rows are
+reviewed; closed periods reject new ledger activity.
+
+## 8. Planning and automation
+
+Merchant rules suggest a category when the description contains a saved,
+user-defined pattern. Suggestions remain editable and are never committed
+without review. Recurring plans create due entries once using a stable source
+fingerprint. Goals track progress toward a target without changing budget
+totals.
+
+## 9. Encrypted exchange and CSV
+
+The **Encrypted backup** page creates a versioned `.mmbundle` file encrypted
+with AES-GCM and a passphrase of your choice. Keep the passphrase separately:
+it cannot be recovered. Importing the same bundle again does not duplicate its
+transactions. The transaction list also provides CSV export for spreadsheet
+analysis or user-owned backups.
+
 ## Good practices
 
 - Reconcile imports against the original statement before committing.

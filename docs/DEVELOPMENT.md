@@ -30,6 +30,9 @@ reference material and is not an alternative installation/migration path.
 
 Model validation enforces transaction dates within their budget period; the
 database migration also establishes the corresponding data-integrity protection.
+Budget items are uniquely identified by period, category, and direction; import
+commits retain an immutable staging source and source fingerprint. Do not edit
+the historical `sql/` scripts to change the live application schema.
 
 ## Android workflow
 
@@ -42,6 +45,10 @@ cd android
 Keep Kotlin tests under `android/app/src/test/` and name them `*Test.kt`. Room
 schema changes need a tested, non-destructive migration; do not use destructive
 fallback migration behavior.
+
+The web bundle format is versioned and encrypted with `cryptography`'s
+AES-GCM implementation. Any format change must preserve idempotent import and
+must be documented before Android support is added.
 
 ## Project conventions
 

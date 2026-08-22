@@ -4,6 +4,15 @@ Financial data is stored in PostgreSQL for the web app. Take a backup before an
 upgrade or any action that removes a database or Docker volume. Store backups in
 private, encrypted storage where appropriate.
 
+## Encrypted application bundle
+
+For a portable, application-level backup or offline exchange, use
+**Encrypted backup** in the web app. It produces a `.mmbundle` protected by
+AES-GCM and your passphrase. Keep the passphrase in a separate secure location:
+the application cannot recover a lost passphrase. Test a bundle by importing it
+into a separate, disposable local installation first; imports merge by stable
+source fingerprints and do not replace a PostgreSQL backup.
+
 ## Docker backup
 
 From the repository root, create a portable SQL dump:
