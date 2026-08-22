@@ -115,6 +115,8 @@ La cabecera de revisión identifica el lote que estás viendo: archivo, cuenta o
 
 Filtra la cartola por texto, tipo o categoría. Puedes seleccionar varias filas y aplicarles la categoría elegida; cada fila sigue visible y editable antes de confirmar el lote.
 
+Una categoría sugerida proviene de una regla comercial que configuraste antes. Es una propuesta, no una decisión automática: puedes reemplazarla o dejar la fila sin confirmar.
+
 Para eliminar todo un lote, la aplicación muestra su nombre y el número de filas y pide escribir `ELIMINAR`. Es una acción permanente: usa las decisiones por fila cuando quieras conservar el resto del lote.
 
 Las tablas usan encabezados completos y las acciones Editar/Eliminar se mantienen visibles tanto con teclado como en pantallas táctiles.

@@ -164,6 +164,7 @@
               {% if form.instance.account_number %}
                 <span class="font-mono text-xs text-zinc-600">{{ form.instance.account_number }}</span>
               {% endif %}
+              {% if form.instance.assigned_category %}<span class="block text-xs text-emerald-300">Sugerencia de regla comercial: revísala antes de confirmar.</span>{% endif %}
             </td>
             <td class="px-4 py-2.5 font-mono text-xs text-zinc-600">{{ form.instance.doc_number|default:"—" }}</td>
             <td class="px-4 py-2.5 text-right font-mono text-sm font-semibold whitespace-nowrap

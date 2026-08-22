@@ -44,7 +44,7 @@ Keep these principles intact in every change:
 - [x] **Make the current location unmistakable.** Primary navigation exposes active and `aria-current` states, and staging review shows `Cargar → Validar → Categorizar → Confirmar` progress.
 - [x] **Scope staging visually.** Each review now identifies its file and account/card, covered dates and import time, plus total, duplicate, assigned, skipped, and committed rows.
 - [x] **Make review fast for real statements.** Staging review provides local search, type/category filters, date/amount/description sorting, row multi-select, and bulk category application without relaxing confirmation.
-- [ ] **Retain manual approval while adding suggestions.** Offer a preselected category based on previously confirmed merchant rules; mark it as a suggestion and require review before commit.
+- [x] **Retain manual approval while adding suggestions.** Merchant rules preselect a visibly marked category suggestion; users can change or leave it unconfirmed before any ledger commit.
 - [x] **Improve duplicate decisions.** Duplicate warnings now identify the matching ledger date, category, amount, and imported-source provenance next to the staged row.
 - [x] **Use Chilean money formatting consistently.** The shared `clp` template formatter renders whole pesos as `$1.234.567` across templates instead of generic `floatformat` currency output.
 - [x] **Use labels, not cryptic abbreviations.** Review and dashboard tables use explicit Spanish headings such as Tipo and Uso del presupuesto, with visible action text.
@@ -55,7 +55,7 @@ Keep these principles intact in every change:
 - [ ] **Localise intentionally.** The product data and audience are Chilean/Spanish but parts of the UI are English. Choose a primary language and make terminology consistent.
 - [x] **Remove runtime styling dependencies for offline use.** Tailwind is compiled into a local static stylesheet and the UI uses system fonts; no runtime styling or font CDN is required.
 - [ ] **Add accessibility basics.** Visible focus states, semantic buttons/labels, keyboard navigation, screen-reader labels for icons, and responsive table alternatives.
-- [ ] **Add merchant rules and bulk categorisation.** Merchant rules now provide transparent suggestions; bulk review actions remain.
+- [x] **Add merchant rules and bulk categorisation.** Merchant rules provide transparent review-only suggestions and the review controls apply a selected category across checked rows.
 
 ## P2 — Reporting and planning
 
