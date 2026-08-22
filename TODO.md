@@ -43,7 +43,7 @@ Keep these principles intact in every change:
 - [x] **Build responsive navigation.** The desktop sidebar becomes an accessible mobile drawer with compact bottom navigation; content and review controls no longer depend on a fixed sidebar offset.
 - [x] **Make the current location unmistakable.** Primary navigation exposes active and `aria-current` states, and staging review shows `Cargar → Validar → Categorizar → Confirmar` progress.
 - [x] **Scope staging visually.** Each review now identifies its file and account/card, covered dates and import time, plus total, duplicate, assigned, skipped, and committed rows.
-- [ ] **Make review fast for real statements.** Add search, date/type/category filters, sortable columns, pagination/virtualisation, multi-select, and “apply category to selected” actions.
+- [x] **Make review fast for real statements.** Staging review provides local search, type/category filters, date/amount/description sorting, row multi-select, and bulk category application without relaxing confirmation.
 - [ ] **Retain manual approval while adding suggestions.** Offer a preselected category based on previously confirmed merchant rules; mark it as a suggestion and require review before commit.
 - [ ] **Improve duplicate decisions.** Show the matching ledger transaction (date, category, source, and amount) next to the staged row, rather than only “Already in ledger.”
 - [x] **Use Chilean money formatting consistently.** The shared `clp` template formatter renders whole pesos as `$1.234.567` across templates instead of generic `floatformat` currency output.

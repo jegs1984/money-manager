@@ -110,3 +110,7 @@ En computadores se muestra la barra lateral. En teléfonos, usa el botón de men
 # Alcance de una importación
 
 La cabecera de revisión identifica el lote que estás viendo: archivo, cuenta o tarjeta, fechas cubiertas, hora de carga y contadores de filas. Revisa esos datos antes de confirmar para no mezclar movimientos de dos cartolas.
+
+# Revisión rápida
+
+Filtra la cartola por texto, tipo o categoría. Puedes seleccionar varias filas y aplicarles la categoría elegida; cada fila sigue visible y editable antes de confirmar el lote.

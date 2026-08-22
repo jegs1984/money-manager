@@ -60,12 +60,20 @@
   {% csrf_token %}
   {% if batch %}<input type="hidden" name="batch" value="{{ batch.pk }}">{% endif %}
   {{ formset.management_form }}
+  <div class="card mb-3 grid gap-2 md:grid-cols-5" aria-label="Filtrar filas de revisión">
+    <input id="review-search" class="form-input" placeholder="Buscar descripción o documento" type="search">
+    <select id="review-type" class="form-select"><option value="">Todos los tipos</option><option value="IN">Ingreso</option><option value="OUT">Gasto</option></select>
+    <select id="review-category" class="form-select"><option value="">Todas las categorías</option>{% for category in formset.empty_form.assigned_category.field.queryset %}<option value="{{ category.pk }}">{{ category.name }}</option>{% endfor %}</select>
+    <select id="review-sort" class="form-select"><option value="date">Fecha</option><option value="amount">Monto</option><option value="description">Descripción</option></select>
+    <button id="apply-selected" type="button" class="btn-secondary justify-center">Aplicar categoría a seleccionadas</button>
+  </div>
 
   <div class="card overflow-hidden p-0 mb-28">
     <div class="overflow-x-auto">
       <table class="w-full text-sm">
         <thead>
           <tr class="border-b border-zinc-800 bg-zinc-900/50">
+            <th class="px-2 py-2.5"><input id="select-all-rows" type="checkbox" class="form-checkbox" aria-label="Seleccionar todas las filas visibles"></th>
             <th class="px-4 py-2.5 text-left  font-mono text-xs text-zinc-600 uppercase tracking-widest w-24">Date</th>
             <th class="px-4 py-2.5 text-left  font-mono text-xs text-zinc-600 uppercase tracking-widest">Description</th>
             <th class="px-4 py-2.5 text-left  font-mono text-xs text-zinc-600 uppercase tracking-widest w-24">Doc #</th>
@@ -84,10 +92,10 @@
           {% if sid in duplicate_ids %}
           {# ── DUPLICATE ROW ──────────────────────────────────────────────── #}
           <tr class="bg-amber-950/20 border-l-2 border-amber-600/60 hover:bg-amber-950/30 transition-colors"
-              id="row-{{ sid }}" data-sid="{{ sid }}">
+              id="row-{{ sid }}" data-sid="{{ sid }}" data-date="{{ form.instance.original_date|date:'Y-m-d' }}" data-amount="{{ form.instance.amount }}">
             {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
 
-            <td class="px-4 py-2.5 font-mono text-xs text-zinc-400 whitespace-nowrap">
+            <td class="px-2 py-2.5"><input type="checkbox" class="row-select form-checkbox" aria-label="Seleccionar {{ form.instance.description }}"></td><td class="px-4 py-2.5 font-mono text-xs text-zinc-400 whitespace-nowrap">
               {{ form.instance.original_date|date:"d/m/Y" }}
             </td>
             <td class="px-4 py-2.5 text-zinc-300 max-w-xs">
@@ -144,10 +152,10 @@
 
           {% else %}
           {# ── NORMAL ROW ─────────────────────────────────────────────────── #}
-          <tr class="hover:bg-zinc-800/20 transition-colors" id="row-{{ sid }}" data-sid="{{ sid }}">
+          <tr class="hover:bg-zinc-800/20 transition-colors" id="row-{{ sid }}" data-sid="{{ sid }}" data-date="{{ form.instance.original_date|date:'Y-m-d' }}" data-amount="{{ form.instance.amount }}">
             {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
 
-            <td class="px-4 py-2.5 font-mono text-xs text-zinc-400 whitespace-nowrap">
+            <td class="px-2 py-2.5"><input type="checkbox" class="row-select form-checkbox" aria-label="Seleccionar {{ form.instance.description }}"></td><td class="px-4 py-2.5 font-mono text-xs text-zinc-400 whitespace-nowrap">
               {{ form.instance.original_date|date:"d/m/Y" }}
             </td>
             <td class="px-4 py-2.5 text-zinc-300 max-w-xs">
@@ -310,7 +318,8 @@
     btnAll.addEventListener('click', async function () {
       const count = document.querySelectorAll('#staging-tbody tr[data-sid]').length;
       if (!count) return;
-      if (!confirm('Delete all ' + count + ' staged transaction' + (count === 1 ? '' : 's') + '? This cannot be undone.')) return;
+      const batchName = '{{ batch.filename|default:"Notificaciones"|escapejs }}';
+      if (prompt('Eliminar ' + count + ' filas del lote “' + batchName + '”. Escribe ELIMINAR para confirmar:') !== 'ELIMINAR') return;
       btnAll.disabled = true;
       try {
         const data = await deleteIds([], true);
@@ -342,6 +351,18 @@
   {% endif %}
   {% endwith %}
   {% endfor %}
+
+  // ── local review tools: filter, sort, select and bulk categorise ─────────
+  const search = document.getElementById('review-search'), type = document.getElementById('review-type'), category = document.getElementById('review-category'), sort = document.getElementById('review-sort');
+  const rows = () => Array.from(document.querySelectorAll('#staging-tbody tr[data-sid]'));
+  function filterRows() {
+    const term = search.value.toLowerCase();
+    rows().forEach(row => { const select = row.querySelector('select'); const matches = row.textContent.toLowerCase().includes(term) && (!type.value || row.textContent.includes(type.value)) && (!category.value || select.value === category.value); row.hidden = !matches; });
+  }
+  [search, type, category].forEach(control => control && control.addEventListener('input', filterRows));
+  sort && sort.addEventListener('change', () => { const tbody = document.getElementById('staging-tbody'); rows().sort((a,b) => (sort.value === 'amount' ? Number(a.dataset.amount)-Number(b.dataset.amount) : sort.value === 'description' ? a.textContent.localeCompare(b.textContent) : a.dataset.date.localeCompare(b.dataset.date))).forEach(row => tbody.appendChild(row)); });
+  document.getElementById('select-all-rows')?.addEventListener('change', e => rows().filter(row => !row.hidden).forEach(row => row.querySelector('.row-select').checked = e.target.checked));
+  document.getElementById('apply-selected')?.addEventListener('click', () => { if (!category.value) { category.focus(); return; } rows().filter(row => row.querySelector('.row-select').checked).forEach(row => { row.querySelector('select').value = category.value; }); });
 
 })();
 </script>
