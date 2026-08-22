@@ -19,7 +19,7 @@ from .forms import (
 )
 from .models import Account, BudgetItem, Category, Goal, ImportBatch, InstallmentObligation, MerchantRule, Period, RecurringPlan, StagingCCTransaction, StagingTransaction, Transaction
 from .services import (
-    calculate_safe_to_spend, generate_dashboard_pdf, get_duplicate_staging_ids,
+    calculate_safe_to_spend, generate_dashboard_pdf, get_duplicate_staging_ids, get_duplicate_staging_matches,
     parse_scotiabank_statement, process_staging_batch,
     parse_scotiabank_cc_statement, process_cc_staging_batch,
     calculate_account_balance, close_period_service, reconcile_account_service,
@@ -597,6 +597,7 @@ class StagingReviewView(TemplateView):
         qs  = self._qs()
         period = self._active_period()
         duplicate_ids = get_duplicate_staging_ids(period, qs) if period else set()
+        ctx['duplicate_matches'] = get_duplicate_staging_matches(qs) if period else {}
 
         ctx['formset']       = StagingReviewFormset(queryset=qs)
         ctx['pending_count'] = qs.count()
@@ -649,6 +650,7 @@ class StagingReviewView(TemplateView):
 
         period = self._active_period()
         duplicate_ids = get_duplicate_staging_ids(period, qs) if period else set()
+        ctx['duplicate_matches'] = get_duplicate_staging_matches(qs) if period else {}
         ctx = self.get_context_data()
         ctx['formset']       = formset
         ctx['duplicate_ids'] = duplicate_ids

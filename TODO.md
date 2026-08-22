@@ -45,7 +45,7 @@ Keep these principles intact in every change:
 - [x] **Scope staging visually.** Each review now identifies its file and account/card, covered dates and import time, plus total, duplicate, assigned, skipped, and committed rows.
 - [x] **Make review fast for real statements.** Staging review provides local search, type/category filters, date/amount/description sorting, row multi-select, and bulk category application without relaxing confirmation.
 - [ ] **Retain manual approval while adding suggestions.** Offer a preselected category based on previously confirmed merchant rules; mark it as a suggestion and require review before commit.
-- [ ] **Improve duplicate decisions.** Show the matching ledger transaction (date, category, source, and amount) next to the staged row, rather than only “Already in ledger.”
+- [x] **Improve duplicate decisions.** Duplicate warnings now identify the matching ledger date, category, amount, and imported-source provenance next to the staged row.
 - [x] **Use Chilean money formatting consistently.** The shared `clp` template formatter renders whole pesos as `$1.234.567` across templates instead of generic `floatformat` currency output.
 - [x] **Use labels, not cryptic abbreviations.** Review and dashboard tables use explicit Spanish headings such as Tipo and Uso del presupuesto, with visible action text.
 - [ ] **Do not rely on colour alone.** Pair green/amber/red states with labels and icons; ensure readable contrast in the dark theme.

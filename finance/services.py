@@ -139,6 +139,22 @@ def get_duplicate_staging_ids(period: Period | None, staging_qs) -> set[int]:
     return duplicate_ids
 
 
+def get_duplicate_staging_matches(staging_qs) -> dict[int, Transaction]:
+    """Return the ledger transaction that caused each staged duplicate warning."""
+    matches = {}
+    for stx in staging_qs:
+        row_period = Period.objects.filter(start_date__lte=stx.original_date, end_date__gte=stx.original_date).first()
+        if not row_period:
+            continue
+        existing = Transaction.objects.select_related('budget_item__category').filter(
+            budget_item__period=row_period, date=stx.original_date,
+            real_amount=stx.amount, description=stx.description,
+        ).first()
+        if existing:
+            matches[stx.pk] = existing
+    return matches
+
+
 # ─────────────────────────────────────────────
 # Public: Bank ETL
 # ─────────────────────────────────────────────

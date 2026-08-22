@@ -15,3 +15,8 @@ def clp(value):
     sign = '-' if amount < 0 else ''
     digits = f'{abs(amount):,.0f}'.replace(',', '.')
     return f'{sign}${digits}'
+
+
+@register.filter
+def get_item(mapping, key):
+    return mapping.get(key) if mapping else None

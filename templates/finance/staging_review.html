@@ -107,6 +107,7 @@
                         clip-rule="evenodd"/>
                 </svg>
                 <span class="font-mono text-xs text-amber-400/80">Already in ledger</span>
+                {% with match=duplicate_matches|get_item:sid %}{% if match %}<span class="font-mono text-xs text-amber-200">Coincide con {{ match.date|date:"d/m/Y" }} · {{ match.budget_item.category.name }} · {{ match.real_amount|clp }}{% if match.source_fingerprint %} · importado{% endif %}</span>{% endif %}{% endwith %}
               </span>
             </td>
             <td class="px-4 py-2.5 font-mono text-xs text-zinc-600">{{ form.instance.doc_number|default:"—" }}</td>
