@@ -66,7 +66,7 @@ data class CategoryEntity(
     indices = [
         Index("period_id"),
         Index("category_id"),
-        Index(value = ["period_id", "category_id"], unique = true),
+        Index(value = ["period_id", "category_id", "type"], unique = true),
     ],
 )
 data class BudgetItemEntity(

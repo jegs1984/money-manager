@@ -13,7 +13,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import java.time.LocalDate
+import java.time.Instant
+import java.time.ZoneId
 import javax.inject.Inject
 
 /**
@@ -55,7 +56,7 @@ class BankNotificationService : NotificationListenerService() {
                 listOf(
                     StagingTransactionEntity(
                         sourceFile   = "notification:${sbn.packageName}",
-                        originalDate = LocalDate.now(),
+                        originalDate = Instant.ofEpochMilli(sbn.postTime).atZone(ZoneId.systemDefault()).toLocalDate(),
                         description  = parsed.description,
                         amount       = parsed.amount.toPlainString(),
                         type         = parsed.type,

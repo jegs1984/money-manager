@@ -84,10 +84,10 @@ class FinanceRepository @Inject constructor(
         budgetItemDao.observeByPeriod(periodId)
 
     suspend fun getOrCreateBudgetItem(periodId: Long, categoryId: Long, type: String): BudgetItemEntity {
-        return budgetItemDao.find(periodId, categoryId) ?: run {
+        return budgetItemDao.find(periodId, categoryId, type) ?: run {
             val entity = BudgetItemEntity(periodId = periodId, categoryId = categoryId, type = type)
             val id = budgetItemDao.insert(entity)
-            budgetItemDao.find(periodId, categoryId)!!
+            budgetItemDao.find(periodId, categoryId, type)!!
         }
     }
 

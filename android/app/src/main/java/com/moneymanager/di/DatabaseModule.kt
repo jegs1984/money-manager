@@ -22,6 +22,7 @@ object DatabaseModule {
     fun provideDatabase(@ApplicationContext ctx: Context): AppDatabase =
         Room.databaseBuilder(ctx, AppDatabase::class.java, AppDatabase.DATABASE_NAME)
             .addMigrations(MIGRATION_1_2)
+            .addMigrations(MIGRATION_2_3)
             .build()
 
     /** Preserve all v1 data while introducing import provenance. */
@@ -39,6 +40,14 @@ object DatabaseModule {
             db.execSQL("CREATE INDEX IF NOT EXISTS index_finance_import_batch_content_hash ON finance_import_batch(content_hash)")
             db.execSQL("ALTER TABLE finance_staging_transaction ADD COLUMN batch_id INTEGER")
             db.execSQL("ALTER TABLE finance_staging_cc_transaction ADD COLUMN batch_id INTEGER")
+        }
+    }
+
+    /** Align budget-item direction identity with the web ledger without data loss. */
+    private val MIGRATION_2_3 = object : Migration(2, 3) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("DROP INDEX IF EXISTS index_finance_budget_item_period_id_category_id")
+            db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_finance_budget_item_period_id_category_id_type ON finance_budget_item(period_id, category_id, type)")
         }
     }
 

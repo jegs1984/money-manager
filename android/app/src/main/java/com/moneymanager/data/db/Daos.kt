@@ -79,8 +79,8 @@ interface BudgetItemDao {
     @Query("SELECT * FROM finance_budget_item WHERE period_id = :periodId")
     suspend fun getByPeriod(periodId: Long): List<BudgetItemEntity>
 
-    @Query("SELECT * FROM finance_budget_item WHERE period_id = :periodId AND category_id = :categoryId LIMIT 1")
-    suspend fun find(periodId: Long, categoryId: Long): BudgetItemEntity?
+    @Query("SELECT * FROM finance_budget_item WHERE period_id = :periodId AND category_id = :categoryId AND type = :type LIMIT 1")
+    suspend fun find(periodId: Long, categoryId: Long, type: String): BudgetItemEntity?
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(item: BudgetItemEntity): Long
