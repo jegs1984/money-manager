@@ -72,3 +72,8 @@ docker compose config --quiet
 
 Document user-visible behavior, migrations/configuration changes, and the
 validation you ran. Include screenshots for Django or Compose UI changes.
+
+GitHub Actions repeats Django migration checks/tests against PostgreSQL and
+Android unit/debug builds for every push and pull request. Keep schema-parity
+notes in the migration and Room-migration comments whenever a shared field
+changes.
