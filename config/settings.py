@@ -9,7 +9,7 @@ DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 REQUIRE_LOGIN = os.environ.get('DJANGO_REQUIRE_LOGIN', str(not DEBUG)) == 'True'
 LOGIN_URL = '/accounts/login/'
 
-ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '127.0.0.1 localhost').split()
+ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '*').split()
 
 if not DEBUG and SECRET_KEY == 'dev-insecure-change-me-in-production':
     raise RuntimeError('DJANGO_SECRET_KEY must be set when DJANGO_DEBUG=False.')
