@@ -5,9 +5,9 @@
     "semantic_hash": "bfee062c3962c14264fd704e975a6b38"
   },
   "android/app/build.gradle.kts": {
-    "mtime": 1782947058.3824542,
-    "ast_hash": "93df98cb4ec367c0ffaac7e57457b9be",
-    "semantic_hash": "93df98cb4ec367c0ffaac7e57457b9be"
+    "mtime": 1787442022.611044,
+    "ast_hash": "e72d07aa7fc91741db66d08e34740289",
+    "semantic_hash": ""
   },
   "android/app/src/main/java/com/moneymanager/MainActivity.kt": {
     "mtime": 1782947058.3847787,
@@ -40,13 +40,13 @@
     "semantic_hash": ""
   },
   "android/app/src/main/java/com/moneymanager/data/repository/FinanceRepository.kt": {
-    "mtime": 1787441054.379885,
-    "ast_hash": "c9f843923d9b90ff1e7855e58b2684ba",
+    "mtime": 1787441855.0843441,
+    "ast_hash": "5c80b88cfd964d45b41603ee57b2a6dd",
     "semantic_hash": ""
   },
   "android/app/src/main/java/com/moneymanager/di/DatabaseModule.kt": {
-    "mtime": 1787441054.3822734,
-    "ast_hash": "1b17dfded7276dcae74bd51c23b618bf",
+    "mtime": 1787442022.6103728,
+    "ast_hash": "fed8f7de5a07d17c44a2c21c95e03682",
     "semantic_hash": ""
   },
   "android/app/src/main/java/com/moneymanager/domain/usecase/DetectStagingDuplicatesUseCase.kt": {
@@ -54,19 +54,14 @@
     "ast_hash": "4aa92167c49e1586817938ade99887d2",
     "semantic_hash": ""
   },
-  "android/app/src/main/java/com/moneymanager/domain/usecase/ParseBankNotificationUseCase.kt": {
-    "mtime": 1787438717.6592462,
-    "ast_hash": "7da6d1b9ccbcfc1491ae3f04f2bcaafe",
-    "semantic_hash": ""
-  },
   "android/app/src/main/java/com/moneymanager/domain/usecase/ParseStatementUseCases.kt": {
-    "mtime": 1787438821.579681,
-    "ast_hash": "ba64df41e33ed23fa536c8c0c1861eba",
+    "mtime": 1787442987.826589,
+    "ast_hash": "aef1d8f6ea076d83615341f636c525ff",
     "semantic_hash": ""
   },
   "android/app/src/main/java/com/moneymanager/notifications/BankNotificationService.kt": {
-    "mtime": 1787441054.3811715,
-    "ast_hash": "db13140e66faeca38e938636422bebec",
+    "mtime": 1787441855.08528,
+    "ast_hash": "c71fafd89d1e988956877db63c6715cb",
     "semantic_hash": ""
   },
   "android/app/src/main/java/com/moneymanager/notifications/model/RawBankNotification.kt": {
@@ -80,9 +75,9 @@
     "semantic_hash": "85d0842e2dc117a0d752cc07e88bcaf1"
   },
   "android/app/src/main/java/com/moneymanager/ui/navigation/NavGraph.kt": {
-    "mtime": 1782947058.4056098,
-    "ast_hash": "abdaa92c9646ba3f721f83605b50c6b8",
-    "semantic_hash": "abdaa92c9646ba3f721f83605b50c6b8"
+    "mtime": 1787441782.5093102,
+    "ast_hash": "6a06b3186672236d47c85c3387e4373b",
+    "semantic_hash": ""
   },
   "android/app/src/main/java/com/moneymanager/ui/screen/DashboardScreen.kt": {
     "mtime": 1787438821.5811915,
@@ -115,9 +110,9 @@
     "semantic_hash": "1b5a96e3bda5be0f940609b135928c22"
   },
   "android/app/src/test/java/com/moneymanager/domain/usecase/ParseBankNotificationUseCaseTest.kt": {
-    "mtime": 1782947058.4240267,
-    "ast_hash": "dd5c82a799f0aa939d12c530cb097ba0",
-    "semantic_hash": "dd5c82a799f0aa939d12c530cb097ba0"
+    "mtime": 1787441855.0858858,
+    "ast_hash": "ee2a35f24e574db5d4b913a4f36cc0fb",
+    "semantic_hash": ""
   },
   "android/build.gradle.kts": {
     "mtime": 1782946244.48404,
@@ -145,8 +140,8 @@
     "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
   },
   "config/settings.py": {
-    "mtime": 1787437579.2474082,
-    "ast_hash": "3e5a82b3fe7ad3af33fb3f4cb322ae8d",
+    "mtime": 1787442275.5206528,
+    "ast_hash": "c6b4d90322854123a81830cb6664f2f3",
     "semantic_hash": ""
   },
   "config/urls.py": {
@@ -180,23 +175,23 @@
     "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
   },
   "finance/models.py": {
-    "mtime": 1787440855.3184545,
-    "ast_hash": "23a70fae634634c95e0de527f36387fc",
+    "mtime": 1787442518.012397,
+    "ast_hash": "5674a6923b2af59a039ccef8e0493722",
     "semantic_hash": ""
   },
   "finance/services.py": {
-    "mtime": 1787440991.8143563,
-    "ast_hash": "fcd6f7329b37f88cfb74adae828c72f1",
+    "mtime": 1787442710.2262056,
+    "ast_hash": "0b9cde58620994bd3a05cf60cff8e6dc",
     "semantic_hash": ""
   },
   "finance/urls.py": {
-    "mtime": 1787441020.6476164,
-    "ast_hash": "b867c57c45042ead91d62cebc93f8fac",
+    "mtime": 1787442830.579091,
+    "ast_hash": "ce1de76cd69f3f83da5b13a93b2d0bda",
     "semantic_hash": ""
   },
   "finance/views.py": {
-    "mtime": 1787441020.6469078,
-    "ast_hash": "e8a74a82b38121032b6773cc78bae950",
+    "mtime": 1787442912.6898298,
+    "ast_hash": "37044af031ff978597b609c573b46d28",
     "semantic_hash": ""
   },
   "installer/run.sh": {
@@ -325,8 +320,8 @@
     "semantic_hash": ""
   },
   "android/README.md": {
-    "mtime": 1787439733.1781049,
-    "ast_hash": "2708a699b9f656fa23deb4d0fa6551ec",
+    "mtime": 1787442022.6123807,
+    "ast_hash": "6abb189b26d384fa27ac0659a9c3e9f2",
     "semantic_hash": ""
   },
   "installer/README.md": {
@@ -340,88 +335,83 @@
     "semantic_hash": ""
   },
   "templates/finance/base.html": {
-    "mtime": 1787441020.6507018,
-    "ast_hash": "3517a19bc4bb22283339c46d884f4bce",
+    "mtime": 1787442830.5806632,
+    "ast_hash": "b2f5840f21c810297cf215430986b73a",
     "semantic_hash": ""
   },
   "templates/finance/budgetitem_form.html": {
-    "mtime": 1782946244.5531998,
+    "mtime": 1787442623.3800833,
     "ast_hash": "d4f80eeab353adf5b99ed0bc27ac8577",
     "semantic_hash": ""
   },
   "templates/finance/category_form.html": {
-    "mtime": 1782946244.553817,
+    "mtime": 1787442623.3816192,
     "ast_hash": "9635d9b0cf60aee5606833ab01b66695",
     "semantic_hash": ""
   },
   "templates/finance/category_list.html": {
-    "mtime": 1787437685.5238001,
+    "mtime": 1787442623.3821418,
     "ast_hash": "3180e901a3a27e1522e43d081220464d",
     "semantic_hash": ""
   },
   "templates/finance/cc_staging_review.html": {
-    "mtime": 1787437731.4079258,
-    "ast_hash": "8b8c5c0d1760bbebfcf0f08b6aaba040",
+    "mtime": 1787442777.6407154,
+    "ast_hash": "8847353ce6b54226a4d57dabbac31d61",
     "semantic_hash": ""
   },
   "templates/finance/cc_statement_upload.html": {
-    "mtime": 1787437532.3402889,
+    "mtime": 1787442623.383671,
     "ast_hash": "6666e1707bc655939ac8e286d3da696d",
     "semantic_hash": ""
   },
   "templates/finance/confirm_delete.html": {
-    "mtime": 1782946244.5586832,
+    "mtime": 1787442623.384255,
     "ast_hash": "fd4998fea846159bfecc876860faa9b3",
     "semantic_hash": ""
   },
   "templates/finance/dashboard.html": {
-    "mtime": 1787437685.5246623,
-    "ast_hash": "df7fc7bd7fe33b27e508cc981fdd7266",
+    "mtime": 1787442924.8710165,
+    "ast_hash": "663e78b66aeaf38f7968a70f6b2a9e5a",
     "semantic_hash": ""
   },
   "templates/finance/group_dashboard.html": {
-    "mtime": 1782946244.5614283,
-    "ast_hash": "0692a8951c3f19d33154d20135aaf87d",
+    "mtime": 1787442864.9300818,
+    "ast_hash": "3f162ef00a653d472f576d00b4fefc2d",
     "semantic_hash": ""
   },
   "templates/finance/period_form.html": {
-    "mtime": 1782946244.5634503,
+    "mtime": 1787442623.3874524,
     "ast_hash": "a8962ab6e240509d43bee59ab8f0e431",
     "semantic_hash": ""
   },
   "templates/finance/period_list.html": {
-    "mtime": 1787440822.3365483,
+    "mtime": 1787442623.3879383,
     "ast_hash": "f1602f9a86973666f534386e19e3d003",
     "semantic_hash": ""
   },
   "templates/finance/staging_review.html": {
-    "mtime": 1787437731.407382,
-    "ast_hash": "1362026b7057fad09ee0321e97e41c3d",
+    "mtime": 1787442777.6400447,
+    "ast_hash": "17cb7603119672c4cee77f24b1452c8d",
     "semantic_hash": ""
   },
   "templates/finance/statement_upload.html": {
-    "mtime": 1787437532.3396654,
+    "mtime": 1787442623.3900244,
     "ast_hash": "c1ecb00f598cac6c4b7a0df33d5b6cb4",
     "semantic_hash": ""
   },
   "templates/finance/transaction_form.html": {
-    "mtime": 1782946244.5666091,
+    "mtime": 1787442623.3904731,
     "ast_hash": "3a710827c322e17e52ff9d35b2f67f21",
     "semantic_hash": ""
   },
   "templates/finance/transaction_list.html": {
-    "mtime": 1787441020.6497371,
-    "ast_hash": "a5aabae02771896a37cc006f6ad55190",
+    "mtime": 1787442623.3909864,
+    "ast_hash": "51c5901ce09ff803147ecc2a73fe6331",
     "semantic_hash": ""
   },
   "android/app/src/main/java/com/moneymanager/ui/screen/CCStagingReviewScreen.kt": {
     "mtime": 1782947058.4089394,
     "ast_hash": "a2def131fda1c39198a2fd45266f8608",
-    "semantic_hash": ""
-  },
-  "android/app/src/main/java/com/moneymanager/ui/viewmodel/CategoryViewModel.kt": {
-    "mtime": 1782947058.4186313,
-    "ast_hash": "c692d1633d52b7814ca2954bed239d93",
     "semantic_hash": ""
   },
   "docker/entrypoint.sh": {
@@ -445,7 +435,7 @@
     "semantic_hash": ""
   },
   "templates/finance/period_duplicate_budget.html": {
-    "mtime": 1782947058.4883413,
+    "mtime": 1787442623.3867683,
     "ast_hash": "219678921f1c69720d02c616c3c32ea1",
     "semantic_hash": ""
   },
@@ -500,18 +490,18 @@
     "semantic_hash": ""
   },
   "finance/tests/test_services.py": {
-    "mtime": 1787441084.4485614,
-    "ast_hash": "848803a481fd68c2ef1702162f50100f",
+    "mtime": 1787442953.217015,
+    "ast_hash": "61d651ee873b0cf4bfbb01df5e9e1615",
     "semantic_hash": ""
   },
   "docs/BACKUP_AND_RECOVERY.md": {
-    "mtime": 1787439563.666457,
-    "ast_hash": "6633942948461d3ecf505b43117a6de9",
+    "mtime": 1787441329.3087356,
+    "ast_hash": "dd6096062ccf8b48193882aed5c818ea",
     "semantic_hash": ""
   },
   "docs/DEVELOPMENT.md": {
-    "mtime": 1787439563.6673286,
-    "ast_hash": "13a34168a1284270b150785e58aef537",
+    "mtime": 1787442800.387911,
+    "ast_hash": "e9d4d2adbf1829b4b0cfc4a752fb5ac9",
     "semantic_hash": ""
   },
   "docs/INSTALLATION.md": {
@@ -525,28 +515,83 @@
     "semantic_hash": ""
   },
   "docs/USER_GUIDE.md": {
-    "mtime": 1787439541.2144883,
-    "ast_hash": "79590f767fb5259407b25ea38c9351b4",
+    "mtime": 1787442777.641972,
+    "ast_hash": "d8fdd99503fa9523b3915e93350a3f47",
     "semantic_hash": ""
   },
   "templates/finance/account_list.html": {
-    "mtime": 1787440801.2709184,
-    "ast_hash": "da0414a56f2854bfd198e4a96ae20cf4",
+    "mtime": 1787442623.378657,
+    "ast_hash": "29dcda42348482ad7fc76b02e8ca049d",
     "semantic_hash": ""
   },
   "templates/finance/bundle_form.html": {
-    "mtime": 1787441020.6489844,
+    "mtime": 1787442623.3806813,
     "ast_hash": "8827aef76b98fa8387f687428f3387e2",
     "semantic_hash": ""
   },
   "templates/finance/financial_form.html": {
-    "mtime": 1787440783.4423568,
+    "mtime": 1787442623.3852532,
     "ast_hash": "5097184efb224b9f9c9dba5d70d5ddf1",
     "semantic_hash": ""
   },
   "templates/finance/simple_list.html": {
-    "mtime": 1787440925.157618,
+    "mtime": 1787442623.3883884,
     "ast_hash": "9b48850e7cf0749f5e731865077d69c9",
+    "semantic_hash": ""
+  },
+  ".github/workflows/ci.yml": {
+    "mtime": 1787441352.8950214,
+    "ast_hash": "5c95a145462e1a36a66f4f244cd8d8fa",
+    "semantic_hash": ""
+  },
+  "android/app/src/main/java/com/moneymanager/data/db/RoomMigrations.kt": {
+    "mtime": 1787442022.6098824,
+    "ast_hash": "45e2dd755133e79c8d2e533b1b39af14",
+    "semantic_hash": ""
+  },
+  "android/app/src/test/java/com/moneymanager/data/db/RoomMigrationsTest.kt": {
+    "mtime": 1787442022.6118274,
+    "ast_hash": "c57bb5988d12f4b2cc4efd8d404f33bb",
+    "semantic_hash": ""
+  },
+  "finance/migrations/0006_installmentobligation.py": {
+    "mtime": 1787442194.067335,
+    "ast_hash": "1a2c71a84302d87491eb8ba2c493cb68",
+    "semantic_hash": ""
+  },
+  "templates/finance/installment_list.html": {
+    "mtime": 1787442623.3863516,
+    "ast_hash": "8d071675b4bb37c2491946ef752bbdd8",
+    "semantic_hash": ""
+  },
+  "finance/templatetags/__init__.py": {
+    "mtime": 1787442275.5171785,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": ""
+  },
+  "finance/templatetags/finance_format.py": {
+    "mtime": 1787442722.208602,
+    "ast_hash": "e5f7595a548f26cfe62718d53c360f35",
+    "semantic_hash": ""
+  },
+  "finance/migrations/0007_importbatch_row_counts.py": {
+    "mtime": 1787442518.0135865,
+    "ast_hash": "d01062afe469737b3913d2d570812823",
+    "semantic_hash": ""
+  },
+  "finance/tests/fixtures/scotiabank_sanitized.expected.json": {
+    "mtime": 1787442800.3860967,
+    "ast_hash": "2cb3acdf87a5185bacbc04ef7e14f910",
+    "semantic_hash": ""
+  },
+  "templates/finance/trend.html": {
+    "mtime": 1787442830.579636,
+    "ast_hash": "e5bb336406b8ee7b70159ea09d2aac2f",
+    "semantic_hash": ""
+  },
+  "android/app/src/test/java/com/moneymanager/domain/usecase/ParseDebitStatementUseCaseTest.kt": {
+    "mtime": 1787442987.8270962,
+    "ast_hash": "12ebc835358b729838c72ce983595a19",
     "semantic_hash": ""
   }
 }
