@@ -884,3 +884,8 @@ class CCStagingDeleteView(View):
         if n:
             messages.success(request, f'{n} CC staged transaction{"s" if n != 1 else ""} deleted.')
         return redirect('finance:cc_staging_review')
+
+
+class UserManualView(TemplateView):
+    template_name = 'finance/user_manual.html'
+
