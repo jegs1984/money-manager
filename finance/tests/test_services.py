@@ -4,7 +4,7 @@ from io import StringIO
 from pathlib import Path
 import json
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from finance.models import Account, Category, InstallmentObligation, MerchantRule, Period, RecurringPlan, StagingCCTransaction, StagingTransaction, Transaction, TransactionSplit
@@ -105,6 +105,53 @@ class LedgerServiceTests(TestCase):
         self.assertTrue(suggestions[staging.pk]['has_suggestion'])
         self.assertEqual(suggestions[staging.pk]['primary']['category_id'], self.category.pk)
         self.assertIn('rule match', suggestions[staging.pk]['primary']['reasons'][0].lower())
+
+    @override_settings(FEATURE_MERCHANT_SUGGESTIONS_ENABLED=False)
+    def test_suggestions_respect_feature_flag(self):
+        result = suggest_merchant_rule_candidates('Mercado', 'OUT')
+        self.assertFalse(result['has_suggestion'])
+
+    @override_settings(FEATURE_AUTO_RULE_CREATION_ENABLED=False)
+    def test_accept_does_not_create_rule_when_disabled(self):
+        from finance.services import accept_staging_suggestion
+
+        staging = StagingTransaction.objects.create(
+            original_date=date(2026, 1, 15), type='OUT',
+            description='Disabled Rule Merchant', amount=Decimal('50.00')
+        )
+        result = accept_staging_suggestion(
+            staging_id=staging.pk, category_id=self.category.pk,
+            create_rule=True, rule_pattern='Disabled Rule Merchant',
+        )
+
+        self.assertTrue(result['success'])
+        self.assertFalse(MerchantRule.objects.filter(
+            description_pattern='Disabled Rule Merchant'
+        ).exists())
+        self.assertIn('disabled', result['rule_warning'].lower())
+
+    def test_accept_feedback_preserves_suggestion_evidence(self):
+        from finance.models import SuggestionFeedback
+        from finance.services import accept_staging_suggestion
+
+        MerchantRule.objects.create(
+            description_pattern='Evidence Merchant', category=self.category,
+            transaction_type='OUT',
+        )
+        staging = StagingTransaction.objects.create(
+            original_date=date(2026, 1, 15), type='OUT',
+            description='Evidence Merchant purchase', amount=Decimal('50.00')
+        )
+        accept_staging_suggestion(
+            staging_id=staging.pk, category_id=self.category.pk,
+        )
+
+        feedback = SuggestionFeedback.objects.get(
+            staging_transaction=staging, event='ACCEPTED'
+        )
+        self.assertEqual(feedback.suggested_category_id, self.category.pk)
+        self.assertGreater(feedback.suggested_confidence, 0)
+        self.assertEqual(feedback.suggested_source, 'merchant_rule')
 
     def test_staging_review_views_expose_merchant_suggestions_for_display(self):
         MerchantRule.objects.create(description_pattern='mercado', category=self.category, transaction_type='OUT')

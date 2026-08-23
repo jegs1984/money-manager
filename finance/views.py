@@ -562,7 +562,7 @@ class TransactionSplitView(View):
         transaction = get_object_or_404(Transaction, pk=pk)
         categories = Category.objects.order_by('group', 'name')
         existing_splits = list(transaction.splits.select_related('budget_item__category').all())
-        
+
         ctx = {
             'transaction': transaction,
             'categories': categories,
@@ -782,7 +782,7 @@ class StagingReviewView(TemplateView):
                     return JsonResponse(result)
                 messages.info(request, result['message'])
                 return redirect('finance:staging_review')
-        
+
         qs      = self._qs()
         formset = StagingReviewFormset(request.POST, queryset=qs)
 
@@ -979,7 +979,7 @@ class CCStagingReviewView(TemplateView):
                     return JsonResponse(result)
                 messages.info(request, result['message'])
                 return redirect('finance:cc_staging_review')
-        
+
         qs      = self._qs()
         formset = StagingCCReviewFormset(request.POST, queryset=qs)
 
