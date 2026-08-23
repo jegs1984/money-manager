@@ -54,4 +54,5 @@ urlpatterns = [
     path('cc/upload/',          views.CCStatementUploadView.as_view(),   name='cc_statement_upload'),
     path('cc/staging/',         views.CCStagingReviewView.as_view(),     name='cc_staging_review'),
     path('cc/staging/delete/',  views.CCStagingDeleteView.as_view(),     name='cc_staging_delete'),
+    path('user-manual/',        views.UserManualView.as_view(),          name='user_manual'),
 ]

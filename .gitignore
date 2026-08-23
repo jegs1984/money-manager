@@ -76,13 +76,25 @@ yarn-error.log*
 *.min.js
 *.min.css
 
+# Gradle & Android build caches
+.gradle/
+**/build/
+android/.gradle/
+android/build/
+android/app/build/
 android/local.properties
+android/.cxx/
+*.keystore
+!*.jks
 
-graphify-out/cache/
-TODO.md
+# Python bytecode & caches
+__pycache__/
+/**/__pycache__/
+*.py[cod]
+*$py.class
 
 # Local tooling and generated runtime caches
 .codex/
-android/.gradle/
-**/__pycache__/
-*.py[cod]
+graphify-out/cache/
+TODO.md
+sessions/
