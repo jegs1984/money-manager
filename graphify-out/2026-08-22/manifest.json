@@ -335,8 +335,8 @@
     "semantic_hash": ""
   },
   "templates/finance/base.html": {
-    "mtime": 1787442830.5806632,
-    "ast_hash": "b2f5840f21c810297cf215430986b73a",
+    "mtime": 1787443075.9642105,
+    "ast_hash": "ffb51b2cd39746899e9e97c3c3abb6c7",
     "semantic_hash": ""
   },
   "templates/finance/budgetitem_form.html": {
@@ -355,8 +355,8 @@
     "semantic_hash": ""
   },
   "templates/finance/cc_staging_review.html": {
-    "mtime": 1787442777.6407154,
-    "ast_hash": "8847353ce6b54226a4d57dabbac31d61",
+    "mtime": 1787443065.7951515,
+    "ast_hash": "c26d75e2fd70dedf7ddfa8fdcb78b8fc",
     "semantic_hash": ""
   },
   "templates/finance/cc_statement_upload.html": {
@@ -390,8 +390,8 @@
     "semantic_hash": ""
   },
   "templates/finance/staging_review.html": {
-    "mtime": 1787442777.6400447,
-    "ast_hash": "17cb7603119672c4cee77f24b1452c8d",
+    "mtime": 1787443065.7945943,
+    "ast_hash": "9ff3b08605c495ac738e7a635885fcff",
     "semantic_hash": ""
   },
   "templates/finance/statement_upload.html": {
@@ -495,13 +495,13 @@
     "semantic_hash": ""
   },
   "docs/BACKUP_AND_RECOVERY.md": {
-    "mtime": 1787441329.3087356,
-    "ast_hash": "dd6096062ccf8b48193882aed5c818ea",
+    "mtime": 1787443022.7744436,
+    "ast_hash": "9d9c6695f6ef5dd9080279ba0b16f299",
     "semantic_hash": ""
   },
   "docs/DEVELOPMENT.md": {
-    "mtime": 1787442800.387911,
-    "ast_hash": "e9d4d2adbf1829b4b0cfc4a752fb5ac9",
+    "mtime": 1787443012.6816137,
+    "ast_hash": "a6b55a35b450c586143a0293af7cff7a",
     "semantic_hash": ""
   },
   "docs/INSTALLATION.md": {
@@ -515,8 +515,8 @@
     "semantic_hash": ""
   },
   "docs/USER_GUIDE.md": {
-    "mtime": 1787442777.641972,
-    "ast_hash": "d8fdd99503fa9523b3915e93350a3f47",
+    "mtime": 1787443083.393057,
+    "ast_hash": "90c178969c117b72c4f4a09329083138",
     "semantic_hash": ""
   },
   "templates/finance/account_list.html": {
@@ -570,8 +570,8 @@
     "semantic_hash": ""
   },
   "finance/templatetags/finance_format.py": {
-    "mtime": 1787442722.208602,
-    "ast_hash": "e5f7595a548f26cfe62718d53c360f35",
+    "mtime": 1787443065.7940521,
+    "ast_hash": "34275dce49ebef10d74bc2b0f0eb6429",
     "semantic_hash": ""
   },
   "finance/migrations/0007_importbatch_row_counts.py": {
@@ -592,6 +592,11 @@
   "android/app/src/test/java/com/moneymanager/domain/usecase/ParseDebitStatementUseCaseTest.kt": {
     "mtime": 1787442987.8270962,
     "ast_hash": "12ebc835358b729838c72ce983595a19",
+    "semantic_hash": ""
+  },
+  "docs/SCHEMA_PARITY.md": {
+    "mtime": 1787443012.6801603,
+    "ast_hash": "fbf44cf58f0f7b70a4270ea2c084fe22",
     "semantic_hash": ""
   }
 }

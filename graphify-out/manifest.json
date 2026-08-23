@@ -140,8 +140,8 @@
     "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
   },
   "config/settings.py": {
-    "mtime": 1787442275.5206528,
-    "ast_hash": "c6b4d90322854123a81830cb6664f2f3",
+    "mtime": 1787447435.760824,
+    "ast_hash": "c86fe03003572f0d3bf3d769159c76ed",
     "semantic_hash": ""
   },
   "config/urls.py": {
@@ -160,8 +160,8 @@
     "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
   },
   "finance/forms.py": {
-    "mtime": 1787441020.6460128,
-    "ast_hash": "852b079d404273971ce5d96c02b4dfc3",
+    "mtime": 1787448676.3322332,
+    "ast_hash": "a606bf1c6146d2f3dadbed5ec8812613",
     "semantic_hash": ""
   },
   "finance/migrations/0001_initial.py": {
@@ -175,23 +175,23 @@
     "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
   },
   "finance/models.py": {
-    "mtime": 1787442518.012397,
-    "ast_hash": "5674a6923b2af59a039ccef8e0493722",
+    "mtime": 1787448615.9531882,
+    "ast_hash": "2e54bf173967a264b890b17c00741da1",
     "semantic_hash": ""
   },
   "finance/services.py": {
-    "mtime": 1787442710.2262056,
-    "ast_hash": "0b9cde58620994bd3a05cf60cff8e6dc",
+    "mtime": 1787448926.622767,
+    "ast_hash": "8171c1aba7175062008d44dbab2a1d30",
     "semantic_hash": ""
   },
   "finance/urls.py": {
-    "mtime": 1787442830.579091,
-    "ast_hash": "ce1de76cd69f3f83da5b13a93b2d0bda",
+    "mtime": 1787448961.3517456,
+    "ast_hash": "ac914241cb9cb844983d95dfe0f36c78",
     "semantic_hash": ""
   },
   "finance/views.py": {
-    "mtime": 1787442912.6898298,
-    "ast_hash": "37044af031ff978597b609c573b46d28",
+    "mtime": 1787448952.9774315,
+    "ast_hash": "b18be607c360fb4949254ba2f7e69fc2",
     "semantic_hash": ""
   },
   "installer/run.sh": {
@@ -200,8 +200,8 @@
     "semantic_hash": "ae8652c22e0bb74d527a62415901f73e"
   },
   "installer/setup.sh": {
-    "mtime": 1787439429.3016536,
-    "ast_hash": "180afd1668e8862c13f430bfba9b8bcf",
+    "mtime": 1787446084.238627,
+    "ast_hash": "ff76409e71cac29bff174580fdbf9238",
     "semantic_hash": ""
   },
   "installer/uninstall.sh": {
@@ -235,9 +235,9 @@
     "semantic_hash": "e34fbfdcca9efa0d69bba1ab117a1e65"
   },
   "start.sh": {
-    "mtime": 1782946244.5506597,
-    "ast_hash": "76277981eb1827688ea832af9ed4818c",
-    "semantic_hash": "76277981eb1827688ea832af9ed4818c"
+    "mtime": 1787447448.5858815,
+    "ast_hash": "dfadd974478adb624284add3712ac913",
+    "semantic_hash": ""
   },
   ".claude/CLAUDE.md": {
     "mtime": 1787437933.4376888,
@@ -335,8 +335,8 @@
     "semantic_hash": ""
   },
   "templates/finance/base.html": {
-    "mtime": 1787443075.9642105,
-    "ast_hash": "ffb51b2cd39746899e9e97c3c3abb6c7",
+    "mtime": 1787448978.3005545,
+    "ast_hash": "99fb027fcb148611b0543902e338c5d0",
     "semantic_hash": ""
   },
   "templates/finance/budgetitem_form.html": {
@@ -370,8 +370,8 @@
     "semantic_hash": ""
   },
   "templates/finance/dashboard.html": {
-    "mtime": 1787442924.8710165,
-    "ast_hash": "663e78b66aeaf38f7968a70f6b2a9e5a",
+    "mtime": 1787447692.6812963,
+    "ast_hash": "de2abdee64075a12d0662ea6c5bd25dd",
     "semantic_hash": ""
   },
   "templates/finance/group_dashboard.html": {
@@ -405,8 +405,8 @@
     "semantic_hash": ""
   },
   "templates/finance/transaction_list.html": {
-    "mtime": 1787442623.3909864,
-    "ast_hash": "51c5901ce09ff803147ecc2a73fe6331",
+    "mtime": 1787448776.768792,
+    "ast_hash": "3a0018cb4e073817d4185a9f978c9e73",
     "semantic_hash": ""
   },
   "android/app/src/main/java/com/moneymanager/ui/screen/CCStagingReviewScreen.kt": {
@@ -490,8 +490,8 @@
     "semantic_hash": ""
   },
   "finance/tests/test_services.py": {
-    "mtime": 1787442953.217015,
-    "ast_hash": "61d651ee873b0cf4bfbb01df5e9e1615",
+    "mtime": 1787448995.2533474,
+    "ast_hash": "cc07af64d453681259fe4a18e635b4ac",
     "semantic_hash": ""
   },
   "docs/BACKUP_AND_RECOVERY.md": {
@@ -597,6 +597,31 @@
   "docs/SCHEMA_PARITY.md": {
     "mtime": 1787443012.6801603,
     "ast_hash": "fbf44cf58f0f7b70a4270ea2c084fe22",
+    "semantic_hash": ""
+  },
+  "templates/finance/cash_flow_forecast.html": {
+    "mtime": 1787448491.033944,
+    "ast_hash": "00a64d57e38a65340752861895b32487",
+    "semantic_hash": ""
+  },
+  "templates/finance/shared_expenses.html": {
+    "mtime": 1787448745.8927863,
+    "ast_hash": "aad1c8e72825d3df1e5dd70762b48da6",
+    "semantic_hash": ""
+  },
+  "templates/finance/transaction_split.html": {
+    "mtime": 1787448720.4248452,
+    "ast_hash": "c113909fbf6c7c49dffb228f10f25d57",
+    "semantic_hash": ""
+  },
+  "templates/finance/user_manual.html": {
+    "mtime": 1787446970.3957498,
+    "ast_hash": "d9b4158f1c62bcd17851f3e32b1625e5",
+    "semantic_hash": ""
+  },
+  "templates/finance/velocity_alerts.html": {
+    "mtime": 1787448970.0191076,
+    "ast_hash": "b7534f114f2d0115b4b9884b95aa412f",
     "semantic_hash": ""
   }
 }

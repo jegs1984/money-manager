@@ -9,6 +9,8 @@ urlpatterns = [
     path('groups/',                       views.GroupDashboardView.as_view(),  name='group_dashboard'),
     path('trend/',                        views.TrendView.as_view(),           name='trend'),
     path('forecast/',                     views.CashFlowForecastView.as_view(),  name='cash_flow_forecast'),
+    path('velocity-alerts/',              views.BudgetVelocityAlertsView.as_view(), name='velocity_alerts'),
+
 
 
     path('periods/',                      views.PeriodListView.as_view(),      name='period_list'),

@@ -1050,8 +1050,100 @@ def build_cash_flow_forecast(months: int = 3, start_date: date = None) -> dict:
     }
 
 
+def get_budget_velocity_alerts(period_id: int | None = None) -> dict:
+    if period_id:
+        period = Period.objects.filter(pk=period_id).first()
+    else:
+        period = Period.objects.filter(is_active=True).first() or Period.objects.order_by('-start_date').first()
+
+    if not period:
+        return {'period': None, 'alerts': [], 'summary': {}}
+
+    today = date.today()
+    if today < period.start_date:
+        days_elapsed = 0
+    elif today > period.end_date:
+        days_elapsed = (period.end_date - period.start_date).days + 1
+    else:
+        days_elapsed = (today - period.start_date).days + 1
+
+    total_days = max((period.end_date - period.start_date).days + 1, 1)
+    period_elapsed_ratio = Decimal(str(min(max(days_elapsed / total_days, 0.01), 1.0)))
+    period_elapsed_percent = int(period_elapsed_ratio * 100)
+
+    budget_items = BudgetItem.objects.filter(period=period, type='OUT').select_related('category')
+
+    alerts = []
+    total_budget = Decimal('0.00')
+    total_spent = Decimal('0.00')
+
+    for item in budget_items:
+        projected = item.projected_amount
+        total_budget += projected
+
+        spent = Decimal('0.00')
+        for tx in item.transactions.all():
+            if tx.splits.exists():
+                spent += sum((s.amount for s in tx.splits.filter(budget_item=item)), Decimal('0.00'))
+            else:
+                spent += tx.real_amount
+        total_spent += spent
+
+        if projected <= Decimal('0.00'):
+            pct_used = Decimal('100.00') if spent > 0 else Decimal('0.00')
+            velocity_ratio = Decimal('2.0') if spent > 0 else Decimal('0.0')
+        else:
+            pct_used = (spent / projected) * Decimal('100.00')
+            velocity_ratio = (spent / projected) / period_elapsed_ratio
+
+        if spent > projected and projected > 0:
+            status = 'CRITICAL'
+            msg = f"Presupuesto superado en un {pct_used:.1f}% (${spent - projected:.2f} por encima del objetivo)."
+        elif velocity_ratio >= Decimal('1.3') and pct_used >= Decimal('40.0'):
+            status = 'WARNING'
+            msg = f"Ritmo de gasto acelerado ({pct_used:.1f}% gastado con solo {period_elapsed_percent}% del período transcurrido)."
+        elif pct_used >= Decimal('80.0') and period_elapsed_percent <= 60:
+            status = 'WARNING'
+            msg = f"Alerta temprana: {pct_used:.1f}% gastado en la primera mitad del período."
+        else:
+            status = 'ON_TRACK'
+            msg = "Gasto dentro del ritmo previsto."
+
+        if status in ['CRITICAL', 'WARNING']:
+            alerts.append({
+                'category_id': item.category_id,
+                'category_name': item.category.name,
+                'category_group': item.category.group,
+                'projected_amount': str(projected),
+                'spent_amount': str(spent),
+                'pct_used': f"{pct_used:.1f}",
+                'velocity_ratio': f"{velocity_ratio:.2f}",
+                'status': status,
+                'message': msg,
+            })
+
+    alerts.sort(key=lambda x: (0 if x['status'] == 'CRITICAL' else 1, -float(x['pct_used'])))
+
+    return {
+        'period': {
+            'id': period.pk,
+            'name': period.name,
+            'start_date': period.start_date.strftime('%Y-%m-%d'),
+            'end_date': period.end_date.strftime('%Y-%m-%d'),
+            'days_elapsed': days_elapsed,
+            'total_days': total_days,
+            'period_elapsed_percent': period_elapsed_percent,
+        },
+        'alerts': alerts,
+        'critical_count': sum(1 for a in alerts if a['status'] == 'CRITICAL'),
+        'warning_count': sum(1 for a in alerts if a['status'] == 'WARNING'),
+        'total_budget': str(total_budget),
+        'total_spent': str(total_spent),
+    }
+
 
 @db_transaction.atomic
+
 def reconcile_account_service(
     account_id: int,
     statement_date: date,

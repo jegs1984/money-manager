@@ -1,0 +1,101 @@
+{% extends "finance/base.html" %}
+{% block title %}Manual de Usuario — Money Manager{% endblock %}
+{% block page_title %}Manual de Usuario{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl space-y-6">
+
+  <!-- Overview Header -->
+  <div class="card bg-gradient-to-r from-zinc-900 to-zinc-950">
+    <h2 class="text-xl font-bold text-emerald-400 mb-2">Bienvenido a Money Manager</h2>
+    <p class="text-zinc-300 text-sm leading-relaxed">
+      Money Manager está organizado en torno a períodos presupuestarios. Las transacciones se registran frente a ítems presupuestarios que conectan categorías con cada período.
+    </p>
+  </div>
+
+  <!-- Sections grid -->
+  <div class="grid gap-6 md:grid-cols-2">
+
+    <div class="card space-y-3">
+      <div class="flex items-center gap-2 text-emerald-400 font-semibold text-base">
+        <span class="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-950 text-xs font-mono">1</span>
+         Configurar el Presupuesto
+      </div>
+      <ol class="list-decimal list-inside space-y-2 text-sm text-zinc-300">
+        <li>Crea un <strong>Período</strong> con nombre, fecha de inicio y fin. Solo un período puede estar activo a la vez.</li>
+        <li>Crea <strong>Categorías</strong> para agrupar ingresos y gastos.</li>
+        <li>Agrega <strong>Ítems de Presupuesto</strong> indicando si es ingreso o gasto y su monto proyectado.</li>
+      </ol>
+    </div>
+
+    <div class="card space-y-3">
+      <div class="flex items-center gap-2 text-emerald-400 font-semibold text-base">
+        <span class="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-950 text-xs font-mono">2</span>
+         Registrar Movimientos
+      </div>
+      <p class="text-sm text-zinc-300 leading-relaxed">
+        Registra transacciones manualmente o impórtalas desde tus cartolas bancarias o tarjetas de crédito.
+      </p>
+      <p class="text-xs text-zinc-400">
+        La aplicación valida automáticamente la fecha de cada movimiento contra el período correspondiente.
+      </p>
+    </div>
+
+    <div class="card space-y-3">
+      <div class="flex items-center gap-2 text-emerald-400 font-semibold text-base">
+        <span class="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-950 text-xs font-mono">3</span>
+         Importar Cartola Bancaria
+      </div>
+      <ol class="list-decimal list-inside space-y-2 text-sm text-zinc-300">
+        <li>Ve a <strong>Import Statement</strong> y sube el archivo de la cartola (Scotiabank).</li>
+        <li>Revisa los datos cargados en <strong>Staging Review</strong>.</li>
+        <li>Asigna categorías, verifica duplicados y confirma los movimientos para incorporarlos al presupuesto.</li>
+      </ol>
+    </div>
+
+    <div class="card space-y-3">
+      <div class="flex items-center gap-2 text-emerald-400 font-semibold text-base">
+        <span class="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-950 text-xs font-mono">4</span>
+         Tarjetas de Crédito y Cuotas
+      </div>
+      <p class="text-sm text-zinc-300 leading-relaxed">
+        Usa <strong>Import Credit Card</strong> para cargar estados de cuenta de tarjeta. Al confirmar compras en cuotas, el sistema genera automáticamente obligaciones en <strong>Cuotas pendientes</strong> para seguimiento futuro.
+      </p>
+    </div>
+
+    <div class="card space-y-3">
+      <div class="flex items-center gap-2 text-emerald-400 font-semibold text-base">
+        <span class="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-950 text-xs font-mono">5</span>
+         Cuentas y Reconciliación
+      </div>
+      <p class="text-sm text-zinc-300 leading-relaxed">
+        En <strong>Accounts</strong> administra cuentas corrientes, de ahorro, efectivo y tarjetas. Las transferencias entre cuentas propias no afectan los totales de ingresos o gastos.
+      </p>
+    </div>
+
+    <div class="card space-y-3">
+      <div class="flex items-center gap-2 text-emerald-400 font-semibold text-base">
+        <span class="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-950 text-xs font-mono">6</span>
+         Reglas, Recurrentes y Respaldos
+      </div>
+      <ul class="list-disc list-inside space-y-2 text-sm text-zinc-300">
+        <li><strong>Reglas comerciales:</strong> Autocompleta la categoría sugiriendo categorías según el texto del comercio.</li>
+        <li><strong>Recurrentes:</strong> Genera pagos periódicos planificados.</li>
+        <li><strong>Respaldo cifrado:</strong> Exporta e importa copias de seguridad cifradas con contraseña AES-GCM (<code>.mmbundle</code>).</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- Good Practices -->
+  <div class="card border-zinc-800 bg-zinc-900/60 p-5 space-y-2">
+    <h3 class="font-mono text-xs uppercase tracking-widest text-amber-400">Buenas Prácticas</h3>
+    <ul class="list-disc list-inside space-y-1 text-sm text-zinc-300">
+      <li>Revisa los lotes en Staging antes de confirmarlos.</li>
+      <li>Usa la función de <strong>reverso</strong> en vez de eliminar transacciones para mantener integridad contable.</li>
+      <li>Cierra el período presupuestario solo cuando todas las revisiones del mes estén completadas.</li>
+    </ul>
+  </div>
+
+</div>
+{% endblock %}

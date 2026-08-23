@@ -1,0 +1,227 @@
+{% extends 'finance/base.html' %}
+
+{% block title %}Dividir Transacción - Money Manager{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+  <!-- Header -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight text-white">Dividir Transacción</h1>
+      <p class="mt-1 text-sm text-zinc-400">
+        Asigna el monto total a múltiples categorías o marca gastos compartidos y reembolsables.
+      </p>
+    </div>
+    <a href="{% url 'finance:transaction_list' %}" class="px-3 py-1.5 text-xs font-medium rounded-lg border border-zinc-700 bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white transition-colors">
+      &larr; Volver
+    </a>
+  </div>
+
+  <!-- Transaction Overview Card -->
+  <div class="rounded-xl border border-zinc-800 bg-zinc-900/60 p-5 backdrop-blur-sm space-y-3">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+      <div>
+        <span class="text-xs font-semibold uppercase tracking-wider text-emerald-400">Transacción Original</span>
+        <h2 class="text-lg font-bold text-white mt-0.5">{{ transaction.description }}</h2>
+        <div class="flex items-center gap-3 text-xs text-zinc-400 mt-1">
+          <span>Fecha: <strong>{{ transaction.date }}</strong></span>
+          <span>&bull;</span>
+          <span>Cuenta: <strong>{{ transaction.account.name|default:"N/A" }}</strong></span>
+          <span>&bull;</span>
+          <span>Categoría Actual: <strong>{{ transaction.budget_item.category.name }}</strong></span>
+        </div>
+      </div>
+      <div class="text-right">
+        <span class="text-xs text-zinc-400 block">Monto Total</span>
+        <span class="text-2xl font-mono font-bold text-emerald-400">${{ transaction.real_amount }}</span>
+      </div>
+    </div>
+  </div>
+
+  {% if error %}
+  <div class="rounded-lg border border-red-500/30 bg-red-950/40 p-4 text-sm text-red-200">
+    <strong>Error:</strong> {{ error }}
+  </div>
+  {% endif %}
+
+  <!-- Split Form -->
+  <form method="post" id="split-form" class="space-y-4">
+    {% csrf_token %}
+
+    <div class="rounded-xl border border-zinc-800 bg-zinc-900/40 p-6 space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-semibold uppercase tracking-wider text-zinc-300">Desglose de Partes (Splits)</h3>
+        <button type="button" id="add-row-btn" class="px-3 py-1.5 text-xs font-medium rounded-md bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-600/50 transition-colors">
+          + Agregar Fila
+        </button>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm text-zinc-300" id="splits-table">
+          <thead class="border-b border-zinc-800 text-xs font-semibold uppercase text-zinc-400">
+            <tr>
+              <th class="pb-2 w-1/4">Categoría</th>
+              <th class="pb-2 w-1/5">Monto ($)</th>
+              <th class="pb-2 w-1/4">Descripción</th>
+              <th class="pb-2 w-1/5">Compartido Con</th>
+              <th class="pb-2 text-center">¿Reembolsable?</th>
+              <th class="pb-2 w-8"></th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-zinc-800/60" id="splits-body">
+            {% if splits %}
+              {% for split in splits %}
+              <tr class="split-row">
+                <td class="py-3 pr-2">
+                  <select name="category_id" class="form-select text-xs w-full bg-zinc-950 border-zinc-800 text-zinc-100 rounded-md" required>
+                    <option value="">-- Seleccionar --</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.pk }}" {% if cat.pk == split.budget_item.category.pk %}selected{% endif %}>{{ cat.group }} &rarr; {{ cat.name }}</option>
+                    {% endfor %}
+                  </select>
+                </td>
+                <td class="py-3 pr-2">
+                  <input type="number" step="0.01" name="amount" value="{{ split.amount }}" class="form-input text-xs w-full bg-zinc-950 border-zinc-800 text-zinc-100 rounded-md amount-input" required />
+                </td>
+                <td class="py-3 pr-2">
+                  <input type="text" name="description" value="{{ split.description }}" placeholder="Detalle parte" class="form-input text-xs w-full bg-zinc-950 border-zinc-800 text-zinc-100 rounded-md" />
+                </td>
+                <td class="py-3 pr-2">
+                  <input type="text" name="shared_with" value="{{ split.shared_with }}" placeholder="ej: Pareja" class="form-input text-xs w-full bg-zinc-950 border-zinc-800 text-zinc-100 rounded-md" />
+                </td>
+                <td class="py-3 text-center">
+                  <input type="checkbox" name="is_reimbursable_index" value="{{ forloop.counter0 }}" {% if split.is_reimbursable %}checked{% endif %} class="form-checkbox text-emerald-500 rounded bg-zinc-950 border-zinc-800" />
+                </td>
+                <td class="py-3 text-center">
+                  <button type="button" class="remove-row-btn text-red-400 hover:text-red-300 font-bold">&times;</button>
+                </td>
+              </tr>
+              {% endfor %}
+            {% else %}
+              <!-- Default 2 blank rows -->
+              {% for i in "12" %}
+              <tr class="split-row">
+                <td class="py-3 pr-2">
+                  <select name="category_id" class="form-select text-xs w-full bg-zinc-950 border-zinc-800 text-zinc-100 rounded-md" required>
+                    <option value="">-- Seleccionar --</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.pk }}">{{ cat.group }} &rarr; {{ cat.name }}</option>
+                    {% endfor %}
+                  </select>
+                </td>
+                <td class="py-3 pr-2">
+                  <input type="number" step="0.01" name="amount" placeholder="0.00" class="form-input text-xs w-full bg-zinc-950 border-zinc-800 text-zinc-100 rounded-md amount-input" required />
+                </td>
+                <td class="py-3 pr-2">
+                  <input type="text" name="description" placeholder="Detalle parte" class="form-input text-xs w-full bg-zinc-950 border-zinc-800 text-zinc-100 rounded-md" />
+                </td>
+                <td class="py-3 pr-2">
+                  <input type="text" name="shared_with" placeholder="ej: Pareja" class="form-input text-xs w-full bg-zinc-950 border-zinc-800 text-zinc-100 rounded-md" />
+                </td>
+                <td class="py-3 text-center">
+                  <input type="checkbox" name="is_reimbursable_index" value="{{ forloop.counter0 }}" class="form-checkbox text-emerald-500 rounded bg-zinc-950 border-zinc-800" />
+                </td>
+                <td class="py-3 text-center">
+                  <button type="button" class="remove-row-btn text-red-400 hover:text-red-300 font-bold">&times;</button>
+                </td>
+              </tr>
+              {% endfor %}
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Live Totals Footer -->
+      <div class="flex items-center justify-between border-t border-zinc-800 pt-4 text-xs">
+        <div>
+          <span>Monto Original: <strong>${{ transaction.real_amount }}</strong></span>
+        </div>
+        <div class="flex items-center gap-4">
+          <span>Suma de Splits: <strong id="sum-splits-display" class="font-mono text-sm">$0.00</strong></span>
+          <span>Diferencia: <strong id="diff-splits-display" class="font-mono text-sm">$0.00</strong></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Submit Buttons -->
+    <div class="flex items-center justify-end gap-3">
+      <a href="{% url 'finance:transaction_list' %}" class="px-4 py-2 text-xs font-medium rounded-lg border border-zinc-700 text-zinc-300 hover:bg-zinc-800 transition-colors">
+        Cancelar
+      </a>
+      <button type="submit" class="px-5 py-2 text-xs font-semibold rounded-lg bg-emerald-600 text-white hover:bg-emerald-500 transition-colors">
+        Guardar Desglose
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const targetTotal = parseFloat("{{ transaction.real_amount }}") || 0;
+  const tbody = document.getElementById('splits-body');
+  const addBtn = document.getElementById('add-row-btn');
+  const sumDisplay = document.getElementById('sum-splits-display');
+  const diffDisplay = document.getElementById('diff-splits-display');
+
+  function updateTotals() {
+    let sum = 0;
+    const amountInputs = tbody.querySelectorAll('.amount-input');
+    amountInputs.forEach(input => {
+      const val = parseFloat(input.value) || 0;
+      sum += val;
+    });
+
+    const diff = targetTotal - sum;
+    sumDisplay.textContent = '$' + sum.toFixed(2);
+    diffDisplay.textContent = '$' + diff.toFixed(2);
+
+    if (Math.abs(diff) < 0.001) {
+      sumDisplay.className = 'font-mono text-sm text-emerald-400';
+      diffDisplay.className = 'font-mono text-sm text-emerald-400';
+    } else {
+      sumDisplay.className = 'font-mono text-sm text-yellow-400';
+      diffDisplay.className = 'font-mono text-sm text-red-400';
+    }
+  }
+
+  function reindexCheckboxes() {
+    const rows = tbody.querySelectorAll('.split-row');
+    rows.forEach((row, idx) => {
+      const cb = row.querySelector('input[type="checkbox"]');
+      if (cb) cb.value = idx;
+    });
+  }
+
+  addBtn.addEventListener('click', function() {
+    const firstRow = tbody.querySelector('.split-row');
+    if (!firstRow) return;
+    const newRow = firstRow.cloneNode(true);
+    newRow.querySelectorAll('input').forEach(input => {
+      if (input.type === 'checkbox') {
+        input.checked = false;
+      } else {
+        input.value = '';
+      }
+    });
+    newRow.querySelector('select').selectedIndex = 0;
+    tbody.appendChild(newRow);
+    reindexCheckboxes();
+    updateTotals();
+  });
+
+  tbody.addEventListener('click', function(e) {
+    if (e.target.classList.contains('remove-row-btn')) {
+      const rows = tbody.querySelectorAll('.split-row');
+      if (rows.length > 1) {
+        e.target.closest('.split-row').remove();
+        reindexCheckboxes();
+        updateTotals();
+      }
+    }
+  });
+
+  tbody.addEventListener('input', updateTotals);
+  updateTotals();
+});
+</script>
+{% endblock %}

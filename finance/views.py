@@ -28,6 +28,7 @@ from .services import (
     record_transfer_service, reverse_transaction_service,
     export_finance_bundle, import_finance_bundle, materialize_recurring_plans,
     build_cash_flow_forecast, create_transaction_splits_service, get_shared_expenses_summary,
+    get_budget_velocity_alerts,
 )
 
 
@@ -90,7 +91,9 @@ class DashboardView(TemplateView):
             expenses += sum((item.installment_value for item in ctx['upcoming_installments'] if item.next_due_date == forecast_date), Decimal('0'))
             forecast.append({'date': forecast_date, 'income': income, 'expenses': expenses, 'net': income - expenses})
         ctx['cash_forecast'] = forecast
+        ctx['velocity_data'] = get_budget_velocity_alerts(active_period.id if active_period else None)
         return ctx
+
 
 
 # ─────────────────────────────────────────────
@@ -219,6 +222,23 @@ class CashFlowForecastView(TemplateView):
         ctx['forecast'] = build_cash_flow_forecast(months=months)
         ctx['selected_months'] = months
         return ctx
+
+
+class BudgetVelocityAlertsView(TemplateView):
+    template_name = 'finance/velocity_alerts.html'
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        period_id = self.request.GET.get('period')
+        try:
+            period_id = int(period_id) if period_id else None
+        except (TypeError, ValueError):
+            period_id = None
+
+        ctx['velocity_data'] = get_budget_velocity_alerts(period_id)
+        ctx['all_periods'] = Period.objects.order_by('-start_date')
+        return ctx
+
 
 
 

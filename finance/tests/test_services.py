@@ -12,6 +12,7 @@ from finance.services import (
     build_cash_flow_forecast,
     create_transaction_splits_service,
     get_shared_expenses_summary,
+    get_budget_velocity_alerts,
     process_cc_staging_batch,
     process_staging_batch,
     parse_scotiabank_statement,
@@ -161,5 +162,24 @@ class LedgerServiceTests(TestCase):
         response = self.client.get('/shared-expenses/')
         self.assertEqual(response.status_code, 200)
         self.assertIn('summary', response.context)
+
+    def test_get_budget_velocity_alerts_detects_overbudget_items(self):
+        item = _get_or_create_budget_item(self.period, self.category, 'OUT')
+        item.projected_amount = Decimal('100.00')
+        item.save()
+
+        Transaction.objects.create(
+            budget_item=item, date=date(2026, 1, 10), real_amount=Decimal('150.00'), description='Overbudget expense'
+        )
+
+        res = get_budget_velocity_alerts(self.period.pk)
+        self.assertEqual(res['critical_count'], 1)
+        self.assertEqual(res['alerts'][0]['status'], 'CRITICAL')
+
+    def test_budget_velocity_alerts_view_returns_200(self):
+        response = self.client.get('/velocity-alerts/')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('velocity_data', response.context)
+
 
 
