@@ -185,7 +185,50 @@
             </td>
             <td class="px-4 py-2.5 text-zinc-300">
               <span class="block truncate max-w-xs" title="{{ form.instance.description }}">{{ form.instance.description }}</span>
-              {% if form.instance.assigned_category %}<span class="block text-xs text-emerald-300">Sugerencia de regla comercial: revísala antes de confirmar.</span>{% endif %}
+              {% with suggestion=merchant_suggestions|get_item:sid %}
+                {% if suggestion and suggestion.has_suggestion %}
+                  <div class="mt-2 rounded border border-violet-800/70 bg-violet-950/20 px-2 py-1.5">
+                    <div class="font-mono text-[10px] uppercase tracking-[0.12em] text-violet-300">Suggestion</div>
+                    <div class="mt-1 text-xs font-medium text-violet-200">{{ suggestion.primary.category_name }}</div>
+                    <div class="mt-0.5 font-mono text-[10px] text-zinc-400">{{ suggestion.primary.confidence }} confidence · {{ suggestion.primary.source }}</div>
+                    {% if suggestion.primary.reasons %}
+                      <p class="mt-1 text-[10px] leading-relaxed text-zinc-300">{{ suggestion.primary.reasons|join:" • " }}</p>
+                    {% endif %}
+                    <div class="mt-2 flex flex-wrap gap-1.5">
+                      <form method="post" style="display:inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="suggestion_action" value="accept">
+                        <input type="hidden" name="staging_cc_id" value="{{ sid }}">
+                        <input type="hidden" name="category_id" value="{{ suggestion.primary.category_id }}">
+                        <button type="submit" class="rounded bg-violet-700/60 px-2 py-0.5 font-mono text-[9px] text-violet-100 hover:bg-violet-600 transition-colors">
+                          Accept
+                        </button>
+                      </form>
+                      <form method="post" style="display:inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="suggestion_action" value="accept">
+                        <input type="hidden" name="staging_cc_id" value="{{ sid }}">
+                        <input type="hidden" name="category_id" value="{{ suggestion.primary.category_id }}">
+                        <input type="hidden" name="create_rule" value="on">
+                        <input type="hidden" name="rule_pattern" value="{{ suggestion.source_description }}">
+                        <button type="submit" class="rounded bg-violet-900/60 px-2 py-0.5 font-mono text-[9px] text-violet-200 hover:bg-violet-800 transition-colors">
+                          Accept + Rule
+                        </button>
+                      </form>
+                      <form method="post" style="display:inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="suggestion_action" value="dismiss">
+                        <input type="hidden" name="staging_cc_id" value="{{ sid }}">
+                        <button type="submit" class="rounded bg-zinc-800/60 px-2 py-0.5 font-mono text-[9px] text-zinc-300 hover:bg-zinc-700 transition-colors">
+                          Dismiss
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                {% elif suggestion and not suggestion.has_suggestion %}
+                  <div class="mt-2 font-mono text-[10px] text-zinc-500">No suggestion</div>
+                {% endif %}
+              {% endwith %}
             </td>
             <td class="px-4 py-2.5 font-mono text-xs text-zinc-500 truncate max-w-xs">{{ form.instance.location|default:"—" }}</td>
             <td class="px-4 py-2.5 font-mono text-xs text-zinc-600 whitespace-nowrap">{{ form.instance.ref_code|default:"—" }}</td>

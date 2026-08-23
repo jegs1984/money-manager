@@ -28,7 +28,8 @@ from .services import (
     record_transfer_service, reverse_transaction_service,
     export_finance_bundle, import_finance_bundle, materialize_recurring_plans,
     build_cash_flow_forecast, create_transaction_splits_service, get_shared_expenses_summary,
-    get_budget_velocity_alerts,
+    get_budget_velocity_alerts, get_staging_merchant_suggestions,
+    accept_staging_suggestion, dismiss_staging_suggestion, create_merchant_rule_from_suggestion,
 )
 
 
@@ -561,7 +562,7 @@ class TransactionSplitView(View):
         transaction = get_object_or_404(Transaction, pk=pk)
         categories = Category.objects.order_by('group', 'name')
         existing_splits = list(transaction.splits.select_related('budget_item__category').all())
-        
+
         ctx = {
             'transaction': transaction,
             'categories': categories,
@@ -733,6 +734,7 @@ class StagingReviewView(TemplateView):
         duplicate_ids = get_duplicate_staging_ids(period, qs) if period else set()
         ctx['duplicate_matches'] = get_duplicate_staging_matches(qs) if period else {}
 
+        ctx['merchant_suggestions'] = get_staging_merchant_suggestions(qs)
         ctx['formset']       = StagingReviewFormset(queryset=qs)
         ctx['pending_count'] = qs.count()
         ctx['duplicate_ids'] = duplicate_ids
@@ -753,6 +755,34 @@ class StagingReviewView(TemplateView):
         return ctx
 
     def post(self, request, *args, **kwargs):
+        # Handle suggestion actions (accept, dismiss, create-rule)
+        action_type = request.POST.get('suggestion_action')
+        if action_type:
+            staging_id = request.POST.get('staging_id')
+            if action_type == 'accept':
+                category_id = request.POST.get('category_id')
+                create_rule = request.POST.get('create_rule') == 'on'
+                rule_pattern = request.POST.get('rule_pattern', '')
+                result = accept_staging_suggestion(
+                    staging_id=int(staging_id) if staging_id else None,
+                    category_id=int(category_id) if category_id else None,
+                    create_rule=create_rule,
+                    rule_pattern=rule_pattern,
+                )
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse(result)
+                if result['success']:
+                    messages.success(request, result['message'])
+                else:
+                    messages.error(request, result['message'])
+                return redirect('finance:staging_review')
+            elif action_type == 'dismiss':
+                result = dismiss_staging_suggestion(staging_id=int(staging_id) if staging_id else None)
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse(result)
+                messages.info(request, result['message'])
+                return redirect('finance:staging_review')
+
         qs      = self._qs()
         formset = StagingReviewFormset(request.POST, queryset=qs)
 
@@ -898,6 +928,7 @@ class CCStagingReviewView(TemplateView):
         period = self._active_period()
         duplicate_ids = get_duplicate_staging_ids(period, qs) if period else set()
 
+        ctx['merchant_suggestions'] = get_staging_merchant_suggestions(qs)
         ctx['formset']       = StagingCCReviewFormset(queryset=qs)
         ctx['pending_count'] = qs.count()
         ctx['duplicate_ids'] = duplicate_ids
@@ -921,6 +952,34 @@ class CCStagingReviewView(TemplateView):
         return ctx
 
     def post(self, request, *args, **kwargs):
+        # Handle suggestion actions (accept, dismiss, create-rule)
+        action_type = request.POST.get('suggestion_action')
+        if action_type:
+            staging_cc_id = request.POST.get('staging_cc_id')
+            if action_type == 'accept':
+                category_id = request.POST.get('category_id')
+                create_rule = request.POST.get('create_rule') == 'on'
+                rule_pattern = request.POST.get('rule_pattern', '')
+                result = accept_staging_suggestion(
+                    staging_cc_id=int(staging_cc_id) if staging_cc_id else None,
+                    category_id=int(category_id) if category_id else None,
+                    create_rule=create_rule,
+                    rule_pattern=rule_pattern,
+                )
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse(result)
+                if result['success']:
+                    messages.success(request, result['message'])
+                else:
+                    messages.error(request, result['message'])
+                return redirect('finance:cc_staging_review')
+            elif action_type == 'dismiss':
+                result = dismiss_staging_suggestion(staging_cc_id=int(staging_cc_id) if staging_cc_id else None)
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse(result)
+                messages.info(request, result['message'])
+                return redirect('finance:cc_staging_review')
+
         qs      = self._qs()
         formset = StagingCCReviewFormset(request.POST, queryset=qs)
 

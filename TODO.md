@@ -3,4 +3,64 @@
 - [x] **1. Cash Flow & Balance Projection Simulator**: Forecast future bank balances and potential shortfalls based on active recurring plans, installment obligation schedules, and pending budget limits over 1-6 months.
 - [x] **2. Transaction Split & Shared Expense Management**: Allow splitting individual transactions across multiple categories or tagging line items for reimbursement/shared expense splits.
 - [ ] **4. AI-Assisted Merchant Rule Suggestions**: Machine learning or regex suggestion engine that analyzes unassigned staging transactions and proposes automatic categorization rules.
+	- [x] **4.1 Define the product contract and safety boundaries**
+		- [x] Keep suggestions separate from confirmed `MerchantRule` records until the user explicitly accepts them.
+		- [x] Support three outcomes for every staging row: high-confidence suggestion, ranked alternatives, or no suggestion.
+		- [x] Never auto-commit a category or create a rule below the configured confidence threshold.
+		- [x] Preserve transaction direction (`IN`/`OUT`) as a hard compatibility constraint.
+		- [x] Record the reason for every suggestion so it can be reviewed and audited.
+	- [x] **4.2 Establish the training and feedback data model**
+		- [x] Treat committed transactions and user-confirmed staging assignments as labeled examples.
+		- [x] Add provenance fields identifying whether a label came from a manual choice, an existing rule, or a suggestion.
+		- [x] Track suggestion lifecycle events: shown, accepted, rejected, edited, dismissed, and converted to rule.
+		- [x] Store model/ranking version and confidence with each suggestion for reproducibility.
+		- [x] Define retention and deletion behavior for derived merchant features and feedback records.
+	- [x] **4.3 Build merchant-description normalization**
+		- [x] Normalize case, whitespace, accents, punctuation, card suffixes, document numbers, dates, and terminal identifiers.
+		- [x] Preserve the original bank description for display and audit purposes.
+		- [x] Extract stable merchant tokens and aliases without storing an entire noisy bank description as a rule.
+		- [x] Add fixture coverage for Spanish text, accented names, abbreviations, refunds, transfers, and recurring merchants.
+	- [x] **4.4 Implement the explainable baseline recommender**
+		- [x] Reuse `suggest_category()` and confirmed merchant rules as the highest-priority signal.
+		- [x] Add historical category frequency by normalized merchant and transaction direction.
+		- [x] Add token similarity and fuzzy matching for descriptions with minor bank-format changes.
+		- [x] Apply recency weighting so recent manual decisions influence future recommendations more strongly.
+		- [x] Produce a ranked list with calibrated confidence, matched evidence, and an explicit `no suggestion` result.
+		- [x] Resolve ties conservatively and suppress recommendations when category evidence conflicts.
+	- [ ] **4.5 Add an ML ranking layer only after the baseline is measurable** (deferred for future iteration)
+		- [ ] Start with a local, interpretable model such as logistic regression or gradient-boosted ranking over engineered merchant features.
+		- [ ] Use a time-based train/validation split to prevent future transactions leaking into historical evaluation.
+		- [ ] Require a minimum number of labeled examples before training merchant- or category-specific behavior.
+		- [ ] Compare the ML ranker against the deterministic baseline and keep the baseline as a fallback.
+		- [ ] Version model artifacts and feature extraction code together.
+		- [ ] Avoid sending raw transaction descriptions to external LLM providers by default.
+	- [x] **4.6 Integrate suggestions into staging review**
+		- [x] Display the primary category, confidence, and concise explanation beside each unassigned row.
+		- [x] Provide actions for accept, choose another category, dismiss, and accept-plus-create-rule.
+		- [x] Allow applying an accepted suggestion to selected compatible rows in the current batch.
+		- [x] Keep the existing formset commit flow authoritative; suggestions must remain reviewable before ledger writes.
+		- [x] Make the UI usable when no model is trained, no history exists, or the recommender is unavailable.
+	- [x] **4.7 Add rule creation and conflict management**
+		- [x] Generate conservative normalized patterns from accepted suggestions.
+		- [x] Detect duplicate, overlapping, and conflicting rules before creation.
+		- [x] Define precedence for exact matches, longer patterns, direction-specific rules, and generic rules.
+		- [x] Allow users to edit, deactivate, and inspect the source evidence for generated rules.
+		- [x] Add an explanation when an existing rule overrides an ML or historical suggestion.
+	- [x] **4.8 Define service and API boundaries**
+		- [x] Add a service that accepts staging rows and returns suggestion DTOs without mutating the ledger.
+		- [x] Keep database writes for feedback, rule creation, and accepted assignments inside `finance/services.py`.
+		- [x] Keep views thin and protect suggestion actions with the existing authentication and CSRF conventions.
+		- [x] Ensure batch suggestion generation is bounded, query-efficient, and safe to rerun.
+	- [x] **4.9 Validate quality, safety, and operational behavior**
+		- [x] Test exact rules, direction mismatches, fuzzy matches, ambiguous merchants, refunds, and unseen merchants.
+		- [x] Measure top-1 accuracy, top-3 recall, coverage, rejection rate, and false-positive rate by transaction direction.
+		- [x] Add confidence calibration checks so a displayed 90% suggestion is reliable in practice.
+		- [x] Monitor drift in merchant descriptions, category distribution, and user rejection rates.
+		- [x] Add structured logs and an admin/debug view for suggestion decisions without exposing sensitive amounts unnecessarily.
+	- [x] **4.10 Roll out incrementally**
+		- [x] Ship deterministic suggestions and instrumentation behind a feature flag.
+		- [x] Run in shadow mode first: calculate recommendations without changing staging assignments.
+		- [x] Enable suggestions for a small user or batch scope after baseline metrics are established.
+		- [x] Promote only suggestions that meet precision and coverage targets; retain manual review as the default.
+		- [x] Add model rollback and feature-disable controls before enabling automatic rule generation.
 - [x] **5. Smart Budget Velocity & Anomaly Alerts**: Real-time spending velocity tracking and warnings when spending in a category exceeds thresholds mid-period.

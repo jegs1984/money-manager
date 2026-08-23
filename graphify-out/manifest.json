@@ -140,8 +140,8 @@
     "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
   },
   "config/settings.py": {
-    "mtime": 1787447435.760824,
-    "ast_hash": "c86fe03003572f0d3bf3d769159c76ed",
+    "mtime": 1787452399.3681617,
+    "ast_hash": "f937b16773305218e80bd6887419aadb",
     "semantic_hash": ""
   },
   "config/urls.py": {
@@ -175,13 +175,13 @@
     "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
   },
   "finance/models.py": {
-    "mtime": 1787448615.9531882,
-    "ast_hash": "2e54bf173967a264b890b17c00741da1",
+    "mtime": 1787452044.8255463,
+    "ast_hash": "52c2250c310b2658574acb880afac765",
     "semantic_hash": ""
   },
   "finance/services.py": {
-    "mtime": 1787448926.622767,
-    "ast_hash": "8171c1aba7175062008d44dbab2a1d30",
+    "mtime": 1787452959.329862,
+    "ast_hash": "3caf645250968453743b7535e456b0f4",
     "semantic_hash": ""
   },
   "finance/urls.py": {
@@ -190,8 +190,8 @@
     "semantic_hash": ""
   },
   "finance/views.py": {
-    "mtime": 1787448952.9774315,
-    "ast_hash": "b18be607c360fb4949254ba2f7e69fc2",
+    "mtime": 1787452928.2817752,
+    "ast_hash": "81c72ebede5c9ccea1c999c1e4ddbb79",
     "semantic_hash": ""
   },
   "installer/run.sh": {
@@ -240,8 +240,8 @@
     "semantic_hash": ""
   },
   ".claude/CLAUDE.md": {
-    "mtime": 1787437933.4376888,
-    "ast_hash": "f63d317b2678ab7a20a8bfd7bd475ea5",
+    "mtime": 1787450763.1448734,
+    "ast_hash": "d1dc165a9f3d8d85ae668ac0426acadd",
     "semantic_hash": ""
   },
   ".claude/skills/graphify/SKILL.md": {
@@ -295,13 +295,13 @@
     "semantic_hash": ""
   },
   "CLAUDE.md": {
-    "mtime": 1787437933.437105,
-    "ast_hash": "8beb732c9278ab51826f8df0f3590ea6",
+    "mtime": 1787450771.0722067,
+    "ast_hash": "d25c4cae816a9f19a5b54ebdd69732a4",
     "semantic_hash": ""
   },
   "GEMINI.md": {
-    "mtime": 1787437933.4382613,
-    "ast_hash": "22dbff44894931c23b50a9a95e38c826",
+    "mtime": 1787450789.9929,
+    "ast_hash": "45fde8096240ef9bf20051929bb8c4fe",
     "semantic_hash": ""
   },
   "README.md": {
@@ -355,8 +355,8 @@
     "semantic_hash": ""
   },
   "templates/finance/cc_staging_review.html": {
-    "mtime": 1787443065.7951515,
-    "ast_hash": "c26d75e2fd70dedf7ddfa8fdcb78b8fc",
+    "mtime": 1787452221.2500234,
+    "ast_hash": "033b2317381c2b35551c2aa87efa98f4",
     "semantic_hash": ""
   },
   "templates/finance/cc_statement_upload.html": {
@@ -390,8 +390,8 @@
     "semantic_hash": ""
   },
   "templates/finance/staging_review.html": {
-    "mtime": 1787443065.7945943,
-    "ast_hash": "9ff3b08605c495ac738e7a635885fcff",
+    "mtime": 1787452221.2494993,
+    "ast_hash": "1dbc662d7fe012749a48486ed0457fbb",
     "semantic_hash": ""
   },
   "templates/finance/statement_upload.html": {
@@ -420,8 +420,8 @@
     "semantic_hash": ""
   },
   "AGENTS.md": {
-    "mtime": 1787437933.4365454,
-    "ast_hash": "a6e0c62e983a2c6acef498eda1923dbc",
+    "mtime": 1787450779.7359183,
+    "ast_hash": "385244327a69eca0457049b1ccde6e52",
     "semantic_hash": ""
   },
   "docker-compose.yml": {
@@ -490,8 +490,8 @@
     "semantic_hash": ""
   },
   "finance/tests/test_services.py": {
-    "mtime": 1787448995.2533474,
-    "ast_hash": "cc07af64d453681259fe4a18e635b4ac",
+    "mtime": 1787452959.330228,
+    "ast_hash": "595ba1a6e40b1c87b23e4ef0b85709c1",
     "semantic_hash": ""
   },
   "docs/BACKUP_AND_RECOVERY.md": {
@@ -622,6 +622,21 @@
   "templates/finance/velocity_alerts.html": {
     "mtime": 1787448970.0191076,
     "ast_hash": "b7534f114f2d0115b4b9884b95aa412f",
+    "semantic_hash": ""
+  },
+  "finance/migrations/0008_transactionsplit.py": {
+    "mtime": 1787451114.2710445,
+    "ast_hash": "96c275304181b429adccb8be026b2cc5",
+    "semantic_hash": ""
+  },
+  ".agents/AGENTS.md": {
+    "mtime": 1787450124.1735625,
+    "ast_hash": "a12e7ac73dbed06a0551f5af7771c946",
+    "semantic_hash": ""
+  },
+  "finance/migrations/0009_merchantruleprovenance_suggestionfeedback_and_more.py": {
+    "mtime": 1787451988.2851174,
+    "ast_hash": "14825ffc8c5cd2a84972b78103e1099a",
     "semantic_hash": ""
   }
 }

@@ -38,3 +38,7 @@ This is a full-stack personal finance and bank reconciliation application. The c
 
 ## Agent Roles & Delegation
 This repository utilizes specific AI agent personas for different development tasks. If you are asked to design databases, write ETL pipelines, or build UIs, you **MUST** read the `AGENTS.md` file in the root directory first and adopt the corresponding role (@DjangoArchitect, @ETLEngineer, or @UIBuilder) before writing any code.
+
+## Communication Style
+
+- **No summaries, no thinking out loud, no preamble.** Do not explain what you are about to do or narrate your reasoning.

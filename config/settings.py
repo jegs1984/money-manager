@@ -90,3 +90,22 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024   # 10 MB
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
+
+# ─────────────────────────────────────────────
+# Feature Flags (4.10 Rollout Controls)
+# ─────────────────────────────────────────────
+
+# Enable deterministic merchant suggestion engine (4.10: rollout control)
+FEATURE_MERCHANT_SUGGESTIONS_ENABLED = os.environ.get('FEATURE_MERCHANT_SUGGESTIONS_ENABLED', 'True') == 'True'
+
+# Run suggestions in shadow mode: calculate but don't auto-assign (4.10: shadow mode)
+FEATURE_MERCHANT_SUGGESTIONS_SHADOW_MODE = os.environ.get('FEATURE_MERCHANT_SUGGESTIONS_SHADOW_MODE', 'False') == 'True'
+
+# Allow automatic rule creation from suggestions (if False, requires manual confirmation)
+FEATURE_AUTO_RULE_CREATION_ENABLED = os.environ.get('FEATURE_AUTO_RULE_CREATION_ENABLED', 'True') == 'True'
+
+# Minimum confidence threshold for displaying suggestions (0.0 - 1.0)
+MERCHANT_SUGGESTION_MIN_CONFIDENCE = float(os.environ.get('MERCHANT_SUGGESTION_MIN_CONFIDENCE', '0.65'))
+
+# Log all suggestion events for monitoring
+FEATURE_SUGGESTION_EVENT_LOGGING = os.environ.get('FEATURE_SUGGESTION_EVENT_LOGGING', 'True') == 'True'

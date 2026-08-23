@@ -416,3 +416,76 @@ class InstallmentObligation(models.Model):
             models.CheckConstraint(check=Q(installment_value__gt=0), name='finance_installment_value_gt_0'),
             models.CheckConstraint(check=Q(remaining_amount__gte=0), name='finance_installment_amount_gte_0'),
         ]
+
+
+class MerchantRuleProvenance(models.Model):
+    """Track the source and evidence for a merchant rule (4.2: provenance tracking)."""
+    SOURCE_CHOICES = [
+        ('MANUAL', 'Manual creation'),
+        ('SUGGESTION', 'From accepted suggestion'),
+        ('IMPORT', 'Imported from backup'),
+    ]
+
+    rule = models.OneToOneField(
+        MerchantRule, on_delete=models.CASCADE, related_name='provenance'
+    )
+    source = models.CharField(max_length=20, choices=SOURCE_CHOICES)
+    created_at = models.DateTimeField(auto_now_add=True)
+    evidence_description = models.TextField(blank=True, help_text='Why this rule was created')
+    evidence_transactions = models.PositiveIntegerField(default=0, help_text='Number of transactions used as evidence')
+
+    class Meta:
+        db_table = 'finance_merchant_rule_provenance'
+        ordering = ['-created_at']
+
+
+class SuggestionFeedback(models.Model):
+    """Track the lifecycle of merchant suggestions (4.2: feedback model, 4.9: monitoring)."""
+    EVENT_CHOICES = [
+        ('SHOWN', 'Suggestion shown to user'),
+        ('ACCEPTED', 'User accepted suggestion'),
+        ('REJECTED', 'User rejected suggestion'),
+        ('DISMISSED', 'User dismissed suggestion'),
+        ('EDITED', 'User edited suggested category'),
+        ('RULE_CREATED', 'User created a rule from suggestion'),
+    ]
+
+    staging_transaction = models.ForeignKey(
+        StagingTransaction, on_delete=models.CASCADE, null=True, blank=True,
+        related_name='suggestion_feedback'
+    )
+    staging_cc_transaction = models.ForeignKey(
+        StagingCCTransaction, on_delete=models.CASCADE, null=True, blank=True,
+        related_name='suggestion_feedback'
+    )
+    suggested_category = models.ForeignKey(
+        Category, on_delete=models.SET_NULL, null=True,
+        related_name='suggestion_feedback_received'
+    )
+    suggested_confidence = models.FloatField(default=0.0, help_text='Confidence score 0.0-1.0')
+    suggested_source = models.CharField(max_length=50, default='merchant_rule', help_text='merchant_rule or history')
+    event = models.CharField(max_length=20, choices=EVENT_CHOICES)
+    user_action_category = models.ForeignKey(
+        Category, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='suggestion_feedback_user_actions'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    event_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'finance_suggestion_feedback'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['event'], name='sugg_feedback_event_idx'),
+            models.Index(fields=['created_at'], name='sugg_feedback_date_idx'),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                check=Q(staging_transaction__isnull=False) | Q(staging_cc_transaction__isnull=False),
+                name='suggestion_feedback_has_staging_source',
+            ),
+        ]
+
+    def __str__(self):
+        source = self.staging_transaction or self.staging_cc_transaction
+        return f'{self.event} for {source} at {self.created_at.isoformat()}'

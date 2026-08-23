@@ -28,10 +28,13 @@ import io
 import json
 import re
 import secrets
+import unicodedata
 import uuid
+from collections import defaultdict
 from datetime import date, datetime, timedelta
 from decimal import Decimal, InvalidOperation
 
+from django.conf import settings
 from django.db import transaction as db_transaction
 from django.db.models import Sum, Value, Q
 from django.db.models.functions import Coalesce
@@ -67,15 +70,426 @@ def _parse_signed_balance(raw: str) -> Decimal:
     return -amount if negative else amount
 
 
+def normalize_merchant_description(description: str) -> str:
+    """Normalize a raw bank description into a stable merchant fingerprint."""
+    value = (description or '').casefold()
+    value = unicodedata.normalize('NFKD', value)
+    value = ''.join(ch for ch in value if not unicodedata.combining(ch))
+    value = value.replace('&', ' and ')
+    value = re.sub(r'[^a-z0-9]+', ' ', value)
+    value = re.sub(r'\b(?:card|tarjeta|visa|mastercard|amex|debit|credit|transfer|trasferencia|caja|clp|chile|chp)\b', ' ', value)
+    value = re.sub(r'\b\d+\b', ' ', value)
+    value = re.sub(r'\s+', ' ', value).strip()
+    return value
+
+
+def _merchant_tokens(value: str) -> set[str]:
+    return {token for token in re.findall(r'[a-z0-9]+', normalize_merchant_description(value)) if token}
+
+
 def suggest_category(description: str, transaction_type: str) -> Category | None:
     """Return a reviewable category suggestion from a user-confirmed merchant rule."""
-    normalized = description.casefold()
-    for rule in MerchantRule.objects.filter(is_active=True).select_related('category'):
+    if not settings.FEATURE_MERCHANT_SUGGESTIONS_ENABLED:
+        return None
+    result = suggest_merchant_rule_candidates(description, transaction_type, min_confidence=0.60)
+    if result.get('primary'):
+        return Category.objects.filter(pk=result['primary']['category_id']).first()
+    return None
+
+
+def suggest_merchant_rule_candidates(
+    description: str,
+    transaction_type: str,
+    min_confidence: float | None = None,
+    rules=None,
+    history=None,
+) -> dict:
+    """Return deterministic, reviewable suggestions for a staging description without mutating the ledger."""
+    if not settings.FEATURE_MERCHANT_SUGGESTIONS_ENABLED:
+        return {'has_suggestion': False, 'primary': None, 'alternatives': []}
+    if min_confidence is None:
+        min_confidence = settings.MERCHANT_SUGGESTION_MIN_CONFIDENCE
+    if not transaction_type:
+        return {'has_suggestion': False, 'primary': None, 'alternatives': []}
+
+    normalized_description = normalize_merchant_description(description)
+    if not normalized_description:
+        return {'has_suggestion': False, 'primary': None, 'alternatives': []}
+
+    candidate_map: dict[int, dict] = {}
+    rule_reasons: dict[int, list[str]] = defaultdict(list)
+
+    if rules is None:
+        rules = MerchantRule.objects.filter(is_active=True).select_related('category')
+    for rule in rules:
         if rule.transaction_type and rule.transaction_type != transaction_type:
             continue
-        if rule.description_pattern.casefold() in normalized:
-            return rule.category
-    return None
+        normalized_pattern = normalize_merchant_description(rule.description_pattern)
+        if not normalized_pattern:
+            continue
+        pattern_match = normalized_pattern in normalized_description or normalized_description in normalized_pattern
+        if not pattern_match:
+            continue
+        category = rule.category
+        base_score = 0.82 if normalized_pattern in normalized_description else 0.74
+        score = min(0.99, base_score + min(0.1, max(0, len(rule.description_pattern) - 8) / 120))
+        rule_reasons[category.pk].append(f"rule match: '{rule.description_pattern}'")
+        candidate_map[category.pk] = {
+            'category_id': category.pk,
+            'category_name': category.name,
+            'confidence': max(candidate_map.get(category.pk, {}).get('confidence', 0.0), score),
+            'reasons': rule_reasons[category.pk],
+            'source': 'merchant_rule',
+        }
+
+    if history is None:
+        history = Transaction.objects.filter(
+            budget_item__type=transaction_type,
+        ).select_related('budget_item__category').order_by('-date', '-id')[:200]
+
+    history_scores: dict[int, float] = defaultdict(float)
+    history_reasons: dict[int, list[str]] = defaultdict(list)
+    for tx in history:
+        tx_text = tx.description or ''
+        tx_norm = normalize_merchant_description(tx_text)
+        if not tx_norm:
+            continue
+        tokens = _merchant_tokens(tx_text)
+        desc_tokens = _merchant_tokens(description)
+        if not tokens or not desc_tokens:
+            overlap = 1.0 if tx_norm == normalized_description else 0.0
+        else:
+            overlap = len(desc_tokens & tokens) / max(1, len(desc_tokens | tokens))
+        if overlap < 0.2 and tx_norm not in normalized_description and normalized_description not in tx_norm:
+            continue
+        category = tx.budget_item.category
+        recency_days = max(1, (date.today() - tx.date).days)
+        recency_weight = max(0.25, 1.0 / (1 + recency_days / 45))
+        score = min(0.95, 0.62 + overlap * 0.25 + recency_weight * 0.18)
+        history_scores[category.pk] += score
+        history_reasons[category.pk].append(
+            f"history: {tx.date.isoformat()} matched {tx.description[:40]} ({category.name})"
+        )
+
+    for category_id, score in history_scores.items():
+        if category_id in candidate_map:
+            candidate_map[category_id]['confidence'] = min(0.99, max(candidate_map[category_id]['confidence'], score))
+            candidate_map[category_id]['reasons'] = list(dict.fromkeys(candidate_map[category_id]['reasons'] + history_reasons[category_id]))
+        else:
+            category = next(
+                (tx.budget_item.category for tx in history if tx.budget_item.category_id == category_id),
+                None,
+            )
+            if category is None:
+                continue
+            candidate_map[category_id] = {
+                'category_id': category.pk,
+                'category_name': category.name,
+                'confidence': min(0.99, max(0.35, score)),
+                'reasons': list(dict.fromkeys(history_reasons[category_id])),
+                'source': 'history',
+            }
+
+    ranked = sorted(candidate_map.values(), key=lambda item: item['confidence'], reverse=True)
+    if not ranked:
+        return {'has_suggestion': False, 'primary': None, 'alternatives': []}
+
+    primary = ranked[0]
+    primary['confidence'] = round(float(primary['confidence']), 3)
+    primary['reasons'] = list(dict.fromkeys(primary.get('reasons', []))) or ['rule match for this merchant pattern']
+    if primary['confidence'] < min_confidence:
+        return {'has_suggestion': False, 'primary': None, 'alternatives': []}
+
+    alternatives = []
+    for item in ranked[1:4]:
+        item = dict(item)
+        item['confidence'] = round(float(item['confidence']), 3)
+        item['reasons'] = list(dict.fromkeys(item.get('reasons', [])))
+        alternatives.append(item)
+
+    return {
+        'has_suggestion': True,
+        'primary': {
+            'category_id': primary['category_id'],
+            'category_name': primary['category_name'],
+            'confidence': primary['confidence'],
+            'reasons': primary['reasons'],
+            'direction': transaction_type,
+            'source': primary.get('source', 'merchant_rule'),
+        },
+        'alternatives': alternatives,
+    }
+
+
+def get_staging_merchant_suggestions(staging_qs, min_confidence: float | None = None) -> dict[int, dict]:
+    """Return suggestion DTOs keyed by staging row id without mutating ledger records."""
+    rows = list(staging_qs)
+    if not settings.FEATURE_MERCHANT_SUGGESTIONS_ENABLED:
+        return {
+            row.pk: {
+                'has_suggestion': False,
+                'primary': None,
+                'alternatives': [],
+                'source_description': row.description,
+            }
+            for row in rows
+        }
+
+    rules = list(MerchantRule.objects.filter(is_active=True).select_related('category'))
+    history_by_type = {
+        transaction_type: list(
+            Transaction.objects.filter(
+                budget_item__type=transaction_type,
+            ).select_related('budget_item__category').order_by('-date', '-id')[:200]
+        )
+        for transaction_type in {row.type for row in rows if row.type}
+    }
+    results: dict[int, dict] = {}
+    for row in rows:
+        if row.assigned_category_id:
+            results[row.pk] = {
+                'has_suggestion': False,
+                'primary': None,
+                'alternatives': [],
+                'source_description': row.description,
+            }
+            continue
+        candidates = suggest_merchant_rule_candidates(
+            row.description,
+            row.type,
+            min_confidence=min_confidence,
+            rules=rules,
+            history=history_by_type.get(row.type, []),
+        )
+        if not candidates['has_suggestion']:
+            results[row.pk] = {
+                'has_suggestion': False,
+                'primary': None,
+                'alternatives': [],
+                'source_description': row.description,
+            }
+            continue
+        results[row.pk] = {
+            'has_suggestion': True,
+            'primary': candidates['primary'],
+            'alternatives': candidates['alternatives'],
+            'source_description': row.description,
+        }
+    return results
+
+
+def record_suggestion_feedback(event: str, staging_id: int = None, staging_cc_id: int = None,
+                               suggested_category_id: int = None, confidence: float = 0.0,
+                               source: str = 'merchant_rule', user_action_category_id: int = None) -> None:
+    """Record a suggestion feedback event for monitoring (4.2, 4.9)."""
+
+    if not staging_id and not staging_cc_id:
+        return
+
+    feedback_data = {
+        'event': event,
+        'suggested_confidence': confidence,
+        'suggested_source': source,
+    }
+
+    if staging_id:
+        feedback_data['staging_transaction_id'] = staging_id
+    if staging_cc_id:
+        feedback_data['staging_cc_transaction_id'] = staging_cc_id
+    if suggested_category_id:
+        feedback_data['suggested_category_id'] = suggested_category_id
+    if user_action_category_id:
+        feedback_data['user_action_category_id'] = user_action_category_id
+
+    from .models import SuggestionFeedback
+    SuggestionFeedback.objects.create(**feedback_data)
+
+
+def _detect_conflicting_rules(pattern: str, transaction_type: str, category: Category) -> list[dict]:
+    """Detect duplicate, overlapping, or conflicting merchant rules (4.7)."""
+    conflicts = []
+    normalized_pattern = normalize_merchant_description(pattern)
+
+    for existing_rule in MerchantRule.objects.filter(is_active=True):
+        if existing_rule.transaction_type and existing_rule.transaction_type != transaction_type:
+            continue
+
+        normalized_existing = normalize_merchant_description(existing_rule.description_pattern)
+
+        is_exact_match = normalized_pattern == normalized_existing
+        is_substring = normalized_pattern in normalized_existing or normalized_existing in normalized_pattern
+
+        if is_exact_match or is_substring:
+            conflicts.append({
+                'rule_id': existing_rule.pk,
+                'pattern': existing_rule.description_pattern,
+                'category': existing_rule.category.name,
+                'type': existing_rule.transaction_type or 'ANY',
+                'severity': 'EXACT_MATCH' if is_exact_match else 'OVERLAPPING',
+                'same_category': existing_rule.category_id == category.id,
+            })
+
+    return conflicts
+
+
+@db_transaction.atomic
+def create_merchant_rule_from_suggestion(pattern: str, category_id: int, transaction_type: str,
+                                       evidence_description: str = '', evidence_count: int = 0) -> dict:
+    """Create a merchant rule from an accepted suggestion with conflict detection (4.7)."""
+    from .models import MerchantRuleProvenance
+
+    category = Category.objects.get(id=category_id)
+    conflicts = _detect_conflicting_rules(pattern, transaction_type, category)
+
+    if conflicts:
+        exact_match_same_cat = [c for c in conflicts if c['severity'] == 'EXACT_MATCH' and c['same_category']]
+        if exact_match_same_cat:
+            return {
+                'success': False,
+                'message': 'Rule already exists for this pattern and category',
+                'conflicts': conflicts,
+                'rule_id': None,
+            }
+        overlapping = [c for c in conflicts if c['severity'] == 'OVERLAPPING']
+        if overlapping and not all(c['same_category'] for c in overlapping):
+            return {
+                'success': False,
+                'message': 'Overlapping rules with different categories detected',
+                'conflicts': conflicts,
+                'rule_id': None,
+            }
+
+    normalized = normalize_merchant_description(pattern)
+    rule, created = MerchantRule.objects.get_or_create(
+        description_pattern=pattern,
+        defaults={
+            'category': category,
+            'transaction_type': transaction_type if transaction_type in ['IN', 'OUT'] else '',
+            'is_active': True,
+        }
+    )
+
+    if created:
+        MerchantRuleProvenance.objects.create(
+            rule=rule,
+            source='SUGGESTION',
+            evidence_description=evidence_description,
+            evidence_transactions=evidence_count,
+        )
+
+    return {
+        'success': True,
+        'message': f'Rule created for "{pattern}"' if created else f'Rule already existed for "{pattern}"',
+        'rule_id': rule.pk,
+        'conflicts': conflicts,
+        'created': created,
+    }
+
+
+@db_transaction.atomic
+def accept_staging_suggestion(staging_id: int = None, staging_cc_id: int = None,
+                             category_id: int = None, create_rule: bool = False,
+                             rule_pattern: str = '') -> dict:
+    """Accept a suggestion and optionally create a rule (4.6, 4.7)."""
+    if not settings.FEATURE_MERCHANT_SUGGESTIONS_ENABLED:
+        return {'success': False, 'message': 'Merchant suggestions are disabled'}
+    if not staging_id and not staging_cc_id:
+        return {'success': False, 'message': 'No staging row specified'}
+
+    if not category_id:
+        return {'success': False, 'message': 'No category specified'}
+
+    category = Category.objects.get(id=category_id)
+
+    try:
+        if staging_id:
+            row = StagingTransaction.objects.get(pk=staging_id, is_processed=False)
+            suggestion = suggest_merchant_rule_candidates(row.description, row.type)
+            row.assigned_category = category
+            row.save(update_fields=['assigned_category'])
+            record_suggestion_feedback(
+                'ACCEPTED', staging_id=staging_id,
+                suggested_category_id=(suggestion['primary'] or {}).get('category_id'),
+                confidence=(suggestion['primary'] or {}).get('confidence', 0.0),
+                source=(suggestion['primary'] or {}).get('source', 'none'),
+                user_action_category_id=category_id,
+            )
+        elif staging_cc_id:
+            row = StagingCCTransaction.objects.get(pk=staging_cc_id, is_processed=False)
+            suggestion = suggest_merchant_rule_candidates(row.description, row.type)
+            row.assigned_category = category
+            row.save(update_fields=['assigned_category'])
+            record_suggestion_feedback(
+                'ACCEPTED', staging_cc_id=staging_cc_id,
+                suggested_category_id=(suggestion['primary'] or {}).get('category_id'),
+                confidence=(suggestion['primary'] or {}).get('confidence', 0.0),
+                source=(suggestion['primary'] or {}).get('source', 'none'),
+                user_action_category_id=category_id,
+            )
+
+        result = {'success': True, 'message': f'Suggestion accepted and category set to {category.name}'}
+
+        if create_rule and rule_pattern and settings.FEATURE_AUTO_RULE_CREATION_ENABLED:
+            rule_result = create_merchant_rule_from_suggestion(
+                rule_pattern,
+                category_id,
+                row.type,
+                evidence_description=f'Created from accepted suggestion for {row.description}',
+                evidence_count=1,
+            )
+            result['rule_created'] = rule_result['success']
+            if not rule_result['success']:
+                result['rule_warning'] = rule_result['message']
+            elif rule_result.get('created'):
+                record_suggestion_feedback(
+                    'RULE_CREATED',
+                    staging_id=staging_id,
+                    staging_cc_id=staging_cc_id,
+                    suggested_category_id=(suggestion['primary'] or {}).get('category_id'),
+                    confidence=(suggestion['primary'] or {}).get('confidence', 0.0),
+                    source=(suggestion['primary'] or {}).get('source', 'none'),
+                    user_action_category_id=category_id,
+                )
+        elif create_rule and rule_pattern:
+            result['rule_warning'] = 'Automatic rule creation is disabled'
+
+        return result
+
+    except (StagingTransaction.DoesNotExist, StagingCCTransaction.DoesNotExist):
+        return {'success': False, 'message': 'Staging row not found'}
+    except Category.DoesNotExist:
+        return {'success': False, 'message': 'Category not found'}
+
+
+@db_transaction.atomic
+def dismiss_staging_suggestion(staging_id: int = None, staging_cc_id: int = None) -> dict:
+    """Dismiss a suggestion without assigning a category (4.6)."""
+    if not staging_id and not staging_cc_id:
+        return {'success': False, 'message': 'No staging row specified'}
+
+    try:
+        if staging_id:
+            row = StagingTransaction.objects.get(pk=staging_id, is_processed=False)
+            suggestion = suggest_merchant_rule_candidates(row.description, row.type)
+            record_suggestion_feedback(
+                'DISMISSED', staging_id=staging_id,
+                suggested_category_id=(suggestion['primary'] or {}).get('category_id'),
+                confidence=(suggestion['primary'] or {}).get('confidence', 0.0),
+                source=(suggestion['primary'] or {}).get('source', 'none'),
+            )
+        elif staging_cc_id:
+            row = StagingCCTransaction.objects.get(pk=staging_cc_id, is_processed=False)
+            suggestion = suggest_merchant_rule_candidates(row.description, row.type)
+            record_suggestion_feedback(
+                'DISMISSED', staging_cc_id=staging_cc_id,
+                suggested_category_id=(suggestion['primary'] or {}).get('category_id'),
+                confidence=(suggestion['primary'] or {}).get('confidence', 0.0),
+                source=(suggestion['primary'] or {}).get('source', 'none'),
+            )
+
+        return {'success': True, 'message': 'Suggestion dismissed'}
+    except Exception as e:
+        return {'success': False, 'message': f'Error: {str(e)}'}
 
 
 def _parse_header(lines: list[str]) -> dict:
@@ -425,7 +839,8 @@ def rollover_period_balance(source_period_id: int, target_period_id: int) -> Dec
 
     if rollover_total != Decimal('0.00'):
         cat         = _get_or_create_unplanned_category()
-        target_item = _get_or_create_budget_item(target, cat, 'IN')
+        rollover_type = 'IN' if rollover_total > Decimal('0.00') else 'OUT'
+        target_item = _get_or_create_budget_item(target, cat, rollover_type)
         committed_transaction = Transaction.objects.create(
             budget_item=target_item,
             date=target.start_date,
@@ -946,12 +1361,15 @@ def build_cash_flow_forecast(months: int = 3, start_date: date = None) -> dict:
     if start_date is None:
         start_date = date.today()
 
+    def format_amount(amount: Decimal) -> str:
+        return f'{amount:.2f}'
+
     active_accounts = Account.objects.filter(is_active=True)
     account_balances = {}
     starting_balance = Decimal('0.00')
     for acc in active_accounts:
         bal = calculate_account_balance(acc.pk)
-        account_balances[acc.name] = str(bal)
+        account_balances[acc.name] = format_amount(bal)
         starting_balance += bal
 
     monthly_forecasts = []
@@ -985,7 +1403,7 @@ def build_cash_flow_forecast(months: int = 3, start_date: date = None) -> dict:
                     'source': f'Recurring Plan: {plan.name}',
                     'category': plan.category.name,
                     'type': 'IN',
-                    'amount': str(plan_amount),
+                    'amount': format_amount(plan_amount),
                 })
             else:
                 month_outflow += plan_amount
@@ -993,7 +1411,7 @@ def build_cash_flow_forecast(months: int = 3, start_date: date = None) -> dict:
                     'source': f'Recurring Plan: {plan.name}',
                     'category': plan.category.name,
                     'type': 'OUT',
-                    'amount': str(plan_amount),
+                    'amount': format_amount(plan_amount),
                 })
 
         # 2. Installment Obligations
@@ -1008,7 +1426,7 @@ def build_cash_flow_forecast(months: int = 3, start_date: date = None) -> dict:
                     'source': f'Installment: {inst.description} ({installment_index + 1}/{inst.remaining_installments})',
                     'category': inst.category.name,
                     'type': 'OUT',
-                    'amount': str(inst.installment_value),
+                    'amount': format_amount(inst.installment_value),
                 })
 
         net_flow = month_inflow - month_outflow
@@ -1018,17 +1436,17 @@ def build_cash_flow_forecast(months: int = 3, start_date: date = None) -> dict:
         if is_shortfall:
             shortfall_alerts.append({
                 'month': month_label,
-                'projected_balance': str(ending_balance),
-                'shortfall_amount': str(abs(ending_balance)),
+                'projected_balance': format_amount(ending_balance),
+                'shortfall_amount': format_amount(abs(ending_balance)),
             })
 
         monthly_forecasts.append({
             'month': month_label,
-            'starting_balance': str(current_balance),
-            'inflows': str(month_inflow),
-            'outflows': str(month_outflow),
-            'net_flow': str(net_flow),
-            'ending_balance': str(ending_balance),
+            'starting_balance': format_amount(current_balance),
+            'inflows': format_amount(month_inflow),
+            'outflows': format_amount(month_outflow),
+            'net_flow': format_amount(net_flow),
+            'ending_balance': format_amount(ending_balance),
             'is_shortfall': is_shortfall,
             'items': item_details,
         })
@@ -1040,11 +1458,11 @@ def build_cash_flow_forecast(months: int = 3, start_date: date = None) -> dict:
     return {
         'months_projected': months,
         'start_date': start_date.strftime('%Y-%m-%d'),
-        'starting_total_balance': str(starting_balance),
-        'ending_total_balance': str(current_balance),
-        'total_inflows': str(total_inflows),
-        'total_outflows': str(total_outflows),
-        'net_cash_flow': str(total_inflows - total_outflows),
+        'starting_total_balance': format_amount(starting_balance),
+        'ending_total_balance': format_amount(current_balance),
+        'total_inflows': format_amount(total_inflows),
+        'total_outflows': format_amount(total_outflows),
+        'net_cash_flow': format_amount(total_inflows - total_outflows),
         'account_balances': account_balances,
         'monthly_forecasts': monthly_forecasts,
         'shortfall_alerts': shortfall_alerts,
