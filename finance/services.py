@@ -28,7 +28,9 @@ import io
 import json
 import re
 import secrets
+import unicodedata
 import uuid
+from collections import defaultdict
 from datetime import date, datetime, timedelta
 from decimal import Decimal, InvalidOperation
 
@@ -67,15 +69,334 @@ def _parse_signed_balance(raw: str) -> Decimal:
     return -amount if negative else amount
 
 
+def normalize_merchant_description(description: str) -> str:
+    """Normalize a raw bank description into a stable merchant fingerprint."""
+    value = (description or '').casefold()
+    value = unicodedata.normalize('NFKD', value)
+    value = ''.join(ch for ch in value if not unicodedata.combining(ch))
+    value = value.replace('&', ' and ')
+    value = re.sub(r'[^a-z0-9]+', ' ', value)
+    value = re.sub(r'\b(?:card|tarjeta|visa|mastercard|amex|debit|credit|transfer|trasferencia|caja|clp|chile|chp)\b', ' ', value)
+    value = re.sub(r'\b\d+\b', ' ', value)
+    value = re.sub(r'\s+', ' ', value).strip()
+    return value
+
+
+def _merchant_tokens(value: str) -> set[str]:
+    return {token for token in re.findall(r'[a-z0-9]+', normalize_merchant_description(value)) if token}
+
+
 def suggest_category(description: str, transaction_type: str) -> Category | None:
     """Return a reviewable category suggestion from a user-confirmed merchant rule."""
-    normalized = description.casefold()
+    result = suggest_merchant_rule_candidates(description, transaction_type, min_confidence=0.60)
+    if result.get('primary'):
+        return Category.objects.filter(pk=result['primary']['category_id']).first()
+    return None
+
+
+def suggest_merchant_rule_candidates(description: str, transaction_type: str, min_confidence: float = 0.65) -> dict:
+    """Return deterministic, reviewable suggestions for a staging description without mutating the ledger."""
+    if not transaction_type:
+        return {'has_suggestion': False, 'primary': None, 'alternatives': []}
+
+    normalized_description = normalize_merchant_description(description)
+    if not normalized_description:
+        return {'has_suggestion': False, 'primary': None, 'alternatives': []}
+
+    candidate_map: dict[int, dict] = {}
+    rule_reasons: dict[int, list[str]] = defaultdict(list)
+
     for rule in MerchantRule.objects.filter(is_active=True).select_related('category'):
         if rule.transaction_type and rule.transaction_type != transaction_type:
             continue
-        if rule.description_pattern.casefold() in normalized:
-            return rule.category
-    return None
+        normalized_pattern = normalize_merchant_description(rule.description_pattern)
+        if not normalized_pattern:
+            continue
+        pattern_match = normalized_pattern in normalized_description or normalized_description in normalized_pattern
+        if not pattern_match:
+            continue
+        category = rule.category
+        base_score = 0.82 if normalized_pattern in normalized_description else 0.74
+        score = min(0.99, base_score + min(0.1, max(0, len(rule.description_pattern) - 8) / 120))
+        rule_reasons[category.pk].append(f"rule match: '{rule.description_pattern}'")
+        candidate_map[category.pk] = {
+            'category_id': category.pk,
+            'category_name': category.name,
+            'confidence': max(candidate_map.get(category.pk, {}).get('confidence', 0.0), score),
+            'reasons': rule_reasons[category.pk],
+            'source': 'merchant_rule',
+        }
+
+    txn_history = Transaction.objects.filter(
+        budget_item__type=transaction_type,
+    ).select_related('budget_item__category').order_by('-date', '-id')[:200]
+
+    history_scores: dict[int, float] = defaultdict(float)
+    history_reasons: dict[int, list[str]] = defaultdict(list)
+    for tx in txn_history:
+        tx_text = tx.description or ''
+        tx_norm = normalize_merchant_description(tx_text)
+        if not tx_norm:
+            continue
+        tokens = _merchant_tokens(tx_text)
+        desc_tokens = _merchant_tokens(description)
+        if not tokens or not desc_tokens:
+            overlap = 1.0 if tx_norm == normalized_description else 0.0
+        else:
+            overlap = len(desc_tokens & tokens) / max(1, len(desc_tokens | tokens))
+        if overlap < 0.2 and tx_norm not in normalized_description and normalized_description not in tx_norm:
+            continue
+        category = tx.budget_item.category
+        recency_days = max(1, (date.today() - tx.date).days)
+        recency_weight = max(0.25, 1.0 / (1 + recency_days / 45))
+        score = min(0.95, 0.62 + overlap * 0.25 + recency_weight * 0.18)
+        history_scores[category.pk] += score
+        history_reasons[category.pk].append(
+            f"history: {tx.date.isoformat()} matched {tx.description[:40]} ({category.name})"
+        )
+
+    for category_id, score in history_scores.items():
+        if category_id in candidate_map:
+            candidate_map[category_id]['confidence'] = min(0.99, max(candidate_map[category_id]['confidence'], score))
+            candidate_map[category_id]['reasons'] = list(dict.fromkeys(candidate_map[category_id]['reasons'] + history_reasons[category_id]))
+        else:
+            category = Category.objects.filter(pk=category_id).first()
+            if not category:
+                continue
+            candidate_map[category_id] = {
+                'category_id': category.pk,
+                'category_name': category.name,
+                'confidence': min(0.99, max(0.35, score)),
+                'reasons': list(dict.fromkeys(history_reasons[category_id])),
+                'source': 'history',
+            }
+
+    ranked = sorted(candidate_map.values(), key=lambda item: item['confidence'], reverse=True)
+    if not ranked:
+        return {'has_suggestion': False, 'primary': None, 'alternatives': []}
+
+    primary = ranked[0]
+    primary['confidence'] = round(float(primary['confidence']), 3)
+    primary['reasons'] = list(dict.fromkeys(primary.get('reasons', []))) or ['rule match for this merchant pattern']
+    if primary['confidence'] < min_confidence:
+        return {'has_suggestion': False, 'primary': None, 'alternatives': []}
+
+    alternatives = []
+    for item in ranked[1:4]:
+        item = dict(item)
+        item['confidence'] = round(float(item['confidence']), 3)
+        item['reasons'] = list(dict.fromkeys(item.get('reasons', [])))
+        alternatives.append(item)
+
+    return {
+        'has_suggestion': True,
+        'primary': {
+            'category_id': primary['category_id'],
+            'category_name': primary['category_name'],
+            'confidence': primary['confidence'],
+            'reasons': primary['reasons'],
+            'direction': transaction_type,
+            'source': primary.get('source', 'merchant_rule'),
+        },
+        'alternatives': alternatives,
+    }
+
+
+def get_staging_merchant_suggestions(staging_qs, min_confidence: float = 0.65) -> dict[int, dict]:
+    """Return suggestion DTOs keyed by staging row id without mutating ledger records."""
+    results: dict[int, dict] = {}
+    for row in staging_qs:
+        candidates = suggest_merchant_rule_candidates(row.description, row.type, min_confidence=min_confidence)
+        if not candidates['has_suggestion']:
+            results[row.pk] = {
+                'has_suggestion': False,
+                'primary': None,
+                'alternatives': [],
+                'source_description': row.description,
+            }
+            continue
+        results[row.pk] = {
+            'has_suggestion': True,
+            'primary': candidates['primary'],
+            'alternatives': candidates['alternatives'],
+            'source_description': row.description,
+        }
+    return results
+
+
+def record_suggestion_feedback(event: str, staging_id: int = None, staging_cc_id: int = None, 
+                               suggested_category_id: int = None, confidence: float = 0.0,
+                               source: str = 'merchant_rule', user_action_category_id: int = None) -> None:
+    """Record a suggestion feedback event for monitoring (4.2, 4.9)."""
+    from django.utils import timezone
+    
+    if not staging_id and not staging_cc_id:
+        return
+    
+    feedback_data = {
+        'event': event,
+        'suggested_confidence': confidence,
+        'suggested_source': source,
+    }
+    
+    if staging_id:
+        feedback_data['staging_transaction_id'] = staging_id
+    if staging_cc_id:
+        feedback_data['staging_cc_transaction_id'] = staging_cc_id
+    if suggested_category_id:
+        feedback_data['suggested_category_id'] = suggested_category_id
+    if user_action_category_id:
+        feedback_data['user_action_category_id'] = user_action_category_id
+    
+    from .models import SuggestionFeedback
+    SuggestionFeedback.objects.create(**feedback_data)
+
+
+def _detect_conflicting_rules(pattern: str, transaction_type: str, category: Category) -> list[dict]:
+    """Detect duplicate, overlapping, or conflicting merchant rules (4.7)."""
+    conflicts = []
+    normalized_pattern = normalize_merchant_description(pattern)
+    
+    for existing_rule in MerchantRule.objects.filter(is_active=True):
+        if existing_rule.transaction_type and existing_rule.transaction_type != transaction_type:
+            continue
+        
+        normalized_existing = normalize_merchant_description(existing_rule.description_pattern)
+        
+        is_exact_match = normalized_pattern == normalized_existing
+        is_substring = normalized_pattern in normalized_existing or normalized_existing in normalized_pattern
+        
+        if is_exact_match or is_substring:
+            conflicts.append({
+                'rule_id': existing_rule.pk,
+                'pattern': existing_rule.description_pattern,
+                'category': existing_rule.category.name,
+                'type': existing_rule.transaction_type or 'ANY',
+                'severity': 'EXACT_MATCH' if is_exact_match else 'OVERLAPPING',
+                'same_category': existing_rule.category_id == category.id,
+            })
+    
+    return conflicts
+
+
+@db_transaction.atomic
+def create_merchant_rule_from_suggestion(pattern: str, category_id: int, transaction_type: str,
+                                       evidence_description: str = '', evidence_count: int = 0) -> dict:
+    """Create a merchant rule from an accepted suggestion with conflict detection (4.7)."""
+    from .models import MerchantRuleProvenance
+    
+    category = Category.objects.get(id=category_id)
+    conflicts = _detect_conflicting_rules(pattern, transaction_type, category)
+    
+    if conflicts:
+        exact_match_same_cat = [c for c in conflicts if c['severity'] == 'EXACT_MATCH' and c['same_category']]
+        if exact_match_same_cat:
+            return {
+                'success': False,
+                'message': 'Rule already exists for this pattern and category',
+                'conflicts': conflicts,
+                'rule_id': None,
+            }
+        overlapping = [c for c in conflicts if c['severity'] == 'OVERLAPPING']
+        if overlapping and not all(c['same_category'] for c in overlapping):
+            return {
+                'success': False,
+                'message': 'Overlapping rules with different categories detected',
+                'conflicts': conflicts,
+                'rule_id': None,
+            }
+    
+    normalized = normalize_merchant_description(pattern)
+    rule, created = MerchantRule.objects.get_or_create(
+        description_pattern=pattern,
+        defaults={
+            'category': category,
+            'transaction_type': transaction_type if transaction_type in ['IN', 'OUT'] else '',
+            'is_active': True,
+        }
+    )
+    
+    if created:
+        MerchantRuleProvenance.objects.create(
+            rule=rule,
+            source='SUGGESTION',
+            evidence_description=evidence_description,
+            evidence_transactions=evidence_count,
+        )
+    
+    return {
+        'success': True,
+        'message': f'Rule created for "{pattern}"' if created else f'Rule already existed for "{pattern}"',
+        'rule_id': rule.pk,
+        'conflicts': conflicts,
+        'created': created,
+    }
+
+
+@db_transaction.atomic
+def accept_staging_suggestion(staging_id: int = None, staging_cc_id: int = None, 
+                             category_id: int = None, create_rule: bool = False,
+                             rule_pattern: str = '') -> dict:
+    """Accept a suggestion and optionally create a rule (4.6, 4.7)."""
+    if not staging_id and not staging_cc_id:
+        return {'success': False, 'message': 'No staging row specified'}
+    
+    if not category_id:
+        return {'success': False, 'message': 'No category specified'}
+    
+    category = Category.objects.get(id=category_id)
+    
+    try:
+        if staging_id:
+            row = StagingTransaction.objects.get(pk=staging_id)
+            row.assigned_category = category
+            row.save(update_fields=['assigned_category'])
+            record_suggestion_feedback('ACCEPTED', staging_id=staging_id, 
+                                     user_action_category_id=category_id)
+        elif staging_cc_id:
+            row = StagingCCTransaction.objects.get(pk=staging_cc_id)
+            row.assigned_category = category
+            row.save(update_fields=['assigned_category'])
+            record_suggestion_feedback('ACCEPTED', staging_cc_id=staging_cc_id,
+                                     user_action_category_id=category_id)
+        
+        result = {'success': True, 'message': f'Suggestion accepted and category set to {category.name}'}
+        
+        if create_rule and rule_pattern:
+            rule_result = create_merchant_rule_from_suggestion(
+                rule_pattern, 
+                category_id,
+                row.type,
+                evidence_description=f'Created from accepted suggestion for {row.description}',
+                evidence_count=1,
+            )
+            result['rule_created'] = rule_result['success']
+            if not rule_result['success']:
+                result['rule_warning'] = rule_result['message']
+        
+        return result
+    
+    except (StagingTransaction.DoesNotExist, StagingCCTransaction.DoesNotExist):
+        return {'success': False, 'message': 'Staging row not found'}
+    except Category.DoesNotExist:
+        return {'success': False, 'message': 'Category not found'}
+
+
+@db_transaction.atomic
+def dismiss_staging_suggestion(staging_id: int = None, staging_cc_id: int = None) -> dict:
+    """Dismiss a suggestion without assigning a category (4.6)."""
+    if not staging_id and not staging_cc_id:
+        return {'success': False, 'message': 'No staging row specified'}
+    
+    try:
+        if staging_id:
+            record_suggestion_feedback('DISMISSED', staging_id=staging_id)
+        elif staging_cc_id:
+            record_suggestion_feedback('DISMISSED', staging_cc_id=staging_cc_id)
+        
+        return {'success': True, 'message': 'Suggestion dismissed'}
+    except Exception as e:
+        return {'success': False, 'message': f'Error: {str(e)}'}
 
 
 def _parse_header(lines: list[str]) -> dict:

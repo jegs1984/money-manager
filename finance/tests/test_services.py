@@ -14,11 +14,13 @@ from finance.services import (
     create_transaction_splits_service,
     get_shared_expenses_summary,
     get_budget_velocity_alerts,
+    get_staging_merchant_suggestions,
     process_cc_staging_batch,
     process_staging_batch,
     parse_scotiabank_statement,
     reverse_transaction_service,
     suggest_category,
+    suggest_merchant_rule_candidates,
 )
 from finance.templatetags.finance_format import clp
 
@@ -62,6 +64,61 @@ class LedgerServiceTests(TestCase):
         MerchantRule.objects.create(description_pattern='market', category=self.category, transaction_type='OUT')
         self.assertEqual(suggest_category('Market purchase', 'OUT'), self.category)
         self.assertIsNone(suggest_category('Market refund', 'IN'))
+
+    def test_merchant_rule_suggestions_return_ranked_primary_and_no_suggestion_when_uncertain(self):
+        category_home = Category.objects.create(name='Home', group='ViviendaHogar')
+        MerchantRule.objects.create(description_pattern='mercado', category=self.category, transaction_type='OUT')
+        MerchantRule.objects.create(description_pattern='condes', category=category_home, transaction_type='OUT')
+        item = _get_or_create_budget_item(self.period, self.category, 'OUT')
+        Transaction.objects.create(
+            budget_item=item,
+            date=date(2026, 1, 10),
+            real_amount=Decimal('1500.00'),
+            description='Mercado Las Condes',
+        )
+        result = suggest_merchant_rule_candidates('Mercado Las Condes compra', 'OUT')
+        self.assertTrue(result['has_suggestion'])
+        self.assertEqual(result['primary']['category_id'], self.category.pk)
+        self.assertGreaterEqual(result['primary']['confidence'], 0.65)
+        self.assertTrue(result['alternatives'])
+        self.assertIn('rule match', result['primary']['reasons'][0].lower())
+
+        no_suggestion = suggest_merchant_rule_candidates('random impossible merchant xyz', 'OUT', min_confidence=0.8)
+        self.assertFalse(no_suggestion['has_suggestion'])
+        self.assertIsNone(no_suggestion['primary'])
+        self.assertEqual(no_suggestion['alternatives'], [])
+
+        result_in = suggest_merchant_rule_candidates('Mercado Las Condes compra', 'IN')
+        self.assertFalse(result_in['has_suggestion'])
+        self.assertEqual(result_in['alternatives'], [])
+
+    def test_staging_merchant_suggestions_return_reviewable_dtos(self):
+        MerchantRule.objects.create(description_pattern='mercado', category=self.category, transaction_type='OUT')
+        staging = StagingTransaction.objects.create(
+            original_date=date(2026, 1, 11),
+            description='Mercado Las Condes compra',
+            amount=Decimal('100.00'),
+            type='OUT',
+        )
+        suggestions = get_staging_merchant_suggestions(StagingTransaction.objects.filter(pk=staging.pk))
+        self.assertIn(staging.pk, suggestions)
+        self.assertTrue(suggestions[staging.pk]['has_suggestion'])
+        self.assertEqual(suggestions[staging.pk]['primary']['category_id'], self.category.pk)
+        self.assertIn('rule match', suggestions[staging.pk]['primary']['reasons'][0].lower())
+
+    def test_staging_review_views_expose_merchant_suggestions_for_display(self):
+        MerchantRule.objects.create(description_pattern='mercado', category=self.category, transaction_type='OUT')
+        staging = StagingTransaction.objects.create(
+            original_date=date(2026, 1, 11),
+            description='Mercado Las Condes compra',
+            amount=Decimal('100.00'),
+            type='OUT',
+        )
+
+        response = self.client.get(reverse('finance:staging_review'))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(staging.pk, response.context['merchant_suggestions'])
+        self.assertTrue(response.context['merchant_suggestions'][staging.pk]['has_suggestion'])
 
     def test_credit_card_installment_creates_future_obligation(self):
         staging = StagingCCTransaction.objects.create(
@@ -181,6 +238,180 @@ class LedgerServiceTests(TestCase):
         response = self.client.get(reverse('finance:velocity_alerts'))
         self.assertEqual(response.status_code, 200)
         self.assertIn('velocity_data', response.context)
+
+    # ─────────────────────────────────────────────────────────────
+    # 4.2: Feedback/Provenance Tracking (4.6, 4.7, 4.9)
+    # ─────────────────────────────────────────────────────────────
+
+    def test_record_suggestion_feedback_creates_feedback_entry(self):
+        """Test that suggestion feedback is recorded for monitoring."""
+        from finance.services import record_suggestion_feedback
+        from finance.models import SuggestionFeedback
+
+        staging = StagingTransaction.objects.create(
+            batch=None, original_date=date(2026, 1, 15), type='OUT',
+            description='Test Merchant', amount=Decimal('50.00')
+        )
+
+        record_suggestion_feedback(
+            'SHOWN',
+            staging_id=staging.pk,
+            suggested_category_id=self.category.pk,
+            confidence=0.85,
+            source='merchant_rule',
+        )
+
+        feedback = SuggestionFeedback.objects.filter(
+            staging_transaction=staging, event='SHOWN'
+        ).first()
+        self.assertIsNotNone(feedback)
+        self.assertEqual(feedback.suggested_confidence, 0.85)
+        self.assertEqual(feedback.suggested_source, 'merchant_rule')
+
+    def test_accept_staging_suggestion_assigns_category(self):
+        """Test that accepting a suggestion assigns the category to staging row."""
+        from finance.services import accept_staging_suggestion
+
+        staging = StagingTransaction.objects.create(
+            batch=None, original_date=date(2026, 1, 15), type='OUT',
+            description='Supermarket Purchase', amount=Decimal('100.00')
+        )
+        self.assertIsNone(staging.assigned_category)
+
+        result = accept_staging_suggestion(
+            staging_id=staging.pk,
+            category_id=self.category.pk,
+        )
+
+        self.assertTrue(result['success'])
+        staging.refresh_from_db()
+        self.assertEqual(staging.assigned_category_id, self.category.pk)
+
+    def test_accept_staging_suggestion_with_rule_creation(self):
+        """Test that accept + rule option creates a merchant rule."""
+        from finance.services import accept_staging_suggestion
+
+        staging = StagingTransaction.objects.create(
+            batch=None, original_date=date(2026, 1, 15), type='OUT',
+            description='Mercado Las Condes', amount=Decimal('150.00')
+        )
+
+        result = accept_staging_suggestion(
+            staging_id=staging.pk,
+            category_id=self.category.pk,
+            create_rule=True,
+            rule_pattern='Mercado Las Condes',
+        )
+
+        self.assertTrue(result['success'])
+        self.assertTrue(result.get('rule_created', False))
+
+        rule = MerchantRule.objects.filter(
+            description_pattern='Mercado Las Condes'
+        ).first()
+        self.assertIsNotNone(rule)
+        self.assertEqual(rule.category_id, self.category.pk)
+
+    def test_dismiss_staging_suggestion_records_event(self):
+        """Test that dismissing a suggestion records the event."""
+        from finance.services import dismiss_staging_suggestion
+        from finance.models import SuggestionFeedback
+
+        staging = StagingTransaction.objects.create(
+            batch=None, original_date=date(2026, 1, 15), type='OUT',
+            description='Test Merchant', amount=Decimal('50.00')
+        )
+
+        result = dismiss_staging_suggestion(staging_id=staging.pk)
+
+        self.assertTrue(result['success'])
+        feedback = SuggestionFeedback.objects.filter(
+            staging_transaction=staging, event='DISMISSED'
+        ).first()
+        self.assertIsNotNone(feedback)
+
+    def test_create_merchant_rule_detects_exact_match_conflict(self):
+        """Test that creating a rule detects exact-match conflicts."""
+        from finance.services import create_merchant_rule_from_suggestion
+
+        existing = MerchantRule.objects.create(
+            description_pattern='Mercado Las Condes',
+            category=self.category,
+            transaction_type='OUT',
+        )
+
+        result = create_merchant_rule_from_suggestion(
+            'Mercado Las Condes',
+            self.category.pk,
+            'OUT',
+            evidence_description='Test',
+        )
+
+        self.assertFalse(result['success'])
+        self.assertIn('already exists', result['message'])
+
+    def test_create_merchant_rule_allows_different_category_overlap(self):
+        """Test that creating a rule with a different category warns but may succeed if not exact."""
+        from finance.services import create_merchant_rule_from_suggestion
+
+        other_category = Category.objects.create(name='Other', group='Gastos')
+        existing = MerchantRule.objects.create(
+            description_pattern='Mercado',
+            category=other_category,
+            transaction_type='OUT',
+        )
+
+        result = create_merchant_rule_from_suggestion(
+            'Mercado Las Condes',
+            self.category.pk,
+            'OUT',
+            evidence_description='Longer pattern',
+        )
+
+        # Should still warn about overlaps
+        self.assertGreater(len(result['conflicts']), 0)
+
+    def test_create_merchant_rule_with_provenance(self):
+        """Test that created rules have provenance tracking."""
+        from finance.services import create_merchant_rule_from_suggestion
+        from finance.models import MerchantRuleProvenance
+
+        result = create_merchant_rule_from_suggestion(
+            'New Test Merchant',
+            self.category.pk,
+            'OUT',
+            evidence_description='Created from accepted suggestion',
+            evidence_count=5,
+        )
+
+        self.assertTrue(result['success'])
+        rule = MerchantRule.objects.get(pk=result['rule_id'])
+        provenance = MerchantRuleProvenance.objects.filter(rule=rule).first()
+        self.assertIsNotNone(provenance)
+        self.assertEqual(provenance.source, 'SUGGESTION')
+        self.assertEqual(provenance.evidence_transactions, 5)
+
+    def test_suggestion_feedback_for_cc_transactions(self):
+        """Test that feedback can be recorded for CC staging transactions."""
+        from finance.services import record_suggestion_feedback
+        from finance.models import SuggestionFeedback
+
+        cc_staging = StagingCCTransaction.objects.create(
+            batch=None, original_date=date(2026, 1, 15), type='OUT',
+            description='CC Purchase', amount=Decimal('75.00')
+        )
+
+        record_suggestion_feedback(
+            'ACCEPTED',
+            staging_cc_id=cc_staging.pk,
+            user_action_category_id=self.category.pk,
+        )
+
+        feedback = SuggestionFeedback.objects.filter(
+            staging_cc_transaction=cc_staging, event='ACCEPTED'
+        ).first()
+        self.assertIsNotNone(feedback)
+
 
 
 
