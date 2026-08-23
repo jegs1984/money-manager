@@ -784,8 +784,8 @@ class StagingReviewView(TemplateView):
 
         period = self._active_period()
         duplicate_ids = get_duplicate_staging_ids(period, qs) if period else set()
-        ctx['duplicate_matches'] = get_duplicate_staging_matches(qs) if period else {}
         ctx = self.get_context_data()
+        ctx['duplicate_matches'] = get_duplicate_staging_matches(qs) if period else {}
         ctx['formset']       = formset
         ctx['duplicate_ids'] = duplicate_ids
         return self.render_to_response(ctx)
@@ -953,6 +953,7 @@ class CCStagingReviewView(TemplateView):
         period = self._active_period()
         duplicate_ids = get_duplicate_staging_ids(period, qs) if period else set()
         ctx = self.get_context_data()
+        ctx['duplicate_matches'] = get_duplicate_staging_matches(qs) if period else {}
         ctx['formset']       = formset
         ctx['duplicate_ids'] = duplicate_ids
         return self.render_to_response(ctx)

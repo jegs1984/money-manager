@@ -5,6 +5,7 @@ from pathlib import Path
 import json
 
 from django.test import TestCase
+from django.urls import reverse
 
 from finance.models import Account, Category, InstallmentObligation, MerchantRule, Period, RecurringPlan, StagingCCTransaction, StagingTransaction, Transaction, TransactionSplit
 from finance.services import (
@@ -114,7 +115,7 @@ class LedgerServiceTests(TestCase):
         self.assertFalse(m1['is_shortfall'])
 
     def test_cash_flow_forecast_view_returns_200(self):
-        response = self.client.get('/forecast/')
+        response = self.client.get(reverse('finance:cash_flow_forecast'))
         self.assertEqual(response.status_code, 200)
         self.assertIn('forecast', response.context)
 
@@ -159,7 +160,7 @@ class LedgerServiceTests(TestCase):
         self.assertEqual(summary['persons'][0]['person'], 'Alice')
 
     def test_shared_expense_list_view_returns_200(self):
-        response = self.client.get('/shared-expenses/')
+        response = self.client.get(reverse('finance:shared_expense_list'))
         self.assertEqual(response.status_code, 200)
         self.assertIn('summary', response.context)
 
@@ -177,7 +178,7 @@ class LedgerServiceTests(TestCase):
         self.assertEqual(res['alerts'][0]['status'], 'CRITICAL')
 
     def test_budget_velocity_alerts_view_returns_200(self):
-        response = self.client.get('/velocity-alerts/')
+        response = self.client.get(reverse('finance:velocity_alerts'))
         self.assertEqual(response.status_code, 200)
         self.assertIn('velocity_data', response.context)
 

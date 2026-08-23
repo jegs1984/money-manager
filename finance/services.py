@@ -999,12 +999,13 @@ def build_cash_flow_forecast(months: int = 3, start_date: date = None) -> dict:
         # 2. Installment Obligations
         for inst in installment_obligations:
             inst_due = inst.next_due_date
-            due_months_from_start = (inst_due.year - cur_year) * 12 + (inst_due.month - cur_month)
-            months_diff = i - due_months_from_start
-            if 0 <= months_diff < inst.remaining_installments:
+            # Clamp overdue obligations: treat them as starting from month 0 of the forecast.
+            first_due_month = max(0, (inst_due.year - cur_year) * 12 + (inst_due.month - cur_month))
+            installment_index = i - first_due_month
+            if 0 <= installment_index < inst.remaining_installments:
                 month_outflow += inst.installment_value
                 item_details.append({
-                    'source': f'Installment: {inst.description} ({months_diff + 1}/{inst.remaining_installments})',
+                    'source': f'Installment: {inst.description} ({installment_index + 1}/{inst.remaining_installments})',
                     'category': inst.category.name,
                     'type': 'OUT',
                     'amount': str(inst.installment_value),
@@ -1071,7 +1072,7 @@ def get_budget_velocity_alerts(period_id: int | None = None) -> dict:
     period_elapsed_ratio = Decimal(str(min(max(days_elapsed / total_days, 0.01), 1.0)))
     period_elapsed_percent = int(period_elapsed_ratio * 100)
 
-    budget_items = BudgetItem.objects.filter(period=period, type='OUT').select_related('category')
+    budget_items = BudgetItem.objects.filter(period=period, type='OUT').select_related('category').prefetch_related('transactions__splits')
 
     alerts = []
     total_budget = Decimal('0.00')
@@ -1090,8 +1091,9 @@ def get_budget_velocity_alerts(period_id: int | None = None) -> dict:
         total_spent += spent
 
         if projected <= Decimal('0.00'):
-            pct_used = Decimal('100.00') if spent > 0 else Decimal('0.00')
-            velocity_ratio = Decimal('2.0') if spent > 0 else Decimal('0.0')
+            # Zero or negative projection: treat unspent as on-track, any spending as critical.
+            pct_used = Decimal('100.00') if spent > Decimal('0.00') else Decimal('0.00')
+            velocity_ratio = Decimal('2.0') if spent > Decimal('0.00') else Decimal('0.0')
         else:
             pct_used = (spent / projected) * Decimal('100.00')
             velocity_ratio = (spent / projected) / period_elapsed_ratio
@@ -1143,7 +1145,6 @@ def get_budget_velocity_alerts(period_id: int | None = None) -> dict:
 
 
 @db_transaction.atomic
-
 def reconcile_account_service(
     account_id: int,
     statement_date: date,
