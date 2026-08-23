@@ -1130,7 +1130,7 @@
       "source_location": "L63",
       "_origin": "ast",
       "id": "repository_financerepository_financerepository_findperiodbydate",
-      "community": 46,
+      "community": 40,
       "norm_label": ".findperiodbydate()"
     },
     {
@@ -1140,7 +1140,7 @@
       "source_location": "L63",
       "_origin": "ast",
       "id": "android_app_src_main_java_com_moneymanager_data_repository_financerepository_kt_localdate",
-      "community": 46,
+      "community": 40,
       "norm_label": "localdate"
     },
     {
@@ -1240,7 +1240,7 @@
       "source_location": "L76",
       "_origin": "ast",
       "id": "repository_financerepository_financerepository_getorcreateunplanned",
-      "community": 46,
+      "community": 40,
       "norm_label": ".getorcreateunplanned()"
     },
     {
@@ -1260,7 +1260,7 @@
       "source_location": "L85",
       "_origin": "ast",
       "id": "android_app_src_main_java_com_moneymanager_data_repository_financerepository_kt_long",
-      "community": 46,
+      "community": 40,
       "norm_label": "long"
     },
     {
@@ -1270,7 +1270,7 @@
       "source_location": "L85",
       "_origin": "ast",
       "id": "android_app_src_main_java_com_moneymanager_data_repository_financerepository_kt_budgetitementity",
-      "community": 3,
+      "community": 40,
       "norm_label": "budgetitementity"
     },
     {
@@ -1280,7 +1280,7 @@
       "source_location": "L88",
       "_origin": "ast",
       "id": "repository_financerepository_financerepository_getorcreatebudgetitem",
-      "community": 46,
+      "community": 40,
       "norm_label": ".getorcreatebudgetitem()"
     },
     {
@@ -1290,7 +1290,7 @@
       "source_location": "L88",
       "_origin": "ast",
       "id": "android_app_src_main_java_com_moneymanager_data_repository_financerepository_kt_string",
-      "community": 46,
+      "community": 40,
       "norm_label": "string"
     },
     {
@@ -1310,7 +1310,7 @@
       "source_location": "L98",
       "_origin": "ast",
       "id": "android_app_src_main_java_com_moneymanager_data_repository_financerepository_kt_transactionentity",
-      "community": 46,
+      "community": 40,
       "norm_label": "transactionentity"
     },
     {
@@ -1320,7 +1320,7 @@
       "source_location": "L101",
       "_origin": "ast",
       "id": "repository_financerepository_financerepository_inserttransaction",
-      "community": 46,
+      "community": 40,
       "norm_label": ".inserttransaction()"
     },
     {
@@ -1350,7 +1350,7 @@
       "source_location": "L133",
       "_origin": "ast",
       "id": "repository_financerepository_financerepository_isduplicateinperiod",
-      "community": 46,
+      "community": 40,
       "norm_label": ".isduplicateinperiod()"
     },
     {
@@ -1360,7 +1360,7 @@
       "source_location": "L133",
       "_origin": "ast",
       "id": "android_app_src_main_java_com_moneymanager_data_repository_financerepository_kt_boolean",
-      "community": 46,
+      "community": 40,
       "norm_label": "boolean"
     },
     {
@@ -1430,7 +1430,7 @@
       "source_location": "L174",
       "_origin": "ast",
       "id": "repository_financerepository_financerepository_processstagingbatch",
-      "community": 46,
+      "community": 40,
       "norm_label": ".processstagingbatch()"
     },
     {
@@ -1440,7 +1440,7 @@
       "source_location": "L174",
       "_origin": "ast",
       "id": "pair",
-      "community": 46,
+      "community": 40,
       "norm_label": "pair"
     },
     {
@@ -1450,7 +1450,7 @@
       "source_location": "L174",
       "_origin": "ast",
       "id": "android_app_src_main_java_com_moneymanager_data_repository_financerepository_kt_set",
-      "community": 46,
+      "community": 40,
       "norm_label": "set"
     },
     {
@@ -1460,7 +1460,7 @@
       "source_location": "L174",
       "_origin": "ast",
       "id": "int",
-      "community": 46,
+      "community": 40,
       "norm_label": "int"
     },
     {
@@ -1510,7 +1510,7 @@
       "source_location": "L207",
       "_origin": "ast",
       "id": "repository_financerepository_financerepository_processccstagingbatch",
-      "community": 46,
+      "community": 40,
       "norm_label": ".processccstagingbatch()"
     },
     {
@@ -2040,7 +2040,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "notifications_banknotificationservice",
-      "community": 71,
+      "community": 40,
       "norm_label": "banknotificationservice.kt"
     },
     {
@@ -2050,7 +2050,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "notifications_banknotificationservice_banknotificationservice",
-      "community": 71,
+      "community": 40,
       "norm_label": "banknotificationservice"
     },
     {
@@ -2060,7 +2060,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "notificationlistenerservice",
-      "community": 71,
+      "community": 40,
       "norm_label": "notificationlistenerservice"
     },
     {
@@ -2080,7 +2080,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "notifications_banknotificationservice_banknotificationservice_onnotificationposted",
-      "community": 71,
+      "community": 40,
       "norm_label": ".onnotificationposted()"
     },
     {
@@ -2090,7 +2090,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "statusbarnotification",
-      "community": 71,
+      "community": 40,
       "norm_label": "statusbarnotification"
     },
     {
@@ -2100,7 +2100,7 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "notifications_banknotificationservice_banknotificationservice_onlistenerdisconnected",
-      "community": 71,
+      "community": 40,
       "norm_label": ".onlistenerdisconnected()"
     },
     {
@@ -2410,7 +2410,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "screen_dashboardscreen",
-      "community": 30,
+      "community": 33,
       "norm_label": "dashboardscreen.kt"
     },
     {
@@ -2420,7 +2420,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "screen_dashboardscreen_dashboardscreen",
-      "community": 30,
+      "community": 33,
       "norm_label": "dashboardscreen()"
     },
     {
@@ -2430,7 +2430,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "dashboardviewmodel",
-      "community": 30,
+      "community": 33,
       "norm_label": "dashboardviewmodel"
     },
     {
@@ -2440,7 +2440,7 @@
       "source_location": "L130",
       "_origin": "ast",
       "id": "screen_dashboardscreen_periodselector",
-      "community": 30,
+      "community": 33,
       "norm_label": "periodselector()"
     },
     {
@@ -2450,7 +2450,7 @@
       "source_location": "L130",
       "_origin": "ast",
       "id": "android_app_src_main_java_com_moneymanager_ui_screen_dashboardscreen_kt_list",
-      "community": 30,
+      "community": 33,
       "norm_label": "list"
     },
     {
@@ -2460,7 +2460,7 @@
       "source_location": "L130",
       "_origin": "ast",
       "id": "android_app_src_main_java_com_moneymanager_ui_screen_dashboardscreen_kt_periodentity",
-      "community": 30,
+      "community": 33,
       "norm_label": "periodentity"
     },
     {
@@ -2470,7 +2470,7 @@
       "source_location": "L165",
       "_origin": "ast",
       "id": "screen_dashboardscreen_kpirow",
-      "community": 30,
+      "community": 33,
       "norm_label": "kpirow()"
     },
     {
@@ -2480,7 +2480,7 @@
       "source_location": "L165",
       "_origin": "ast",
       "id": "periodstats",
-      "community": 30,
+      "community": 33,
       "norm_label": "periodstats"
     },
     {
@@ -2490,7 +2490,7 @@
       "source_location": "L187",
       "_origin": "ast",
       "id": "screen_dashboardscreen_kpicard",
-      "community": 30,
+      "community": 33,
       "norm_label": "kpicard()"
     },
     {
@@ -2500,7 +2500,7 @@
       "source_location": "L187",
       "_origin": "ast",
       "id": "android_app_src_main_java_com_moneymanager_ui_screen_dashboardscreen_kt_string",
-      "community": 30,
+      "community": 33,
       "norm_label": "string"
     },
     {
@@ -2510,7 +2510,7 @@
       "source_location": "L187",
       "_origin": "ast",
       "id": "android_app_src_main_java_com_moneymanager_ui_screen_dashboardscreen_kt_bigdecimal",
-      "community": 30,
+      "community": 33,
       "norm_label": "bigdecimal"
     },
     {
@@ -2520,7 +2520,7 @@
       "source_location": "L187",
       "_origin": "ast",
       "id": "androidx",
-      "community": 30,
+      "community": 33,
       "norm_label": "androidx"
     },
     {
@@ -2530,7 +2530,7 @@
       "source_location": "L187",
       "_origin": "ast",
       "id": "modifier",
-      "community": 30,
+      "community": 33,
       "norm_label": "modifier"
     },
     {
@@ -2540,7 +2540,7 @@
       "source_location": "L210",
       "_origin": "ast",
       "id": "screen_dashboardscreen_sectionheader",
-      "community": 30,
+      "community": 33,
       "norm_label": "sectionheader()"
     },
     {
@@ -2550,7 +2550,7 @@
       "source_location": "L223",
       "_origin": "ast",
       "id": "screen_dashboardscreen_budgetitemrow",
-      "community": 30,
+      "community": 33,
       "norm_label": "budgetitemrow()"
     },
     {
@@ -2560,7 +2560,7 @@
       "source_location": "L223",
       "_origin": "ast",
       "id": "budgetitemwithstats",
-      "community": 30,
+      "community": 33,
       "norm_label": "budgetitemwithstats"
     },
     {
@@ -2570,7 +2570,7 @@
       "source_location": "L263",
       "_origin": "ast",
       "id": "screen_dashboardscreen_formatclp",
-      "community": 30,
+      "community": 33,
       "norm_label": "formatclp()"
     },
     {
@@ -2580,7 +2580,7 @@
       "source_location": "L269",
       "_origin": "ast",
       "id": "screen_dashboardscreen_tobigdecimal",
-      "community": 30,
+      "community": 33,
       "norm_label": "tobigdecimal()"
     },
     {
@@ -4368,7 +4368,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "finance_services",
-      "community": 3,
+      "community": 73,
       "norm_label": "services.py"
     },
     {
@@ -4378,7 +4378,7 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "finance_services_parse_amount",
-      "community": 3,
+      "community": 46,
       "norm_label": "_parse_amount()"
     },
     {
@@ -4388,7 +4388,7 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "decimal",
-      "community": 3,
+      "community": 30,
       "norm_label": "decimal"
     },
     {
@@ -4398,7 +4398,7 @@
       "source_location": "L63",
       "_origin": "ast",
       "id": "finance_services_parse_signed_balance",
-      "community": 3,
+      "community": 46,
       "norm_label": "_parse_signed_balance()"
     },
     {
@@ -4408,7 +4408,7 @@
       "source_location": "L70",
       "_origin": "ast",
       "id": "finance_services_suggest_category",
-      "community": 3,
+      "community": 46,
       "norm_label": "suggest_category()"
     },
     {
@@ -4438,7 +4438,7 @@
       "source_location": "L101",
       "_origin": "ast",
       "id": "finance_services_parse_date",
-      "community": 3,
+      "community": 46,
       "norm_label": "_parse_date()"
     },
     {
@@ -4498,7 +4498,7 @@
       "source_location": "L162",
       "_origin": "ast",
       "id": "finance_services_parse_scotiabank_statement",
-      "community": 3,
+      "community": 46,
       "norm_label": "parse_scotiabank_statement()"
     },
     {
@@ -4508,7 +4508,7 @@
       "source_location": "L271",
       "_origin": "ast",
       "id": "finance_services_get_or_create_unplanned_category",
-      "community": 46,
+      "community": 73,
       "norm_label": "_get_or_create_unplanned_category()"
     },
     {
@@ -4518,7 +4518,7 @@
       "source_location": "L279",
       "_origin": "ast",
       "id": "finance_services_get_or_create_budget_item",
-      "community": 3,
+      "community": 40,
       "norm_label": "_get_or_create_budget_item()"
     },
     {
@@ -4538,7 +4538,7 @@
       "source_location": "L287",
       "_origin": "ast",
       "id": "finance_services_assert_period_open",
-      "community": 3,
+      "community": 73,
       "norm_label": "_assert_period_open()"
     },
     {
@@ -4548,7 +4548,7 @@
       "source_location": "L292",
       "_origin": "ast",
       "id": "finance_services_get_or_create_import_account",
-      "community": 46,
+      "community": 40,
       "norm_label": "_get_or_create_import_account()"
     },
     {
@@ -4578,7 +4578,7 @@
       "source_location": "L318",
       "_origin": "ast",
       "id": "finance_services_process_staging_batch",
-      "community": 46,
+      "community": 40,
       "norm_label": "process_staging_batch()"
     },
     {
@@ -4588,7 +4588,7 @@
       "source_location": "L383",
       "_origin": "ast",
       "id": "finance_services_log_transaction_service",
-      "community": 3,
+      "community": 73,
       "norm_label": "log_transaction_service()"
     },
     {
@@ -4598,7 +4598,7 @@
       "source_location": "L414",
       "_origin": "ast",
       "id": "finance_services_rollover_period_balance",
-      "community": 3,
+      "community": 73,
       "norm_label": "rollover_period_balance()"
     },
     {
@@ -4608,7 +4608,7 @@
       "source_location": "L443",
       "_origin": "ast",
       "id": "finance_services_duplicate_period_budget_items",
-      "community": 2,
+      "community": 73,
       "norm_label": "duplicate_period_budget_items()"
     },
     {
@@ -4618,7 +4618,7 @@
       "source_location": "L487",
       "_origin": "ast",
       "id": "finance_services_parse_clp_amount",
-      "community": 3,
+      "community": 30,
       "norm_label": "_parse_clp_amount()"
     },
     {
@@ -4638,7 +4638,7 @@
       "source_location": "L531",
       "_origin": "ast",
       "id": "finance_services_parse_scotiabank_cc_statement",
-      "community": 3,
+      "community": 30,
       "norm_label": "parse_scotiabank_cc_statement()"
     },
     {
@@ -4648,7 +4648,7 @@
       "source_location": "L703",
       "_origin": "ast",
       "id": "finance_services_process_cc_staging_batch",
-      "community": 46,
+      "community": 40,
       "norm_label": "process_cc_staging_batch()"
     },
     {
@@ -4668,7 +4668,7 @@
       "source_location": "L811",
       "_origin": "ast",
       "id": "finance_services_record_transfer_service",
-      "community": 68,
+      "community": 3,
       "norm_label": "record_transfer_service()"
     },
     {
@@ -4728,7 +4728,7 @@
       "source_location": "L887",
       "_origin": "ast",
       "id": "finance_services_advance_recurring_date",
-      "community": 3,
+      "community": 73,
       "norm_label": "_advance_recurring_date()"
     },
     {
@@ -4738,7 +4738,7 @@
       "source_location": "L897",
       "_origin": "ast",
       "id": "finance_services_materialize_recurring_plans",
-      "community": 3,
+      "community": 73,
       "norm_label": "materialize_recurring_plans()"
     },
     {
@@ -4748,7 +4748,7 @@
       "source_location": "L924",
       "_origin": "ast",
       "id": "finance_services_contribute_to_goal",
-      "community": 3,
+      "community": 30,
       "norm_label": "contribute_to_goal()"
     },
     {
@@ -4768,7 +4768,7 @@
       "source_location": "L941",
       "_origin": "ast",
       "id": "finance_services_bundle_key",
-      "community": 3,
+      "community": 73,
       "norm_label": "_bundle_key()"
     },
     {
@@ -4778,7 +4778,7 @@
       "source_location": "L947",
       "_origin": "ast",
       "id": "finance_services_export_finance_bundle",
-      "community": 68,
+      "community": 73,
       "norm_label": "export_finance_bundle()"
     },
     {
@@ -4788,7 +4788,7 @@
       "source_location": "L971",
       "_origin": "ast",
       "id": "finance_services_import_finance_bundle",
-      "community": 3,
+      "community": 73,
       "norm_label": "import_finance_bundle()"
     },
     {
@@ -4798,7 +4798,7 @@
       "source_location": "L1027",
       "_origin": "ast",
       "id": "finance_services_calculate_safe_to_spend",
-      "community": 2,
+      "community": 30,
       "norm_label": "calculate_safe_to_spend()"
     },
     {
@@ -4808,7 +4808,7 @@
       "source_location": "L1065",
       "_origin": "ast",
       "id": "finance_services_clp",
-      "community": 3,
+      "community": 30,
       "norm_label": "_clp()"
     },
     {
@@ -4818,7 +4818,7 @@
       "source_location": "L1072",
       "_origin": "ast",
       "id": "finance_services_generate_dashboard_pdf",
-      "community": 2,
+      "community": 30,
       "norm_label": "generate_dashboard_pdf()"
     },
     {
@@ -4828,7 +4828,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "finance_services_rationale_1",
-      "community": 3,
+      "community": 73,
       "norm_label": "services.py =========== business logic layer.  all db writes go through here; vi"
     },
     {
@@ -4838,7 +4838,7 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "finance_services_rationale_52",
-      "community": 3,
+      "community": 46,
       "norm_label": "parse a debit/credit amount, which is always stored as positive."
     },
     {
@@ -4848,7 +4848,7 @@
       "source_location": "L64",
       "_origin": "ast",
       "id": "finance_services_rationale_64",
-      "community": 3,
+      "community": 46,
       "norm_label": "parse balances without losing their sign."
     },
     {
@@ -4858,7 +4858,7 @@
       "source_location": "L71",
       "_origin": "ast",
       "id": "finance_services_rationale_71",
-      "community": 3,
+      "community": 46,
       "norm_label": "return a reviewable category suggestion from a user-confirmed merchant rule."
     },
     {
@@ -4898,7 +4898,7 @@
       "source_location": "L444",
       "_origin": "ast",
       "id": "finance_services_rationale_444",
-      "community": 2,
+      "community": 73,
       "norm_label": "copy all budgetitems from source_period into target_period, preserving     categ"
     },
     {
@@ -4908,7 +4908,7 @@
       "source_location": "L898",
       "_origin": "ast",
       "id": "finance_services_rationale_898",
-      "community": 3,
+      "community": 73,
       "norm_label": "create due recurring ledger entries once, retaining a stable source fingerprint."
     },
     {
@@ -4918,7 +4918,7 @@
       "source_location": "L948",
       "_origin": "ast",
       "id": "finance_services_rationale_948",
-      "community": 68,
+      "community": 73,
       "norm_label": "create a versioned aes-gcm encrypted backup/exchange bundle."
     },
     {
@@ -4928,7 +4928,7 @@
       "source_location": "L1066",
       "_origin": "ast",
       "id": "finance_services_rationale_1066",
-      "community": 3,
+      "community": 30,
       "norm_label": "format a decimal as chilean peso string: $1.234.567"
     },
     {
@@ -4938,7 +4938,7 @@
       "source_location": "L1073",
       "_origin": "ast",
       "id": "finance_services_rationale_1073",
-      "community": 2,
+      "community": 30,
       "norm_label": "build and return pdf bytes for the dashboard projected budget report.      conte"
     },
     {
@@ -4958,7 +4958,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "templatetags_finance_format",
-      "community": 3,
+      "community": 30,
       "norm_label": "finance_format.py"
     },
     {
@@ -4968,7 +4968,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "templatetags_finance_format_clp",
-      "community": 3,
+      "community": 30,
       "norm_label": "clp()"
     },
     {
@@ -4978,8 +4978,18 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "templatetags_finance_format_get_item",
-      "community": 3,
+      "community": 30,
       "norm_label": "get_item()"
+    },
+    {
+      "label": "direction_label()",
+      "file_type": "code",
+      "source_file": "finance/templatetags/finance_format.py",
+      "source_location": "L26",
+      "_origin": "ast",
+      "id": "templatetags_finance_format_direction_label",
+      "community": 30,
+      "norm_label": "direction_label()"
     },
     {
       "label": "Render whole Chilean pesos consistently, e.g. ``$1.234.567``.",
@@ -4988,7 +4998,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "templatetags_finance_format_rationale_10",
-      "community": 3,
+      "community": 30,
       "norm_label": "render whole chilean pesos consistently, e.g. ``$1.234.567``."
     },
     {
@@ -5138,7 +5148,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_services",
-      "community": 3,
+      "community": 40,
       "norm_label": "test_services.py"
     },
     {
@@ -5178,7 +5188,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "tests_test_services_ledgerservicetests_test_chilean_money_formatter_uses_dots_and_no_float_rounding",
-      "community": 3,
+      "community": 30,
       "norm_label": ".test_chilean_money_formatter_uses_dots_and_no_float_rounding()"
     },
     {
@@ -5218,7 +5228,7 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "tests_test_services_ledgerservicetests_test_merchant_rules_only_suggest_matching_direction",
-      "community": 3,
+      "community": 46,
       "norm_label": ".test_merchant_rules_only_suggest_matching_direction()"
     },
     {
@@ -5238,7 +5248,7 @@
       "source_location": "L73",
       "_origin": "ast",
       "id": "tests_test_services_ledgerservicetests_test_sanitized_statement_fixture_preserves_signed_balances_and_batch_counts",
-      "community": 3,
+      "community": 46,
       "norm_label": ".test_sanitized_statement_fixture_preserves_signed_balances_and_batch_counts()"
     },
     {
@@ -5368,7 +5378,7 @@
       "source_location": "L196",
       "_origin": "ast",
       "id": "finance_views_trendview_get_context_data",
-      "community": 2,
+      "community": 30,
       "norm_label": ".get_context_data()"
     },
     {
@@ -5678,7 +5688,7 @@
       "source_location": "L397",
       "_origin": "ast",
       "id": "finance_views_recurringplanlistview_post",
-      "community": 3,
+      "community": 73,
       "norm_label": ".post()"
     },
     {
@@ -5828,7 +5838,7 @@
       "source_location": "L510",
       "_origin": "ast",
       "id": "finance_views_transactionreverseview_post",
-      "community": 2,
+      "community": 3,
       "norm_label": ".post()"
     },
     {
@@ -5868,7 +5878,7 @@
       "source_location": "L539",
       "_origin": "ast",
       "id": "finance_views_bundleexportview_form_valid",
-      "community": 68,
+      "community": 73,
       "norm_label": ".form_valid()"
     },
     {
@@ -5908,7 +5918,7 @@
       "source_location": "L573",
       "_origin": "ast",
       "id": "finance_views_statementuploadview_form_valid",
-      "community": 2,
+      "community": 46,
       "norm_label": ".form_valid()"
     },
     {
@@ -7752,6 +7762,16 @@
       "norm_label": "recovery check"
     },
     {
+      "label": "Recovering a failed import",
+      "file_type": "document",
+      "source_file": "docs/BACKUP_AND_RECOVERY.md",
+      "source_location": "L69",
+      "_origin": "ast",
+      "id": "docs_backup_and_recovery_recovering_a_failed_import",
+      "community": 16,
+      "norm_label": "recovering a failed import"
+    },
+    {
       "label": "DEVELOPMENT.md",
       "file_type": "document",
       "source_file": "docs/DEVELOPMENT.md",
@@ -7825,7 +7845,7 @@
       "label": "Fixtures bancarios",
       "file_type": "document",
       "source_file": "docs/DEVELOPMENT.md",
-      "source_location": "L81",
+      "source_location": "L83",
       "_origin": "ast",
       "id": "docs_development_fixtures_bancarios",
       "community": 6,
@@ -7835,7 +7855,7 @@
       "label": "Estilos locales",
       "file_type": "document",
       "source_file": "docs/DEVELOPMENT.md",
-      "source_location": "L84",
+      "source_location": "L86",
       "_origin": "ast",
       "id": "docs_development_estilos_locales",
       "community": 6,
@@ -7930,6 +7950,26 @@
       "id": "docs_readme_documentation_index",
       "community": 22,
       "norm_label": "documentation index"
+    },
+    {
+      "label": "SCHEMA_PARITY.md",
+      "file_type": "document",
+      "source_file": "docs/SCHEMA_PARITY.md",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "docs_schema_parity",
+      "community": 71,
+      "norm_label": "schema_parity.md"
+    },
+    {
+      "label": "Web / Android schema parity",
+      "file_type": "document",
+      "source_file": "docs/SCHEMA_PARITY.md",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "docs_schema_parity_web_android_schema_parity",
+      "community": 71,
+      "norm_label": "web / android schema parity"
     },
     {
       "label": "USER_GUIDE.md",
@@ -8110,6 +8150,16 @@
       "id": "docs_user_guide_necesita_atenci\u00f3n",
       "community": 4,
       "norm_label": "necesita atencion"
+    },
+    {
+      "label": "Accesibilidad e idioma",
+      "file_type": "document",
+      "source_file": "docs/USER_GUIDE.md",
+      "source_location": "L128",
+      "_origin": "ast",
+      "id": "docs_user_guide_accesibilidad_e_idioma",
+      "community": 4,
+      "norm_label": "accesibilidad e idioma"
     },
     {
       "label": "README.md",
@@ -12505,9 +12555,9 @@
       "source_file": "android/app/src/main/java/com/moneymanager/domain/usecase/ParseStatementUseCases.kt",
       "source_location": "L122",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "usecase_parsestatementusecases_parsedebitstatementusecase",
-      "target": "usecase_parsestatementusecases_parsedebitstatementusecase_parsesignedamount",
-      "confidence_score": 1.0
+      "target": "usecase_parsestatementusecases_parsedebitstatementusecase_parsesignedamount"
     },
     {
       "relation": "references",
@@ -12593,9 +12643,9 @@
       "source_file": "android/app/src/main/java/com/moneymanager/domain/usecase/ParseStatementUseCases.kt",
       "source_location": "L67",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "usecase_parsestatementusecases_parsedebitstatementusecase_parse",
-      "target": "usecase_parsestatementusecases_parsedebitstatementusecase_parsesignedamount",
-      "confidence_score": 1.0
+      "target": "usecase_parsestatementusecases_parsedebitstatementusecase_parsesignedamount"
     },
     {
       "relation": "references",
@@ -12703,9 +12753,9 @@
       "source_location": "L122",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "usecase_parsestatementusecases_parsedebitstatementusecase_parsesignedamount",
-      "target": "android_app_src_main_java_com_moneymanager_domain_usecase_parsestatementusecases_kt_string",
-      "confidence_score": 1.0
+      "target": "android_app_src_main_java_com_moneymanager_domain_usecase_parsestatementusecases_kt_string"
     },
     {
       "relation": "references",
@@ -12824,9 +12874,9 @@
       "source_file": "android/app/src/main/java/com/moneymanager/domain/usecase/ParseStatementUseCases.kt",
       "source_location": "L123",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "usecase_parsestatementusecases_parsedebitstatementusecase_parsesignedamount",
-      "target": "usecase_parsestatementusecases_parsedebitstatementusecase_parseamount",
-      "confidence_score": 1.0
+      "target": "usecase_parsestatementusecases_parsedebitstatementusecase_parseamount"
     },
     {
       "relation": "references",
@@ -12846,9 +12896,9 @@
       "source_location": "L122",
       "weight": 1.0,
       "context": "return_type",
+      "confidence_score": 1.0,
       "source": "usecase_parsestatementusecases_parsedebitstatementusecase_parsesignedamount",
-      "target": "android_app_src_main_java_com_moneymanager_domain_usecase_parsestatementusecases_kt_bigdecimal",
-      "confidence_score": 1.0
+      "target": "android_app_src_main_java_com_moneymanager_domain_usecase_parsestatementusecases_kt_bigdecimal"
     },
     {
       "relation": "method",
@@ -14928,9 +14978,9 @@
       "source_file": "android/app/src/test/java/com/moneymanager/domain/usecase/ParseDebitStatementUseCaseTest.kt",
       "source_location": "L7",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "usecase_parsedebitstatementusecasetest",
-      "target": "usecase_parsedebitstatementusecasetest_parsedebitstatementusecasetest",
-      "confidence_score": 1.0
+      "target": "usecase_parsedebitstatementusecasetest_parsedebitstatementusecasetest"
     },
     {
       "relation": "method",
@@ -14938,9 +14988,9 @@
       "source_file": "android/app/src/test/java/com/moneymanager/domain/usecase/ParseDebitStatementUseCaseTest.kt",
       "source_location": "L8",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "usecase_parsedebitstatementusecasetest_parsedebitstatementusecasetest",
-      "target": "usecase_parsedebitstatementusecasetest_parsedebitstatementusecasetest_parser_preserves_signed_balances_and_skips_malformed_records",
-      "confidence_score": 1.0
+      "target": "usecase_parsedebitstatementusecasetest_parsedebitstatementusecasetest_parser_preserves_signed_balances_and_skips_malformed_records"
     },
     {
       "relation": "contains",
@@ -34656,6 +34706,16 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "finance/templatetags/finance_format.py",
+      "source_location": "L26",
+      "weight": 1.0,
+      "source": "templatetags_finance_format",
+      "target": "templatetags_finance_format_direction_label",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "finance/templatetags/finance_format.py",
       "source_location": "L21",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -38367,6 +38427,16 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/BACKUP_AND_RECOVERY.md",
+      "source_location": "L69",
+      "weight": 1.0,
+      "source": "docs_backup_and_recovery_backup_and_recovery",
+      "target": "docs_backup_and_recovery_recovering_a_failed_import",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/BACKUP_AND_RECOVERY.md",
       "source_location": "L53",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -38522,6 +38592,26 @@
       "confidence_score": 1.0,
       "source": "docs_readme",
       "target": "docs_readme_documentation_index"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/SCHEMA_PARITY.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "docs_schema_parity",
+      "target": "docs_schema_parity_web_android_schema_parity",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/USER_GUIDE.md",
+      "source_location": "L128",
+      "weight": 1.0,
+      "source": "docs_user_guide",
+      "target": "docs_user_guide_accesibilidad_e_idioma",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -38745,5 +38835,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "430371a41857d5eed6eda9a82967231bddcadd8c"
+  "built_at_commit": "9556d287bf5d1f42093e472d6ba5a799188ff6cc"
 }

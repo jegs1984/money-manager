@@ -2,7 +2,7 @@ from django import forms
 from django.forms import modelformset_factory
 from django.utils import timezone
 
-from .models import Account, BudgetItem, Category, Goal, MerchantRule, Period, Reconciliation, RecurringPlan, StagingCCTransaction, StagingTransaction, Transaction, Transfer
+from .models import Account, BudgetItem, Category, Goal, MerchantRule, Period, Reconciliation, RecurringPlan, StagingCCTransaction, StagingTransaction, Transaction, TransactionSplit, Transfer
 
 
 class PeriodForm(forms.ModelForm):
@@ -226,3 +226,33 @@ StagingCCReviewFormset = modelformset_factory(
     form=StagingCCTransactionReviewForm,
     extra=0,
 )
+
+
+class TransactionSplitForm(forms.Form):
+    category_id = forms.ModelChoiceField(
+        queryset=Category.objects.order_by('group', 'name'),
+        widget=forms.Select(attrs={'class': 'form-select text-xs'}),
+        required=True,
+    )
+    amount = forms.DecimalField(
+        max_digits=10, decimal_places=2,
+        widget=forms.NumberInput(attrs={'class': 'form-input text-xs', 'step': '0.01', 'min': '0.01'}),
+        required=True,
+    )
+    description = forms.CharField(
+        max_length=255, required=False,
+        widget=forms.TextInput(attrs={'class': 'form-input text-xs', 'placeholder': 'Descripción (opcional)'}),
+    )
+    shared_with = forms.CharField(
+        max_length=100, required=False,
+        widget=forms.TextInput(attrs={'class': 'form-input text-xs', 'placeholder': 'Compartido con (ej: Juan)'}),
+    )
+    is_reimbursable = forms.BooleanField(
+        required=False,
+        widget=forms.CheckboxInput(attrs={'class': 'form-checkbox'}),
+    )
+    notes = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-input text-xs', 'placeholder': 'Notas'}),
+    )
+

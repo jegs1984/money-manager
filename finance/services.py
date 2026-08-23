@@ -40,7 +40,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from .models import (
     Account, BudgetItem, Category, Goal, ImportBatch, InstallmentObligation, MerchantRule, Period, Reconciliation,
     RecurringPlan,
-    StagingCCTransaction, StagingTransaction, Transaction, Transfer,
+    StagingCCTransaction, StagingTransaction, Transaction, TransactionSplit, Transfer,
 )
 
 
@@ -808,6 +808,105 @@ def reverse_transaction_service(transaction_id: int, notes: str = '') -> Transac
 
 
 @db_transaction.atomic
+def create_transaction_splits_service(transaction_id: int, splits_data: list) -> list:
+    transaction = Transaction.objects.select_for_update().get(pk=transaction_id)
+    if not splits_data:
+        transaction.splits.all().delete()
+        return []
+
+    total_split_amount = sum((Decimal(str(item['amount'])) for item in splits_data), Decimal('0.00'))
+    if total_split_amount != transaction.real_amount:
+        raise ValueError(
+            f"Sum of split amounts (${total_split_amount}) must equal total transaction amount (${transaction.real_amount})."
+        )
+
+    period = transaction.budget_item.period
+    transaction_type = transaction.budget_item.type
+
+    transaction.splits.all().delete()
+    created_splits = []
+
+    for item in splits_data:
+        category_id = item['category_id']
+        category = Category.objects.get(pk=category_id)
+        budget_item = _get_or_create_budget_item(period, category, transaction_type)
+
+        split = TransactionSplit.objects.create(
+            transaction=transaction,
+            budget_item=budget_item,
+            amount=Decimal(str(item['amount'])),
+            description=item.get('description', '') or transaction.description,
+            shared_with=item.get('shared_with', ''),
+            is_reimbursable=bool(item.get('is_reimbursable', False)),
+            notes=item.get('notes', ''),
+        )
+        created_splits.append(split)
+
+    return created_splits
+
+
+def get_shared_expenses_summary() -> dict:
+    splits = TransactionSplit.objects.select_related(
+        'transaction', 'budget_item__category', 'transaction__account'
+    ).filter(
+        Q(is_reimbursable=True) | ~Q(shared_with='')
+    ).order_by('-transaction__date')
+
+    person_summary = {}
+    total_reimbursable = Decimal('0.00')
+    total_shared = Decimal('0.00')
+
+    for s in splits:
+        person = s.shared_with or 'General'
+        if person not in person_summary:
+            person_summary[person] = {
+                'person': person,
+                'total_amount': Decimal('0.00'),
+                'reimbursable_amount': Decimal('0.00'),
+                'count': 0,
+                'items': [],
+            }
+
+        person_summary[person]['total_amount'] += s.amount
+        person_summary[person]['count'] += 1
+        if s.is_reimbursable:
+            person_summary[person]['reimbursable_amount'] += s.amount
+            total_reimbursable += s.amount
+
+        total_shared += s.amount
+
+        person_summary[person]['items'].append({
+            'id': s.pk,
+            'transaction_id': s.transaction_id,
+            'date': s.transaction.date.strftime('%Y-%m-%d'),
+            'description': s.description or s.transaction.description,
+            'category': s.budget_item.category.name,
+            'account': s.transaction.account.name if s.transaction.account else 'N/A',
+            'amount': str(s.amount),
+            'shared_with': s.shared_with,
+            'is_reimbursable': s.is_reimbursable,
+            'notes': s.notes,
+        })
+
+    formatted_persons = []
+    for person, data in person_summary.items():
+        formatted_persons.append({
+            'person': person,
+            'total_amount': str(data['total_amount']),
+            'reimbursable_amount': str(data['reimbursable_amount']),
+            'count': data['count'],
+            'items': data['items'],
+        })
+
+    return {
+        'total_shared_amount': str(total_shared),
+        'total_reimbursable_amount': str(total_reimbursable),
+        'persons': formatted_persons,
+        'all_splits': list(splits),
+    }
+
+
+@db_transaction.atomic
 def record_transfer_service(
     source_account_id: int,
     destination_account_id: int,
@@ -841,6 +940,208 @@ def calculate_account_balance(account_id: int) -> Decimal:
         total=Coalesce(Sum('amount'), Value(Decimal('0.00')))
     )['total']
     return account.opening_balance + transaction_total + incoming - outgoing
+
+
+def build_cash_flow_forecast(months: int = 3, start_date: date = None) -> dict:
+    if start_date is None:
+        start_date = date.today()
+
+    active_accounts = Account.objects.filter(is_active=True)
+    account_balances = {}
+    starting_balance = Decimal('0.00')
+    for acc in active_accounts:
+        bal = calculate_account_balance(acc.pk)
+        account_balances[acc.name] = str(bal)
+        starting_balance += bal
+
+    monthly_forecasts = []
+    current_balance = starting_balance
+    total_inflows = Decimal('0.00')
+    total_outflows = Decimal('0.00')
+    shortfall_alerts = []
+
+    recurring_plans = list(RecurringPlan.objects.filter(is_active=True).select_related('category', 'account'))
+    installment_obligations = list(InstallmentObligation.objects.filter(is_complete=False).select_related('category'))
+
+    cur_year = start_date.year
+    cur_month = start_date.month
+
+    for i in range(months):
+        target_year = cur_year + (cur_month - 1 + i) // 12
+        target_month = (cur_month - 1 + i) % 12 + 1
+        month_label = f"{target_year:04d}-{target_month:02d}"
+
+        month_inflow = Decimal('0.00')
+        month_outflow = Decimal('0.00')
+        item_details = []
+
+        # 1. Recurring Plans
+        for plan in recurring_plans:
+            multiplier = Decimal('4.00') if plan.frequency == 'WEEKLY' else Decimal('1.00')
+            plan_amount = plan.amount * multiplier
+            if plan.transaction_type == 'IN':
+                month_inflow += plan_amount
+                item_details.append({
+                    'source': f'Recurring Plan: {plan.name}',
+                    'category': plan.category.name,
+                    'type': 'IN',
+                    'amount': str(plan_amount),
+                })
+            else:
+                month_outflow += plan_amount
+                item_details.append({
+                    'source': f'Recurring Plan: {plan.name}',
+                    'category': plan.category.name,
+                    'type': 'OUT',
+                    'amount': str(plan_amount),
+                })
+
+        # 2. Installment Obligations
+        for inst in installment_obligations:
+            inst_due = inst.next_due_date
+            # Clamp overdue obligations: treat them as starting from month 0 of the forecast.
+            first_due_month = max(0, (inst_due.year - cur_year) * 12 + (inst_due.month - cur_month))
+            installment_index = i - first_due_month
+            if 0 <= installment_index < inst.remaining_installments:
+                month_outflow += inst.installment_value
+                item_details.append({
+                    'source': f'Installment: {inst.description} ({installment_index + 1}/{inst.remaining_installments})',
+                    'category': inst.category.name,
+                    'type': 'OUT',
+                    'amount': str(inst.installment_value),
+                })
+
+        net_flow = month_inflow - month_outflow
+        ending_balance = current_balance + net_flow
+
+        is_shortfall = ending_balance < Decimal('0.00')
+        if is_shortfall:
+            shortfall_alerts.append({
+                'month': month_label,
+                'projected_balance': str(ending_balance),
+                'shortfall_amount': str(abs(ending_balance)),
+            })
+
+        monthly_forecasts.append({
+            'month': month_label,
+            'starting_balance': str(current_balance),
+            'inflows': str(month_inflow),
+            'outflows': str(month_outflow),
+            'net_flow': str(net_flow),
+            'ending_balance': str(ending_balance),
+            'is_shortfall': is_shortfall,
+            'items': item_details,
+        })
+
+        total_inflows += month_inflow
+        total_outflows += month_outflow
+        current_balance = ending_balance
+
+    return {
+        'months_projected': months,
+        'start_date': start_date.strftime('%Y-%m-%d'),
+        'starting_total_balance': str(starting_balance),
+        'ending_total_balance': str(current_balance),
+        'total_inflows': str(total_inflows),
+        'total_outflows': str(total_outflows),
+        'net_cash_flow': str(total_inflows - total_outflows),
+        'account_balances': account_balances,
+        'monthly_forecasts': monthly_forecasts,
+        'shortfall_alerts': shortfall_alerts,
+    }
+
+
+def get_budget_velocity_alerts(period_id: int | None = None) -> dict:
+    if period_id:
+        period = Period.objects.filter(pk=period_id).first()
+    else:
+        period = Period.objects.filter(is_active=True).first() or Period.objects.order_by('-start_date').first()
+
+    if not period:
+        return {'period': None, 'alerts': [], 'summary': {}}
+
+    today = date.today()
+    if today < period.start_date:
+        days_elapsed = 0
+    elif today > period.end_date:
+        days_elapsed = (period.end_date - period.start_date).days + 1
+    else:
+        days_elapsed = (today - period.start_date).days + 1
+
+    total_days = max((period.end_date - period.start_date).days + 1, 1)
+    period_elapsed_ratio = Decimal(str(min(max(days_elapsed / total_days, 0.01), 1.0)))
+    period_elapsed_percent = int(period_elapsed_ratio * 100)
+
+    budget_items = BudgetItem.objects.filter(period=period, type='OUT').select_related('category').prefetch_related('transactions__splits')
+
+    alerts = []
+    total_budget = Decimal('0.00')
+    total_spent = Decimal('0.00')
+
+    for item in budget_items:
+        projected = item.projected_amount
+        total_budget += projected
+
+        spent = Decimal('0.00')
+        for tx in item.transactions.all():
+            if tx.splits.exists():
+                spent += sum((s.amount for s in tx.splits.filter(budget_item=item)), Decimal('0.00'))
+            else:
+                spent += tx.real_amount
+        total_spent += spent
+
+        if projected <= Decimal('0.00'):
+            # Zero or negative projection: treat unspent as on-track, any spending as critical.
+            pct_used = Decimal('100.00') if spent > Decimal('0.00') else Decimal('0.00')
+            velocity_ratio = Decimal('2.0') if spent > Decimal('0.00') else Decimal('0.0')
+        else:
+            pct_used = (spent / projected) * Decimal('100.00')
+            velocity_ratio = (spent / projected) / period_elapsed_ratio
+
+        if spent > projected and projected > 0:
+            status = 'CRITICAL'
+            msg = f"Presupuesto superado en un {pct_used:.1f}% (${spent - projected:.2f} por encima del objetivo)."
+        elif velocity_ratio >= Decimal('1.3') and pct_used >= Decimal('40.0'):
+            status = 'WARNING'
+            msg = f"Ritmo de gasto acelerado ({pct_used:.1f}% gastado con solo {period_elapsed_percent}% del período transcurrido)."
+        elif pct_used >= Decimal('80.0') and period_elapsed_percent <= 60:
+            status = 'WARNING'
+            msg = f"Alerta temprana: {pct_used:.1f}% gastado en la primera mitad del período."
+        else:
+            status = 'ON_TRACK'
+            msg = "Gasto dentro del ritmo previsto."
+
+        if status in ['CRITICAL', 'WARNING']:
+            alerts.append({
+                'category_id': item.category_id,
+                'category_name': item.category.name,
+                'category_group': item.category.group,
+                'projected_amount': str(projected),
+                'spent_amount': str(spent),
+                'pct_used': f"{pct_used:.1f}",
+                'velocity_ratio': f"{velocity_ratio:.2f}",
+                'status': status,
+                'message': msg,
+            })
+
+    alerts.sort(key=lambda x: (0 if x['status'] == 'CRITICAL' else 1, -float(x['pct_used'])))
+
+    return {
+        'period': {
+            'id': period.pk,
+            'name': period.name,
+            'start_date': period.start_date.strftime('%Y-%m-%d'),
+            'end_date': period.end_date.strftime('%Y-%m-%d'),
+            'days_elapsed': days_elapsed,
+            'total_days': total_days,
+            'period_elapsed_percent': period_elapsed_percent,
+        },
+        'alerts': alerts,
+        'critical_count': sum(1 for a in alerts if a['status'] == 'CRITICAL'),
+        'warning_count': sum(1 for a in alerts if a['status'] == 'WARNING'),
+        'total_budget': str(total_budget),
+        'total_spent': str(total_spent),
+    }
 
 
 @db_transaction.atomic

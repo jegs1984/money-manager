@@ -8,6 +8,10 @@ urlpatterns = [
     path('dashboard/pdf/',                views.DashboardPDFView.as_view(),    name='dashboard_pdf'),
     path('groups/',                       views.GroupDashboardView.as_view(),  name='group_dashboard'),
     path('trend/',                        views.TrendView.as_view(),           name='trend'),
+    path('forecast/',                     views.CashFlowForecastView.as_view(),  name='cash_flow_forecast'),
+    path('velocity-alerts/',              views.BudgetVelocityAlertsView.as_view(), name='velocity_alerts'),
+
+
 
     path('periods/',                      views.PeriodListView.as_view(),      name='period_list'),
     path('periods/create/',               views.PeriodCreateView.as_view(),    name='period_create'),
@@ -43,7 +47,10 @@ urlpatterns = [
     path('transactions/<int:pk>/edit/',   views.TransactionUpdateView.as_view(), name='transaction_update'),
     path('transactions/<int:pk>/delete/', views.TransactionDeleteView.as_view(), name='transaction_delete'),
     path('transactions/<int:pk>/reverse/', views.TransactionReverseView.as_view(), name='transaction_reverse'),
+    path('transactions/<int:pk>/split/',   views.TransactionSplitView.as_view(),  name='transaction_split'),
+    path('shared-expenses/',               views.SharedExpenseListView.as_view(),  name='shared_expense_list'),
     path('transactions/export.csv',        views.TransactionCSVExportView.as_view(), name='transaction_csv_export'),
+
     path('bundle/export/',                 views.BundleExportView.as_view(), name='bundle_export'),
     path('bundle/import/',                 views.BundleImportView.as_view(), name='bundle_import'),
 

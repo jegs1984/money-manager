@@ -1,0 +1,111 @@
+{% extends 'finance/base.html' %}
+
+{% block title %}Alertas de Ritmo de Gasto - Money Manager{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <!-- Header -->
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight text-white">Alertas de Ritmo de Gasto (Velocity)</h1>
+      <p class="mt-1 text-sm text-zinc-400">
+        Monitoreo en tiempo real de velocidad de presupuesto vs. tiempo transcurrido en el período.
+      </p>
+    </div>
+
+    <!-- Period Selector -->
+    <form method="get" class="flex items-center gap-2">
+      <select name="period" onchange="this.form.submit()" class="form-select text-xs bg-zinc-900 border-zinc-800 text-zinc-100 rounded-lg">
+        {% for p in all_periods %}
+        <option value="{{ p.pk }}" {% if velocity_data.period and velocity_data.period.id == p.pk %}selected{% endif %}>
+          {{ p.name }}
+        </option>
+        {% endfor %}
+      </select>
+    </form>
+  </div>
+
+  {% if velocity_data.period %}
+  <!-- KPI Overview Cards -->
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5 backdrop-blur-sm">
+      <span class="text-xs font-medium uppercase tracking-wider text-zinc-400">Período Transcurrido</span>
+      <div class="mt-2 text-2xl font-bold text-white">{{ velocity_data.period.period_elapsed_percent }}%</div>
+      <span class="mt-1 text-xs text-zinc-500">{{ velocity_data.period.days_elapsed }} de {{ velocity_data.period.total_days }} días</span>
+    </div>
+
+    <div class="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5 backdrop-blur-sm">
+      <span class="text-xs font-medium uppercase tracking-wider text-red-400">Presupuestos Superados</span>
+      <div class="mt-2 text-2xl font-bold text-red-400">{{ velocity_data.critical_count }}</div>
+      <span class="mt-1 text-xs text-zinc-500">Categorías en estado crítico</span>
+    </div>
+
+    <div class="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5 backdrop-blur-sm">
+      <span class="text-xs font-medium uppercase tracking-wider text-amber-400">Alertas de Velocidad</span>
+      <div class="mt-2 text-2xl font-bold text-amber-400">{{ velocity_data.warning_count }}</div>
+      <span class="mt-1 text-xs text-zinc-500">Ritmo de gasto acelerado</span>
+    </div>
+
+    <div class="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5 backdrop-blur-sm">
+      <span class="text-xs font-medium uppercase tracking-wider text-zinc-400">Gasto Total Acumulado</span>
+      <div class="mt-2 text-2xl font-bold text-emerald-400">${{ velocity_data.total_spent }}</div>
+      <span class="mt-1 text-xs text-zinc-500">de ${{ velocity_data.total_budget }} presupuestado</span>
+    </div>
+  </div>
+
+  <!-- Alerts Section -->
+  {% if velocity_data.alerts %}
+  <div class="space-y-4">
+    <h2 class="text-lg font-semibold text-white">Anomalías y Desviaciones Detectadas</h2>
+
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+      {% for alert in velocity_data.alerts %}
+      <div class="rounded-xl border {% if alert.status == 'CRITICAL' %}border-red-500/40 bg-red-950/20{% else %}border-amber-500/40 bg-amber-950/20{% endif %} p-5 backdrop-blur-sm space-y-3">
+        <div class="flex items-center justify-between">
+          <div>
+            <span class="text-xs font-mono text-zinc-400">{{ alert.category_group }}</span>
+            <h3 class="text-base font-bold text-white">{{ alert.category_name }}</h3>
+          </div>
+          {% if alert.status == 'CRITICAL' %}
+          <span class="inline-flex items-center rounded-full bg-red-500/10 px-2.5 py-0.5 text-xs font-medium text-red-400 border border-red-500/20">
+            Crítico
+          </span>
+          {% else %}
+          <span class="inline-flex items-center rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-400 border border-amber-500/20">
+            Aviso Velocidad
+          </span>
+          {% endif %}
+        </div>
+
+        <p class="text-xs text-zinc-300">{{ alert.message }}</p>
+
+        <!-- Progress bar -->
+        <div class="space-y-1">
+          <div class="flex justify-between text-xs font-mono">
+            <span class="text-zinc-400">Gastado: ${{ alert.spent_amount }}</span>
+            <span class="font-semibold text-white">{{ alert.pct_used }}% del objetivo (${{ alert.projected_amount }})</span>
+          </div>
+          <div class="h-2 w-full overflow-hidden rounded-full bg-zinc-800">
+            <div class="h-full rounded-full {% if alert.status == 'CRITICAL' %}bg-red-500{% else %}bg-amber-400{% endif %}" style="width: {{ alert.pct_used|default:100 }}%"></div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% else %}
+  <div class="rounded-xl border border-zinc-800 bg-zinc-900/40 p-8 text-center text-zinc-400">
+    <svg class="mx-auto h-8 w-8 text-emerald-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    </svg>
+    <p class="font-semibold text-white">¡Excelente ritmo de gasto!</p>
+    <p class="text-xs text-zinc-500 mt-1">No se han detectado anomalías de velocidad ni sobregiros en este período.</p>
+  </div>
+  {% endif %}
+  {% else %}
+  <div class="rounded-xl border border-zinc-800 bg-zinc-900/40 p-8 text-center text-zinc-400">
+    No hay períodos presupuestarios registrados.
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

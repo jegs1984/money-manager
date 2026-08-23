@@ -1,0 +1,149 @@
+{% extends 'finance/base.html' %}
+
+{% block title %}Proyección de Flujo de Caja - Money Manager{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <!-- Header & Controls -->
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight text-white">Proyección de Flujo de Caja</h1>
+      <p class="mt-1 text-sm text-zinc-400">
+        Simulador de saldo projected a partir de planes recurrentes y obligaciones en cuotas.
+      </p>
+    </div>
+
+    <div class="inline-flex rounded-lg border border-zinc-800 bg-zinc-900/60 p-1">
+      <a href="?months=1" class="px-3 py-1.5 text-xs font-medium rounded-md transition-colors {% if selected_months == 1 %}bg-emerald-600 text-white{% else %}text-zinc-400 hover:text-white{% endif %}">
+        1 Mes
+      </a>
+      <a href="?months=3" class="px-3 py-1.5 text-xs font-medium rounded-md transition-colors {% if selected_months == 3 %}bg-emerald-600 text-white{% else %}text-zinc-400 hover:text-white{% endif %}">
+        3 Meses
+      </a>
+      <a href="?months=6" class="px-3 py-1.5 text-xs font-medium rounded-md transition-colors {% if selected_months == 6 %}bg-emerald-600 text-white{% else %}text-zinc-400 hover:text-white{% endif %}">
+        6 Meses
+      </a>
+    </div>
+  </div>
+
+  {% if forecast.shortfall_alerts %}
+  <!-- Shortfall Alert Banner -->
+  <div class="rounded-xl border border-red-500/30 bg-red-950/40 p-4 text-red-200 backdrop-blur-sm">
+    <div class="flex items-start gap-3">
+      <svg class="h-6 w-6 text-red-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+      </svg>
+      <div>
+        <h3 class="font-semibold text-red-300">Alerta de Déficit de Saldo Detectado</h3>
+        <p class="mt-1 text-sm text-red-300/90">
+          Se proyecta un saldo negativo durante el período simulado. Revisa las obligaciones y egresos programados para evitar sobregiros.
+        </p>
+        <ul class="mt-2 list-disc list-inside text-xs space-y-1 text-red-300/80">
+          {% for alert in forecast.shortfall_alerts %}
+          <li>Período <strong>{{ alert.month }}</strong>: Saldo proyectado de <strong>${{ alert.projected_balance }}</strong> (Déficit de ${{ alert.shortfall_amount }})</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- KPI Overview Cards -->
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5 backdrop-blur-sm">
+      <span class="text-xs font-medium uppercase tracking-wider text-zinc-400">Saldo Inicial Total</span>
+      <div class="mt-2 text-2xl font-bold text-white">${{ forecast.starting_total_balance }}</div>
+      <span class="mt-1 text-xs text-zinc-500">Cuentas activas líquidas</span>
+    </div>
+
+    <div class="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5 backdrop-blur-sm">
+      <span class="text-xs font-medium uppercase tracking-wider text-emerald-400">Ingresos Proyectados</span>
+      <div class="mt-2 text-2xl font-bold text-emerald-400">+${{ forecast.total_inflows }}</div>
+      <span class="mt-1 text-xs text-zinc-500">{{ forecast.months_projected }} mes(es) simulados</span>
+    </div>
+
+    <div class="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5 backdrop-blur-sm">
+      <span class="text-xs font-medium uppercase tracking-wider text-red-400">Egresos Proyectados</span>
+      <div class="mt-2 text-2xl font-bold text-red-400">-${{ forecast.total_outflows }}</div>
+      <span class="mt-1 text-xs text-zinc-500">Recurrentes + Cuotas</span>
+    </div>
+
+    <div class="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5 backdrop-blur-sm">
+      <span class="text-xs font-medium uppercase tracking-wider text-zinc-400">Saldo Final Proyectado</span>
+      <div class="mt-2 text-2xl font-bold {% if forecast.ending_total_balance < 0 %}text-red-400{% else %}text-emerald-400{% endif %}">
+        ${{ forecast.ending_total_balance }}
+      </div>
+      <span class="mt-1 text-xs text-zinc-500">Flujo Neto: ${{ forecast.net_cash_flow }}</span>
+    </div>
+  </div>
+
+  <!-- Monthly Breakdown Timeline -->
+  <div class="space-y-4">
+    <h2 class="text-lg font-semibold text-white">Desglose Mensual Proyectado</h2>
+
+    <div class="space-y-4">
+      {% for m in forecast.monthly_forecasts %}
+      <div class="rounded-xl border {% if m.is_shortfall %}border-red-800/60 bg-red-950/20{% else %}border-zinc-800 bg-zinc-900/40{% endif %} overflow-hidden backdrop-blur-sm">
+        <!-- Month Header -->
+        <div class="flex flex-wrap items-center justify-between gap-4 border-b border-zinc-800/80 px-6 py-4">
+          <div class="flex items-center gap-3">
+            <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-800 font-mono text-sm font-semibold text-emerald-400">
+              {{ m.month }}
+            </span>
+            <div>
+              <h3 class="font-semibold text-white">Período {{ m.month }}</h3>
+              <span class="text-xs text-zinc-400">Saldo inicial: ${{ m.starting_balance }}</span>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-6 text-sm">
+            <div>
+              <span class="text-xs text-zinc-400 block">Ingresos</span>
+              <span class="font-semibold text-emerald-400">+${{ m.inflows }}</span>
+            </div>
+            <div>
+              <span class="text-xs text-zinc-400 block">Egresos</span>
+              <span class="font-semibold text-red-400">-${{ m.outflows }}</span>
+            </div>
+            <div>
+              <span class="text-xs text-zinc-400 block">Saldo Final</span>
+              <span class="font-semibold {% if m.is_shortfall %}text-red-400{% else %}text-emerald-400{% endif %}">${{ m.ending_balance }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Month Items List -->
+        <div class="p-6">
+          {% if m.items %}
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-zinc-300">
+              <thead class="border-b border-zinc-800 text-xs font-semibold uppercase text-zinc-400">
+                <tr>
+                  <th class="pb-3">Concepto / Fuente</th>
+                  <th class="pb-3">Categoría</th>
+                  <th class="pb-3 text-right">Monto</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-zinc-800/50">
+                {% for item in m.items %}
+                <tr class="hover:bg-zinc-800/30 transition-colors">
+                  <td class="py-2.5 font-medium text-white">{{ item.source }}</td>
+                  <td class="py-2.5 text-zinc-400">{{ item.category }}</td>
+                  <td class="py-2.5 text-right font-mono font-semibold {% if item.type == 'IN' %}text-emerald-400{% else %}text-red-400{% endif %}">
+                    {% if item.type == 'IN' %}+{% else %}-{% endif %}${{ item.amount }}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <p class="text-xs text-zinc-500 italic">No hay planes recurrentes ni obligaciones programadas para este mes.</p>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

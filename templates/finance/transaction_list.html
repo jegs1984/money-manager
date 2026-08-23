@@ -43,6 +43,7 @@
         </td>
         <td class="px-4 py-3 text-right">
           <div class="flex justify-end gap-3">
+            <a href="{% url 'finance:transaction_split' tx.pk %}" class="text-xs text-emerald-400 hover:text-emerald-300 font-medium">split</a>
             <a href="{% url 'finance:transaction_update' tx.pk %}" class="text-xs text-zinc-500 hover:text-zinc-300">edit</a>
             {% if not tx.reversal_of_id and not tx.reversal %}<form method="post" action="{% url 'finance:transaction_reverse' tx.pk %}" class="inline">{% csrf_token %}<button class="text-xs text-amber-400" type="submit">reverse</button></form>{% endif %}
             <a href="{% url 'finance:transaction_delete' tx.pk %}" class="text-xs text-zinc-500 hover:text-red-400">delete</a>

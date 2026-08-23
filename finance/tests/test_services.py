@@ -5,10 +5,15 @@ from pathlib import Path
 import json
 
 from django.test import TestCase
+from django.urls import reverse
 
-from finance.models import Category, InstallmentObligation, MerchantRule, Period, StagingCCTransaction, StagingTransaction, Transaction
+from finance.models import Account, Category, InstallmentObligation, MerchantRule, Period, RecurringPlan, StagingCCTransaction, StagingTransaction, Transaction, TransactionSplit
 from finance.services import (
     _get_or_create_budget_item,
+    build_cash_flow_forecast,
+    create_transaction_splits_service,
+    get_shared_expenses_summary,
+    get_budget_velocity_alerts,
     process_cc_staging_batch,
     process_staging_batch,
     parse_scotiabank_statement,
@@ -85,3 +90,97 @@ class LedgerServiceTests(TestCase):
         self.assertEqual(result['count'], 0)
         self.assertEqual(result['skipped'], 1)
         self.assertEqual(Transaction.objects.count(), 0)
+
+    def test_cash_flow_forecast_calculates_monthly_inflows_and_outflows(self):
+        acc = Account.objects.create(name='Checking', opening_balance=Decimal('1000.00'), is_active=True)
+        RecurringPlan.objects.create(
+            name='Salary', category=self.category, account=acc,
+            transaction_type='IN', amount=Decimal('5000.00'), frequency='MONTHLY',
+            next_date=date(2026, 1, 1), description='Monthly Salary'
+        )
+        RecurringPlan.objects.create(
+            name='Rent', category=self.category, account=acc,
+            transaction_type='OUT', amount=Decimal('2000.00'), frequency='MONTHLY',
+            next_date=date(2026, 1, 1), description='Apartment Rent'
+        )
+
+        forecast = build_cash_flow_forecast(months=3, start_date=date(2026, 1, 1))
+        self.assertEqual(forecast['starting_total_balance'], '1000.00')
+        self.assertEqual(len(forecast['monthly_forecasts']), 3)
+        m1 = forecast['monthly_forecasts'][0]
+        self.assertEqual(m1['inflows'], '5000.00')
+        self.assertEqual(m1['outflows'], '2000.00')
+        self.assertEqual(m1['net_flow'], '3000.00')
+        self.assertEqual(m1['ending_balance'], '4000.00')
+        self.assertFalse(m1['is_shortfall'])
+
+    def test_cash_flow_forecast_view_returns_200(self):
+        response = self.client.get(reverse('finance:cash_flow_forecast'))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('forecast', response.context)
+
+    def test_transaction_splits_service_creates_splits_when_totals_match(self):
+        item = _get_or_create_budget_item(self.period, self.category, 'OUT')
+        tx = Transaction.objects.create(
+            budget_item=item, date=date(2026, 1, 10), real_amount=Decimal('100.00'), description='Supermarket'
+        )
+        cat2 = Category.objects.create(name='Home', group='Hogar')
+        splits_data = [
+            {'category_id': self.category.pk, 'amount': Decimal('60.00'), 'description': 'Groceries', 'shared_with': 'Juan', 'is_reimbursable': True},
+            {'category_id': cat2.pk, 'amount': Decimal('40.00'), 'description': 'Cleaning Supplies', 'shared_with': 'Juan', 'is_reimbursable': False},
+        ]
+        created = create_transaction_splits_service(tx.pk, splits_data)
+        self.assertEqual(len(created), 2)
+        self.assertEqual(tx.splits.count(), 2)
+
+    def test_transaction_splits_service_raises_error_when_totals_mismatch(self):
+        item = _get_or_create_budget_item(self.period, self.category, 'OUT')
+        tx = Transaction.objects.create(
+            budget_item=item, date=date(2026, 1, 10), real_amount=Decimal('100.00'), description='Supermarket'
+        )
+        splits_data = [
+            {'category_id': self.category.pk, 'amount': Decimal('50.00'), 'description': 'Part 1'},
+        ]
+        with self.assertRaises(ValueError):
+            create_transaction_splits_service(tx.pk, splits_data)
+
+    def test_shared_expenses_summary_aggregates_reimbursable_and_shared_items(self):
+        item = _get_or_create_budget_item(self.period, self.category, 'OUT')
+        tx = Transaction.objects.create(
+            budget_item=item, date=date(2026, 1, 10), real_amount=Decimal('100.00'), description='Dinner'
+        )
+        create_transaction_splits_service(tx.pk, [
+            {'category_id': self.category.pk, 'amount': Decimal('50.00'), 'description': 'My share', 'shared_with': 'Alice', 'is_reimbursable': False},
+            {'category_id': self.category.pk, 'amount': Decimal('50.00'), 'description': 'Alice share', 'shared_with': 'Alice', 'is_reimbursable': True},
+        ])
+        summary = get_shared_expenses_summary()
+        self.assertEqual(summary['total_shared_amount'], '100.00')
+        self.assertEqual(summary['total_reimbursable_amount'], '50.00')
+        self.assertEqual(len(summary['persons']), 1)
+        self.assertEqual(summary['persons'][0]['person'], 'Alice')
+
+    def test_shared_expense_list_view_returns_200(self):
+        response = self.client.get(reverse('finance:shared_expense_list'))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('summary', response.context)
+
+    def test_get_budget_velocity_alerts_detects_overbudget_items(self):
+        item = _get_or_create_budget_item(self.period, self.category, 'OUT')
+        item.projected_amount = Decimal('100.00')
+        item.save()
+
+        Transaction.objects.create(
+            budget_item=item, date=date(2026, 1, 10), real_amount=Decimal('150.00'), description='Overbudget expense'
+        )
+
+        res = get_budget_velocity_alerts(self.period.pk)
+        self.assertEqual(res['critical_count'], 1)
+        self.assertEqual(res['alerts'][0]['status'], 'CRITICAL')
+
+    def test_budget_velocity_alerts_view_returns_200(self):
+        response = self.client.get(reverse('finance:velocity_alerts'))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('velocity_data', response.context)
+
+
+

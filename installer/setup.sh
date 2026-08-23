@@ -80,6 +80,12 @@ if ! pg_ctl status -D "$PG_PREFIX/var/postgresql@$PG_VERSION" &>/dev/null 2>&1; 
     sleep 2
 fi
 
+# Ensure default 'postgres' superuser role exists (Homebrew initdb defaults to system user)
+if ! psql -U "$(whoami)" postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname='postgres'" 2>/dev/null | grep -q 1; then
+    info "Creating default 'postgres' superuser role..."
+    createuser -s postgres 2>/dev/null || true
+fi
+
 # ── 4. LibreOffice ────────────────────────────────────────────────────────────
 info "Checking LibreOffice (needed for CC statement parsing)..."
 if ! command -v soffice &>/dev/null && [[ ! -d "/Applications/LibreOffice.app" ]]; then

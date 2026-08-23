@@ -1,16 +1,16 @@
 # Graph Report - money-manager  (2026-08-22)
 
 ## Corpus Check
-- 90 files · ~49,997 words
+- 91 files · ~50,277 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 813 nodes · 2977 edges · 78 communities (56 shown, 22 thin omitted)
+- 818 nodes · 2981 edges · 78 communities (55 shown, 23 thin omitted)
 - Extraction: 48% EXTRACTED · 52% INFERRED · 0% AMBIGUOUS · INFERRED: 1552 edges (avg confidence: 0.5)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `430371a4`
+- Built from commit: `9556d287`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -98,31 +98,31 @@
   finance/views.py → templates/finance/base.html
 - `_get_or_create_budget_item()` --calls--> `run()`  [INFERRED]
   finance/services.py → bootstrap.py
-- `process_cc_staging_batch()` --references--> `List`  [EXTRACTED]
-  finance/services.py → android/app/src/main/java/com/moneymanager/data/repository/FinanceRepository.kt
-- `process_staging_batch()` --references--> `List`  [EXTRACTED]
-  finance/services.py → android/app/src/main/java/com/moneymanager/data/repository/FinanceRepository.kt
+- `_parse_header()` --references--> `Map`  [EXTRACTED]
+  finance/services.py → android/app/src/main/java/com/moneymanager/domain/usecase/ParseStatementUseCases.kt
+- `StagingReviewView` --inherits--> `Screen`  [EXTRACTED]
+  finance/views.py → android/app/src/main/java/com/moneymanager/ui/navigation/NavGraph.kt
 
 ## Import Cycles
 - 1-file cycle: `finance/services.py -> finance/services.py`
 
-## Communities (78 total, 22 thin omitted)
+## Communities (78 total, 23 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.28
 Nodes (97): Account, BudgetItem, Category, CreateView, DeleteView, Base Template, AccountForm, BudgetItemForm (+89 more)
 
 ### Community 2 - "Community 2"
-Cohesion: 0.15
-Nodes (9): calculate_safe_to_spend(), duplicate_period_budget_items(), generate_dashboard_pdf(), get_duplicate_staging_ids(), get_duplicate_staging_matches(), Build and return PDF bytes for the Dashboard projected budget report.      Conte, Return the set of staging row IDs whose (date, amount, description) triple     a, Return the ledger transaction that caused each staged duplicate warning. (+1 more)
+Cohesion: 0.23
+Nodes (4): get_duplicate_staging_ids(), get_duplicate_staging_matches(), Return the set of staging row IDs whose (date, amount, description) triple     a, Return the ledger transaction that caused each staged duplicate warning.
 
 ### Community 3 - "Community 3"
-Cohesion: 0.09
-Nodes (33): BudgetItemEntity, date, Decimal, _add_months(), _advance_recurring_date(), _assert_period_open(), _bundle_key(), _clp() (+25 more)
+Cohesion: 0.18
+Nodes (7): date, _add_months(), Move a date forward without invalid month-end dates., record_transfer_service(), reverse_transaction_service(), TestCase, LedgerServiceTests
 
 ### Community 4 - "Community 4"
 Cohesion: 0.11
-Nodes (17): 1. Set up the budget, 2. Add transactions, 3. Import a bank statement, 4. Import a credit-card statement, 5. Android notification capture, 6. Review and reporting, 7. Accounts, corrections, and reconciliation, 8. Planning and automation (+9 more)
+Nodes (18): 1. Set up the budget, 2. Add transactions, 3. Import a bank statement, 4. Import a credit-card statement, 5. Android notification capture, 6. Review and reporting, 7. Accounts, corrections, and reconciliation, 8. Planning and automation (+10 more)
 
 ### Community 5 - "Community 5"
 Cohesion: 0.09
@@ -157,8 +157,8 @@ Cohesion: 0.29
 Nodes (6): Android setup, First-use checklist, Installation, Manual Python setup, Option A: native macOS installer, Option B: Docker Compose
 
 ### Community 16 - "Community 16"
-Cohesion: 0.29
-Nodes (6): Backup and recovery, Docker backup, Docker volume warning, Encrypted application bundle, Native PostgreSQL backup, Recovery check
+Cohesion: 0.25
+Nodes (7): Backup and recovery, Docker backup, Docker volume warning, Encrypted application bundle, Native PostgreSQL backup, Recovering a failed import, Recovery check
 
 ### Community 17 - "Community 17"
 Cohesion: 0.33
@@ -173,8 +173,8 @@ Cohesion: 0.70
 Nodes (4): info(), success(), warn(), uninstall.sh script
 
 ### Community 30 - "Community 30"
-Cohesion: 0.20
-Nodes (17): BigDecimal, List, PeriodEntity, String, androidx, BudgetItemWithStats, DashboardViewModel, Modifier (+9 more)
+Cohesion: 0.17
+Nodes (11): Decimal, calculate_safe_to_spend(), _clp(), contribute_to_goal(), generate_dashboard_pdf(), _parse_clp_amount(), parse_scotiabank_cc_statement(), Format a Decimal as Chilean peso string: $1.234.567 (+3 more)
 
 ### Community 31 - "Community 31"
 Cohesion: 0.15
@@ -185,8 +185,8 @@ Cohesion: 0.50
 Nodes (3): Array, RoomMigrations, Migration
 
 ### Community 33 - "Community 33"
-Cohesion: 0.10
-Nodes (24): BigDecimal, Boolean, CategoryEntity, CategoryViewModel, DupAction, List, Long, StagingCCTransactionEntity (+16 more)
+Cohesion: 0.07
+Nodes (41): BigDecimal, Boolean, CategoryEntity, CategoryViewModel, DupAction, List, Long, StagingCCTransactionEntity (+33 more)
 
 ### Community 34 - "Community 34"
 Cohesion: 0.25
@@ -209,8 +209,8 @@ Cohesion: 0.48
 Nodes (6): die(), info(), PATH, success(), warn(), setup.sh script
 
 ### Community 40 - "Community 40"
-Cohesion: 0.15
-Nodes (12): BigDecimal, CategoryEntity, Flow, List, PeriodEntity, RawBankNotification, StagingCCTransactionEntity, StagingTransactionEntity (+4 more)
+Cohesion: 0.09
+Nodes (28): BigDecimal, Boolean, BudgetItemEntity, CategoryEntity, Flow, List, LocalDate, Long (+20 more)
 
 ### Community 41 - "Community 41"
 Cohesion: 0.33
@@ -233,8 +233,8 @@ Cohesion: 0.70
 Nodes (4): die(), info(), success(), update.sh script
 
 ### Community 46 - "Community 46"
-Cohesion: 0.24
-Nodes (12): Boolean, LocalDate, Long, Set, String, TransactionEntity, _get_or_create_import_account(), _get_or_create_unplanned_category() (+4 more)
+Cohesion: 0.20
+Nodes (8): _parse_amount(), _parse_date(), parse_scotiabank_statement(), _parse_signed_balance(), Parse a debit/credit amount, which is always stored as positive., Parse balances without losing their sign., Return a reviewable category suggestion from a user-confirmed merchant rule., suggest_category()
 
 ### Community 47 - "Community 47"
 Cohesion: 0.50
@@ -248,10 +248,6 @@ Nodes (3): For git commit hook, For native CLAUDE.md integration, graphify refer
 Cohesion: 0.50
 Nodes (3): For --cluster-only, For --update (incremental re-extraction), graphify reference: incremental update and cluster-only
 
-### Community 68 - "Community 68"
-Cohesion: 0.18
-Nodes (5): calculate_account_balance(), export_finance_bundle(), Create a versioned AES-GCM encrypted backup/exchange bundle., reconcile_account_service(), record_transfer_service()
-
 ### Community 69 - "Community 69"
 Cohesion: 0.33
 Nodes (6): Daily operations, Docker deployment, Environment variables, Persistence and safety, Requirements, Start the stack
@@ -260,31 +256,31 @@ Nodes (6): Daily operations, Docker deployment, Environment variables, Persisten
 Cohesion: 0.07
 Nodes (25): Android app, Bank-notification capture, Build and test, Data and upgrades, Money Manager for Android, Related guides, Release signing, Requirements (+17 more)
 
-### Community 71 - "Community 71"
-Cohesion: 0.53
-Nodes (3): NotificationListenerService, BankNotificationService, StatusBarNotification
-
 ### Community 72 - "Community 72"
 Cohesion: 0.22
 Nodes (8): Build, Test, and Development Commands, Coding Style & Naming Conventions, Commit & Pull Request Guidelines, graphify, Project Structure & Module Organization, Repository Guidelines, Safety Approval, Testing Guidelines
+
+### Community 73 - "Community 73"
+Cohesion: 0.15
+Nodes (15): _advance_recurring_date(), _assert_period_open(), _bundle_key(), close_period_service(), duplicate_period_budget_items(), export_finance_bundle(), _get_or_create_unplanned_category(), import_finance_bundle() (+7 more)
 
 ### Community 83 - "Community 83"
 Cohesion: 0.50
 Nodes (3): RawBankNotification, BankNotificationParser, Result
 
 ## Knowledge Gaps
-- **213 isolated node(s):** `PreToolUse`, `Bundle`, `PeriodDao`, `CategoryDao`, `BudgetItemDao` (+208 more)
+- **216 isolated node(s):** `PreToolUse`, `Bundle`, `PeriodDao`, `CategoryDao`, `BudgetItemDao` (+211 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **22 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **23 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `NavGraph()` connect `Community 33` to `Community 13`, `Community 30`?**
-  _High betweenness centrality (0.092) - this node is a cross-community bridge._
+- **Why does `NavGraph()` connect `Community 33` to `Community 13`?**
+  _High betweenness centrality (0.091) - this node is a cross-community bridge._
 - **Why does `StagingReviewView` connect `Community 0` to `Community 33`, `Community 2`?**
-  _High betweenness centrality (0.088) - this node is a cross-community bridge._
-- **Why does `Transaction` connect `Community 0` to `Community 2`, `Community 3`, `Community 7`?**
+  _High betweenness centrality (0.087) - this node is a cross-community bridge._
+- **Why does `Transaction` connect `Community 0` to `Community 2`, `Community 3`, `Community 7`, `Community 73`, `Community 30`?**
   _High betweenness centrality (0.071) - this node is a cross-community bridge._
 - **Are the 72 inferred relationships involving `Period` (e.g. with `Account` and `BudgetItem`) actually correct?**
   _`Period` has 72 INFERRED edges - model-reasoned connections that need verification._

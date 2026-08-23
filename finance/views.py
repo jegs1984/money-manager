@@ -1,12 +1,12 @@
 import csv
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from datetime import timedelta
 
 from django.contrib import messages
 from django.db.models import F, Sum, Value, Case, When
 from django.db.models.functions import Coalesce
 from django.http import HttpResponse, JsonResponse
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.views.decorators.http import require_POST
 from django.utils import timezone
@@ -16,10 +16,10 @@ from django.views.generic import (
 
 from .forms import (
     AccountForm, BudgetItemForm, BundleExportForm, BundleImportForm, CategoryForm, GoalForm, MerchantRuleForm, PeriodForm, ReconciliationForm, RecurringPlanForm, TransferForm,
-    StagingReviewFormset, StatementUploadForm, TransactionForm,
+    StagingReviewFormset, StatementUploadForm, TransactionForm, TransactionSplitForm,
     CCStatementUploadForm, StagingCCReviewFormset,
 )
-from .models import Account, BudgetItem, Category, Goal, ImportBatch, InstallmentObligation, MerchantRule, Period, RecurringPlan, StagingCCTransaction, StagingTransaction, Transaction
+from .models import Account, BudgetItem, Category, Goal, ImportBatch, InstallmentObligation, MerchantRule, Period, RecurringPlan, StagingCCTransaction, StagingTransaction, Transaction, TransactionSplit
 from .services import (
     calculate_safe_to_spend, generate_dashboard_pdf, get_duplicate_staging_ids, get_duplicate_staging_matches,
     parse_scotiabank_statement, process_staging_batch,
@@ -27,6 +27,8 @@ from .services import (
     calculate_account_balance, close_period_service, reconcile_account_service,
     record_transfer_service, reverse_transaction_service,
     export_finance_bundle, import_finance_bundle, materialize_recurring_plans,
+    build_cash_flow_forecast, create_transaction_splits_service, get_shared_expenses_summary,
+    get_budget_velocity_alerts,
 )
 
 
@@ -89,7 +91,9 @@ class DashboardView(TemplateView):
             expenses += sum((item.installment_value for item in ctx['upcoming_installments'] if item.next_due_date == forecast_date), Decimal('0'))
             forecast.append({'date': forecast_date, 'income': income, 'expenses': expenses, 'net': income - expenses})
         ctx['cash_forecast'] = forecast
+        ctx['velocity_data'] = get_budget_velocity_alerts(active_period.id if active_period else None)
         return ctx
+
 
 
 # ─────────────────────────────────────────────
@@ -201,6 +205,41 @@ class TrendView(TemplateView):
             rows.append({'period': period, **stats})
         context['rows'] = rows
         return context
+
+
+class CashFlowForecastView(TemplateView):
+    template_name = 'finance/cash_flow_forecast.html'
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        try:
+            months = int(self.request.GET.get('months', 3))
+        except (TypeError, ValueError):
+            months = 3
+        if months not in [1, 3, 6]:
+            months = 3
+
+        ctx['forecast'] = build_cash_flow_forecast(months=months)
+        ctx['selected_months'] = months
+        return ctx
+
+
+class BudgetVelocityAlertsView(TemplateView):
+    template_name = 'finance/velocity_alerts.html'
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        period_id = self.request.GET.get('period')
+        try:
+            period_id = int(period_id) if period_id else None
+        except (TypeError, ValueError):
+            period_id = None
+
+        ctx['velocity_data'] = get_budget_velocity_alerts(period_id)
+        ctx['all_periods'] = Period.objects.order_by('-start_date')
+        return ctx
+
+
 
 
 # ─────────────────────────────────────────────
@@ -517,6 +556,72 @@ class TransactionReverseView(View):
         return redirect('finance:transaction_list')
 
 
+class TransactionSplitView(View):
+    def get(self, request, pk, *args, **kwargs):
+        transaction = get_object_or_404(Transaction, pk=pk)
+        categories = Category.objects.order_by('group', 'name')
+        existing_splits = list(transaction.splits.select_related('budget_item__category').all())
+        
+        ctx = {
+            'transaction': transaction,
+            'categories': categories,
+            'splits': existing_splits,
+        }
+        return render(request, 'finance/transaction_split.html', ctx)
+
+    def post(self, request, pk, *args, **kwargs):
+        transaction = get_object_or_404(Transaction, pk=pk)
+        category_ids = request.POST.getlist('category_id')
+        amounts = request.POST.getlist('amount')
+        descriptions = request.POST.getlist('description')
+        shared_withs = request.POST.getlist('shared_with')
+        is_reimbursable_indices = request.POST.getlist('is_reimbursable_index')
+        notes_list = request.POST.getlist('notes')
+
+        splits_data = []
+        for i in range(len(category_ids)):
+            if not category_ids[i] or not amounts[i]:
+                continue
+            try:
+                amt = Decimal(amounts[i])
+            except (TypeError, ValueError, InvalidOperation):
+                continue
+
+            splits_data.append({
+                'category_id': int(category_ids[i]),
+                'amount': amt,
+                'description': descriptions[i] if i < len(descriptions) else '',
+                'shared_with': shared_withs[i] if i < len(shared_withs) else '',
+                'is_reimbursable': str(i) in is_reimbursable_indices,
+                'notes': notes_list[i] if i < len(notes_list) else '',
+            })
+
+        try:
+            create_transaction_splits_service(transaction.pk, splits_data)
+            messages.success(request, f"Dividida transacción #{transaction.pk} en {len(splits_data)} partes.")
+            return redirect('finance:transaction_list')
+        except ValueError as exc:
+            messages.error(request, str(exc))
+            categories = Category.objects.order_by('group', 'name')
+            ctx = {
+                'transaction': transaction,
+                'categories': categories,
+                'splits': transaction.splits.all(),
+                'error': str(exc),
+            }
+            return render(request, 'finance/transaction_split.html', ctx)
+
+
+class SharedExpenseListView(TemplateView):
+    template_name = 'finance/shared_expenses.html'
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['summary'] = get_shared_expenses_summary()
+        return ctx
+
+
+
 class TransactionCSVExportView(View):
     def get(self, request, *args, **kwargs):
         response = HttpResponse(content_type='text/csv; charset=utf-8')
@@ -679,8 +784,8 @@ class StagingReviewView(TemplateView):
 
         period = self._active_period()
         duplicate_ids = get_duplicate_staging_ids(period, qs) if period else set()
-        ctx['duplicate_matches'] = get_duplicate_staging_matches(qs) if period else {}
         ctx = self.get_context_data()
+        ctx['duplicate_matches'] = get_duplicate_staging_matches(qs) if period else {}
         ctx['formset']       = formset
         ctx['duplicate_ids'] = duplicate_ids
         return self.render_to_response(ctx)
@@ -848,6 +953,7 @@ class CCStagingReviewView(TemplateView):
         period = self._active_period()
         duplicate_ids = get_duplicate_staging_ids(period, qs) if period else set()
         ctx = self.get_context_data()
+        ctx['duplicate_matches'] = get_duplicate_staging_matches(qs) if period else {}
         ctx['formset']       = formset
         ctx['duplicate_ids'] = duplicate_ids
         return self.render_to_response(ctx)

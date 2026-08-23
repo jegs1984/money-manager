@@ -1,0 +1,125 @@
+{% extends 'finance/base.html' %}
+
+{% block title %}Gastos Compartidos y Reembolsos - Money Manager{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <!-- Header -->
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight text-white">Gastos Compartidos y Reembolsos</h1>
+      <p class="mt-1 text-sm text-zinc-400">
+        Seguimiento de ítems compartidos con terceros y cobros/reembolsos pendientes.
+      </p>
+    </div>
+    <a href="{% url 'finance:transaction_list' %}" class="px-3.5 py-2 text-xs font-semibold rounded-lg bg-emerald-600 text-white hover:bg-emerald-500 transition-colors">
+      Ver Transacciones
+    </a>
+  </div>
+
+  <!-- KPI Overview Cards -->
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div class="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5 backdrop-blur-sm">
+      <span class="text-xs font-medium uppercase tracking-wider text-zinc-400">Total Gastos Compartidos</span>
+      <div class="mt-2 text-2xl font-bold text-white">${{ summary.total_shared_amount }}</div>
+      <span class="mt-1 text-xs text-zinc-500">Monto acumulado en splits</span>
+    </div>
+
+    <div class="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5 backdrop-blur-sm">
+      <span class="text-xs font-medium uppercase tracking-wider text-amber-400">Pendiente de Reembolso</span>
+      <div class="mt-2 text-2xl font-bold text-amber-400">${{ summary.total_reimbursable_amount }}</div>
+      <span class="mt-1 text-xs text-zinc-500">Marcados como por cobrar</span>
+    </div>
+
+    <div class="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5 backdrop-blur-sm">
+      <span class="text-xs font-medium uppercase tracking-wider text-emerald-400">Personas / Destinatarios</span>
+      <div class="mt-2 text-2xl font-bold text-emerald-400">{{ summary.persons|length }}</div>
+      <span class="mt-1 text-xs text-zinc-500">Grupos de reparto activos</span>
+    </div>
+  </div>
+
+  <!-- Breakdown by Person -->
+  {% if summary.persons %}
+  <div class="space-y-6">
+    {% for p in summary.persons %}
+    <div class="rounded-xl border border-zinc-800 bg-zinc-900/40 overflow-hidden backdrop-blur-sm">
+      <!-- Person Header -->
+      <div class="flex items-center justify-between border-b border-zinc-800/80 px-6 py-4">
+        <div class="flex items-center gap-3">
+          <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-800 font-bold text-emerald-400 uppercase">
+            {{ p.person|slice:":2" }}
+          </span>
+          <div>
+            <h3 class="font-semibold text-white text-base">{{ p.person }}</h3>
+            <span class="text-xs text-zinc-400">{{ p.count }} ítem(s) compartidos</span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-6 text-sm">
+          <div>
+            <span class="text-xs text-zinc-400 block">Total Compartido</span>
+            <span class="font-semibold text-white">${{ p.total_amount }}</span>
+          </div>
+          <div>
+            <span class="text-xs text-zinc-400 block">Reembolsable</span>
+            <span class="font-semibold text-amber-400">${{ p.reimbursable_amount }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Person Items Table -->
+      <div class="p-6">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm text-zinc-300">
+            <thead class="border-b border-zinc-800 text-xs font-semibold uppercase text-zinc-400">
+              <tr>
+                <th class="pb-3">Fecha</th>
+                <th class="pb-3">Concepto / Descripción</th>
+                <th class="pb-3">Categoría</th>
+                <th class="pb-3">Cuenta</th>
+                <th class="pb-3 text-right">Monto Parte</th>
+                <th class="pb-3 text-center">Estado Reembolso</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-zinc-800/50">
+              {% for item in p.items %}
+              <tr class="hover:bg-zinc-800/30 transition-colors">
+                <td class="py-3 text-xs font-mono text-zinc-400">{{ item.date }}</td>
+                <td class="py-3 font-medium text-white">
+                  <a href="{% url 'finance:transaction_split' item.transaction_id %}" class="hover:underline text-emerald-300">
+                    {{ item.description }}
+                  </a>
+                </td>
+                <td class="py-3 text-zinc-400">{{ item.category }}</td>
+                <td class="py-3 text-zinc-400">{{ item.account }}</td>
+                <td class="py-3 text-right font-mono font-semibold text-white">${{ item.amount }}</td>
+                <td class="py-3 text-center">
+                  {% if item.is_reimbursable %}
+                  <span class="inline-flex items-center rounded-full bg-amber-400/10 px-2.5 py-0.5 text-xs font-medium text-amber-400 border border-amber-400/20">
+                    Por cobrar
+                  </span>
+                  {% else %}
+                  <span class="inline-flex items-center rounded-full bg-zinc-800 px-2.5 py-0.5 text-xs font-medium text-zinc-400">
+                    Compartido
+                  </span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="rounded-xl border border-zinc-800 bg-zinc-900/40 p-8 text-center text-zinc-400">
+    <p>No hay gastos compartidos ni reembolsos registrados.</p>
+    <p class="text-xs text-zinc-500 mt-1">
+      Puedes dividir cualquier transacción existente desde la lista de transacciones usando el botón <strong>Dividir</strong>.
+    </p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

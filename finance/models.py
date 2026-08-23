@@ -194,6 +194,31 @@ class Transaction(models.Model):
             raise ValidationError('A transaction can have only one staging source.')
 
 
+class TransactionSplit(models.Model):
+    transaction = models.ForeignKey(
+        Transaction, on_delete=models.CASCADE, related_name='splits'
+    )
+    budget_item = models.ForeignKey(
+        BudgetItem, on_delete=models.PROTECT, related_name='transaction_splits'
+    )
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    description = models.CharField(max_length=255, blank=True)
+    shared_with = models.CharField(max_length=100, blank=True)
+    is_reimbursable = models.BooleanField(default=False)
+    notes = models.TextField(blank=True)
+
+    class Meta:
+        db_table = 'finance_transaction_split'
+        ordering = ['id']
+        constraints = [
+            models.CheckConstraint(check=Q(amount__gt=0), name='finance_transaction_split_amount_gt_0'),
+        ]
+
+    def __str__(self):
+        return f'Split #{self.pk} - {self.transaction.description} (${self.amount})'
+
+
+
 class Transfer(models.Model):
     source_account = models.ForeignKey(Account, on_delete=models.PROTECT, related_name='outgoing_transfers')
     destination_account = models.ForeignKey(Account, on_delete=models.PROTECT, related_name='incoming_transfers')
