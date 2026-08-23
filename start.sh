@@ -39,12 +39,9 @@ if [[ -z "$PG_VERSION" ]]; then
 fi
 
 PG_PREFIX="$(brew --prefix "postgresql@$PG_VERSION")"
-PG_DATA="$PG_PREFIX/var/postgresql@$PG_VERSION"
-export PATH="$PG_PREFIX/bin:$PATH"
-
-if ! pg_ctl status -D "$PG_DATA" &>/dev/null; then
-    echo -e "${CYAN}▶ Starting PostgreSQL $PG_VERSION...${NC}"
-    pg_ctl -D "$PG_DATA" -l "$PG_DATA/server.log" start
+if ! brew services list | grep "postgresql@$PG_VERSION" | grep -q "started"; then
+    echo -e "${CYAN}▶ Starting PostgreSQL $PG_VERSION via Homebrew...${NC}"
+    brew services start "postgresql@$PG_VERSION"
     sleep 2
 fi
 
@@ -76,4 +73,4 @@ echo ""
 ) &
 
 cd "$PROJECT_ROOT"
-exec "$VENV_PYTHON" manage.py runserver "127.0.0.1:$APP_PORT"
+exec "$VENV_PYTHON" manage.py runserver "0.0.0.0:$APP_PORT"

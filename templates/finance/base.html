@@ -113,6 +113,10 @@
           {% endfor %}
         {% endif %}
         {% block header_actions %}{% endblock %}
+        <div class="flex items-center rounded-md border border-zinc-800 bg-zinc-900 p-0.5 text-xs font-mono">
+          <button type="button" id="lang-btn-es" onclick="setAppLanguage('es')" class="px-2 py-1 rounded text-zinc-400 hover:text-zinc-100 transition-colors">ES</button>
+          <button type="button" id="lang-btn-en" onclick="setAppLanguage('en')" class="px-2 py-1 rounded text-zinc-400 hover:text-zinc-100 transition-colors">EN</button>
+        </div>
       </div>
     </header>
 
@@ -126,6 +130,119 @@
   <a class="nav-link" href="{% url 'finance:dashboard' %}">Inicio</a><a class="nav-link" href="{% url 'finance:statement_upload' %}">Importar</a><a class="nav-link" href="{% url 'finance:staging_review' %}">Revisar</a>
 </nav>
 {% block extra_js %}{% endblock %}
+<script>
+  const i18nDict = {
+    en: {
+      "Dashboard": "Dashboard",
+      "By Group": "By Group",
+      "Tendencias": "Trends",
+      "Import Statement": "Import Statement",
+      "Staging Review": "Staging Review",
+      "Import Credit Card": "Import Credit Card",
+      "CC Staging Review": "CC Staging Review",
+      "Manage": "Manage",
+      "Periods": "Periods",
+      "Categories": "Categories",
+      "Accounts": "Accounts",
+      "Reglas comerciales": "Merchant Rules",
+      "Recurrentes": "Recurring Plans",
+      "Metas": "Goals",
+      "Cuotas pendientes": "Pending Installments",
+      "Respaldo cifrado": "Encrypted Backup",
+      "Transactions": "Transactions",
+      "Manual de Usuario": "User Manual",
+      "Export PDF": "Export PDF",
+      "+ Budget Item": "+ Budget Item",
+      "+ Log Transaction": "+ Log Transaction",
+      "Necesita atención": "Needs Attention",
+      "Revisa antes de cerrar el período": "Review before closing period",
+      "sin categoría": "uncategorized",
+      "duplicados por decidir": "pending duplicates",
+      "categorías cerca del límite": "near budget limit",
+      "categorías sobre presupuesto": "over budget",
+      "Próximos cobros y pagos": "Upcoming Bills & Payments",
+      "Pronóstico diario (7 días)": "Daily Forecast (7 Days)",
+      "Inicio": "Home",
+      "Importar": "Import",
+      "Revisar": "Review"
+    },
+    es: {
+      "Dashboard": "Panel Principal",
+      "By Group": "Por Grupo",
+      "Trends": "Tendencias",
+      "Import Statement": "Importar Cartola",
+      "Staging Review": "Revisar Importación",
+      "Import Credit Card": "Importar Tarjeta",
+      "CC Staging Review": "Revisar Tarjeta",
+      "Manage": "Administrar",
+      "Periods": "Períodos",
+      "Categories": "Categorías",
+      "Accounts": "Cuentas",
+      "Merchant Rules": "Reglas Comerciales",
+      "Recurring Plans": "Planes Recurrentes",
+      "Goals": "Metas",
+      "Pending Installments": "Cuotas Pendientes",
+      "Encrypted Backup": "Respaldo Cifrado",
+      "Transactions": "Transacciones",
+      "User Manual": "Manual de Usuario",
+      "Export PDF": "Exportar PDF",
+      "+ Budget Item": "+ Ítem Presupuesto",
+      "+ Log Transaction": "+ Registrar Movimiento",
+      "Needs Attention": "Necesita Atención",
+      "Review before closing period": "Revisa antes de cerrar el período",
+      "uncategorized": "sin categoría",
+      "pending duplicates": "duplicados por decidir",
+      "near budget limit": "categorías cerca del límite",
+      "over budget": "categorías sobre presupuesto",
+      "Upcoming Bills & Payments": "Próximos cobros y pagos",
+      "Daily Forecast (7 Days)": "Pronóstico diario (7 días)",
+      "Home": "Inicio",
+      "Import": "Importar",
+      "Review": "Revisar"
+    }
+  };
+
+  function getAppLanguage() {
+    return localStorage.getItem('app_lang') || 'es';
+  }
+
+  function applyTranslations(lang) {
+    const dict = i18nDict[lang];
+    if (!dict) return;
+
+    // Update buttons UI
+    const btnEs = document.getElementById('lang-btn-es');
+    const btnEn = document.getElementById('lang-btn-en');
+    if (btnEs && btnEn) {
+      if (lang === 'es') {
+        btnEs.className = "px-2 py-1 rounded bg-emerald-500/20 text-emerald-400 font-semibold";
+        btnEn.className = "px-2 py-1 rounded text-zinc-400 hover:text-zinc-100 transition-colors";
+      } else {
+        btnEn.className = "px-2 py-1 rounded bg-emerald-500/20 text-emerald-400 font-semibold";
+        btnEs.className = "px-2 py-1 rounded text-zinc-400 hover:text-zinc-100 transition-colors";
+      }
+    }
+
+    // Traverse text nodes
+    const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+    let node;
+    while (node = walk.nextNode()) {
+      const text = node.nodeValue.trim();
+      if (text && dict[text]) {
+        node.nodeValue = node.nodeValue.replace(text, dict[text]);
+      }
+    }
+  }
+
+  function setAppLanguage(lang) {
+    localStorage.setItem('app_lang', lang);
+    location.reload();
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    applyTranslations(getAppLanguage());
+  });
+</script>
 <script>
   (() => { const nav=document.getElementById('mobile-nav'), button=document.getElementById('mobile-nav-toggle'), backdrop=document.getElementById('mobile-nav-backdrop'); const close=()=>{nav.classList.add('-translate-x-full');backdrop.classList.add('hidden');button.setAttribute('aria-expanded','false')}; button.addEventListener('click',()=>{nav.classList.toggle('-translate-x-full'); const open=!nav.classList.contains('-translate-x-full'); backdrop.classList.toggle('hidden', !open);button.setAttribute('aria-expanded', String(open))});backdrop.addEventListener('click',close);document.addEventListener('keydown',e=>{if(e.key==='Escape')close()}) })();
 </script>
