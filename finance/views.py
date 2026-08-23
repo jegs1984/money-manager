@@ -1,12 +1,12 @@
 import csv
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from datetime import timedelta
 
 from django.contrib import messages
 from django.db.models import F, Sum, Value, Case, When
 from django.db.models.functions import Coalesce
 from django.http import HttpResponse, JsonResponse
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.views.decorators.http import require_POST
 from django.utils import timezone
@@ -16,10 +16,10 @@ from django.views.generic import (
 
 from .forms import (
     AccountForm, BudgetItemForm, BundleExportForm, BundleImportForm, CategoryForm, GoalForm, MerchantRuleForm, PeriodForm, ReconciliationForm, RecurringPlanForm, TransferForm,
-    StagingReviewFormset, StatementUploadForm, TransactionForm,
+    StagingReviewFormset, StatementUploadForm, TransactionForm, TransactionSplitForm,
     CCStatementUploadForm, StagingCCReviewFormset,
 )
-from .models import Account, BudgetItem, Category, Goal, ImportBatch, InstallmentObligation, MerchantRule, Period, RecurringPlan, StagingCCTransaction, StagingTransaction, Transaction
+from .models import Account, BudgetItem, Category, Goal, ImportBatch, InstallmentObligation, MerchantRule, Period, RecurringPlan, StagingCCTransaction, StagingTransaction, Transaction, TransactionSplit
 from .services import (
     calculate_safe_to_spend, generate_dashboard_pdf, get_duplicate_staging_ids, get_duplicate_staging_matches,
     parse_scotiabank_statement, process_staging_batch,
@@ -27,7 +27,7 @@ from .services import (
     calculate_account_balance, close_period_service, reconcile_account_service,
     record_transfer_service, reverse_transaction_service,
     export_finance_bundle, import_finance_bundle, materialize_recurring_plans,
-    build_cash_flow_forecast,
+    build_cash_flow_forecast, create_transaction_splits_service, get_shared_expenses_summary,
 )
 
 
@@ -534,6 +534,72 @@ class TransactionReverseView(View):
         else:
             messages.success(request, 'A compensating reversal was added; the original transaction is preserved.')
         return redirect('finance:transaction_list')
+
+
+class TransactionSplitView(View):
+    def get(self, request, pk, *args, **kwargs):
+        transaction = get_object_or_404(Transaction, pk=pk)
+        categories = Category.objects.order_by('group', 'name')
+        existing_splits = list(transaction.splits.select_related('budget_item__category').all())
+        
+        ctx = {
+            'transaction': transaction,
+            'categories': categories,
+            'splits': existing_splits,
+        }
+        return render(request, 'finance/transaction_split.html', ctx)
+
+    def post(self, request, pk, *args, **kwargs):
+        transaction = get_object_or_404(Transaction, pk=pk)
+        category_ids = request.POST.getlist('category_id')
+        amounts = request.POST.getlist('amount')
+        descriptions = request.POST.getlist('description')
+        shared_withs = request.POST.getlist('shared_with')
+        is_reimbursable_indices = request.POST.getlist('is_reimbursable_index')
+        notes_list = request.POST.getlist('notes')
+
+        splits_data = []
+        for i in range(len(category_ids)):
+            if not category_ids[i] or not amounts[i]:
+                continue
+            try:
+                amt = Decimal(amounts[i])
+            except (TypeError, ValueError, InvalidOperation):
+                continue
+
+            splits_data.append({
+                'category_id': int(category_ids[i]),
+                'amount': amt,
+                'description': descriptions[i] if i < len(descriptions) else '',
+                'shared_with': shared_withs[i] if i < len(shared_withs) else '',
+                'is_reimbursable': str(i) in is_reimbursable_indices,
+                'notes': notes_list[i] if i < len(notes_list) else '',
+            })
+
+        try:
+            create_transaction_splits_service(transaction.pk, splits_data)
+            messages.success(request, f"Dividida transacción #{transaction.pk} en {len(splits_data)} partes.")
+            return redirect('finance:transaction_list')
+        except ValueError as exc:
+            messages.error(request, str(exc))
+            categories = Category.objects.order_by('group', 'name')
+            ctx = {
+                'transaction': transaction,
+                'categories': categories,
+                'splits': transaction.splits.all(),
+                'error': str(exc),
+            }
+            return render(request, 'finance/transaction_split.html', ctx)
+
+
+class SharedExpenseListView(TemplateView):
+    template_name = 'finance/shared_expenses.html'
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['summary'] = get_shared_expenses_summary()
+        return ctx
+
 
 
 class TransactionCSVExportView(View):

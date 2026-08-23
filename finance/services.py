@@ -40,7 +40,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from .models import (
     Account, BudgetItem, Category, Goal, ImportBatch, InstallmentObligation, MerchantRule, Period, Reconciliation,
     RecurringPlan,
-    StagingCCTransaction, StagingTransaction, Transaction, Transfer,
+    StagingCCTransaction, StagingTransaction, Transaction, TransactionSplit, Transfer,
 )
 
 
@@ -805,6 +805,105 @@ def reverse_transaction_service(transaction_id: int, notes: str = '') -> Transac
         reversal_of=original,
         source_fingerprint=f'reversal:{original.pk}',
     )
+
+
+@db_transaction.atomic
+def create_transaction_splits_service(transaction_id: int, splits_data: list) -> list:
+    transaction = Transaction.objects.select_for_update().get(pk=transaction_id)
+    if not splits_data:
+        transaction.splits.all().delete()
+        return []
+
+    total_split_amount = sum((Decimal(str(item['amount'])) for item in splits_data), Decimal('0.00'))
+    if total_split_amount != transaction.real_amount:
+        raise ValueError(
+            f"Sum of split amounts (${total_split_amount}) must equal total transaction amount (${transaction.real_amount})."
+        )
+
+    period = transaction.budget_item.period
+    transaction_type = transaction.budget_item.type
+
+    transaction.splits.all().delete()
+    created_splits = []
+
+    for item in splits_data:
+        category_id = item['category_id']
+        category = Category.objects.get(pk=category_id)
+        budget_item = _get_or_create_budget_item(period, category, transaction_type)
+
+        split = TransactionSplit.objects.create(
+            transaction=transaction,
+            budget_item=budget_item,
+            amount=Decimal(str(item['amount'])),
+            description=item.get('description', '') or transaction.description,
+            shared_with=item.get('shared_with', ''),
+            is_reimbursable=bool(item.get('is_reimbursable', False)),
+            notes=item.get('notes', ''),
+        )
+        created_splits.append(split)
+
+    return created_splits
+
+
+def get_shared_expenses_summary() -> dict:
+    splits = TransactionSplit.objects.select_related(
+        'transaction', 'budget_item__category', 'transaction__account'
+    ).filter(
+        Q(is_reimbursable=True) | ~Q(shared_with='')
+    ).order_by('-transaction__date')
+
+    person_summary = {}
+    total_reimbursable = Decimal('0.00')
+    total_shared = Decimal('0.00')
+
+    for s in splits:
+        person = s.shared_with or 'General'
+        if person not in person_summary:
+            person_summary[person] = {
+                'person': person,
+                'total_amount': Decimal('0.00'),
+                'reimbursable_amount': Decimal('0.00'),
+                'count': 0,
+                'items': [],
+            }
+
+        person_summary[person]['total_amount'] += s.amount
+        person_summary[person]['count'] += 1
+        if s.is_reimbursable:
+            person_summary[person]['reimbursable_amount'] += s.amount
+            total_reimbursable += s.amount
+
+        total_shared += s.amount
+
+        person_summary[person]['items'].append({
+            'id': s.pk,
+            'transaction_id': s.transaction_id,
+            'date': s.transaction.date.strftime('%Y-%m-%d'),
+            'description': s.description or s.transaction.description,
+            'category': s.budget_item.category.name,
+            'account': s.transaction.account.name if s.transaction.account else 'N/A',
+            'amount': str(s.amount),
+            'shared_with': s.shared_with,
+            'is_reimbursable': s.is_reimbursable,
+            'notes': s.notes,
+        })
+
+    formatted_persons = []
+    for person, data in person_summary.items():
+        formatted_persons.append({
+            'person': person,
+            'total_amount': str(data['total_amount']),
+            'reimbursable_amount': str(data['reimbursable_amount']),
+            'count': data['count'],
+            'items': data['items'],
+        })
+
+    return {
+        'total_shared_amount': str(total_shared),
+        'total_reimbursable_amount': str(total_reimbursable),
+        'persons': formatted_persons,
+        'all_splits': list(splits),
+    }
 
 
 @db_transaction.atomic
