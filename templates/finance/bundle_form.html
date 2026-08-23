@@ -1,0 +1,10 @@
+{% extends "finance/base.html" %}
+{% block page_title %}Encrypted exchange bundle{% endblock %}
+{% block content %}
+<form method="post" enctype="multipart/form-data" class="card max-w-xl space-y-5">{% csrf_token %}
+  <p class="text-sm text-zinc-400">This file is encrypted with your passphrase. Keep the passphrase separately; it cannot be recovered.</p>
+  {{ form.non_field_errors }}
+  {% for field in form %}<div><label class="mb-1 block text-sm text-zinc-300" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% for error in field.errors %}<p class="text-xs text-red-400">{{ error }}</p>{% endfor %}</div>{% endfor %}
+  <button class="btn-primary" type="submit">{% if form.bundle %}Import encrypted bundle{% else %}Download encrypted bundle{% endif %}</button>
+</form>
+{% endblock %}

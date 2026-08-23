@@ -1,5 +1,9 @@
 # money-manager workspace instructions
 
+## Safety Approval
+
+Before running any potentially dangerous command or action, explain the exact impact and ask the user for explicit approval. This includes destructive filesystem or database changes, privileged/system-wide changes, external side effects, and commands that may overwrite, delete, expose, or irreversibly alter data. Do not proceed until approval is given.
+
 ## Project Context
 This is a full-stack personal finance and bank reconciliation application. The core feature is an ETL pipeline that ingests Scotiabank bank statements, stages them for bulk review, and maps them to a monthly budgeting matrix.
 

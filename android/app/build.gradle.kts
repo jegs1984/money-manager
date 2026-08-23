@@ -64,6 +64,11 @@ android {
     packaging { resources { excludes += "/META-INF/{AL2.0,LGPL2.1}" } }
 }
 
+ksp {
+    // Versioned schemas make each future Room migration reviewable and testable.
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 dependencies {
     implementation(libs.core.ktx)
     implementation(libs.activity.compose)

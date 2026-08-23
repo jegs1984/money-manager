@@ -79,3 +79,10 @@ yarn-error.log*
 android/local.properties
 
 graphify-out/cache/
+TODO.md
+
+# Local tooling and generated runtime caches
+.codex/
+android/.gradle/
+**/__pycache__/
+*.py[cod]

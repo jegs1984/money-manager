@@ -16,17 +16,21 @@ class DetectStagingDuplicatesUseCase @Inject constructor(
     private val repo: FinanceRepository,
 ) {
     suspend fun forDebit(rows: List<StagingTransactionEntity>): Set<Long> {
-        val period = repo.getActivePeriod() ?: return emptySet()
         return rows
-            .filter { repo.isDuplicateInPeriod(period.id, it.originalDate, it.amount.toBigDecimal(), it.description) }
+            .filter { row ->
+                val period = repo.findPeriodByDate(row.originalDate)
+                period != null && repo.isDuplicateInPeriod(period.id, row.originalDate, row.amount.toBigDecimal(), row.description)
+            }
             .map { it.id }
             .toSet()
     }
 
     suspend fun forCC(rows: List<StagingCCTransactionEntity>): Set<Long> {
-        val period = repo.getActivePeriod() ?: return emptySet()
         return rows
-            .filter { repo.isDuplicateInPeriod(period.id, it.originalDate, it.amount.toBigDecimal(), it.description) }
+            .filter { row ->
+                val period = repo.findPeriodByDate(row.originalDate)
+                period != null && repo.isDuplicateInPeriod(period.id, row.originalDate, row.amount.toBigDecimal(), row.description)
+            }
             .map { it.id }
             .toSet()
     }

@@ -1,6 +1,9 @@
 package com.moneymanager.data.repository
 
+import androidx.room.withTransaction
 import com.moneymanager.data.db.*
+import com.moneymanager.domain.usecase.BankNotificationParser
+import com.moneymanager.notifications.model.RawBankNotification
 import kotlinx.coroutines.flow.Flow
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -83,10 +86,10 @@ class FinanceRepository @Inject constructor(
         budgetItemDao.observeByPeriod(periodId)
 
     suspend fun getOrCreateBudgetItem(periodId: Long, categoryId: Long, type: String): BudgetItemEntity {
-        return budgetItemDao.find(periodId, categoryId) ?: run {
+        return budgetItemDao.find(periodId, categoryId, type) ?: run {
             val entity = BudgetItemEntity(periodId = periodId, categoryId = categoryId, type = type)
             val id = budgetItemDao.insert(entity)
-            budgetItemDao.find(periodId, categoryId)!!
+            budgetItemDao.find(periodId, categoryId, type)!!
         }
     }
 
@@ -141,6 +144,26 @@ class FinanceRepository @Inject constructor(
     fun observePendingStaging(): Flow<List<StagingTransactionEntity>> = stagingDao.observePending()
     suspend fun getPendingStaging(): List<StagingTransactionEntity> = stagingDao.getPending()
     suspend fun insertStagingRows(rows: List<StagingTransactionEntity>) = stagingDao.insertAll(rows)
+
+    /**
+     * Converts a bank notification with the shared pure parser, then persists only
+     * the resulting review row. Notifications never create ledger transactions.
+     */
+    suspend fun stageNotification(raw: RawBankNotification, sourceFile: String) {
+        val parsed = BankNotificationParser.parse(raw) ?: return
+        insertStagingRows(
+            listOf(
+                StagingTransactionEntity(
+                    sourceFile = sourceFile,
+                    originalDate = java.time.Instant.ofEpochMilli(raw.timestamp)
+                        .atZone(java.time.ZoneId.systemDefault()).toLocalDate(),
+                    description = parsed.description,
+                    amount = parsed.amount.toPlainString(),
+                    type = parsed.type,
+                )
+            )
+        )
+    }
 
     /**
      * Mirrors process_staging_batch.

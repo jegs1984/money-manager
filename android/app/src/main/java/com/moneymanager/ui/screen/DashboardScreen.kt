@@ -127,6 +127,7 @@ fun DashboardScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun PeriodSelector(
     periods: List<PeriodEntity>,

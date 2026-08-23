@@ -1,21 +1,21 @@
-# Graph Report - /Users/juan/github-labs/money-manager  (2026-06-08)
+# Graph Report - money-manager  (2026-08-22)
 
 ## Corpus Check
-- cluster-only mode — file stats not available
+- 91 files · ~50,277 words
+- Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 917 nodes · 1925 edges · 68 communities (57 shown, 11 thin omitted)
-- Extraction: 86% EXTRACTED · 14% INFERRED · 0% AMBIGUOUS · INFERRED: 265 edges (avg confidence: 0.51)
+- 818 nodes · 2981 edges · 78 communities (55 shown, 23 thin omitted)
+- Extraction: 48% EXTRACTED · 52% INFERRED · 0% AMBIGUOUS · INFERRED: 1552 edges (avg confidence: 0.5)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `9b5793dd`
+- Built from commit: `9556d287`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - [[_COMMUNITY_Community 0|Community 0]]
-- [[_COMMUNITY_Community 1|Community 1]]
 - [[_COMMUNITY_Community 2|Community 2]]
 - [[_COMMUNITY_Community 3|Community 3]]
 - [[_COMMUNITY_Community 4|Community 4]]
@@ -25,7 +25,6 @@
 - [[_COMMUNITY_Community 8|Community 8]]
 - [[_COMMUNITY_Community 9|Community 9]]
 - [[_COMMUNITY_Community 10|Community 10]]
-- [[_COMMUNITY_Community 11|Community 11]]
 - [[_COMMUNITY_Community 12|Community 12]]
 - [[_COMMUNITY_Community 13|Community 13]]
 - [[_COMMUNITY_Community 14|Community 14]]
@@ -33,15 +32,12 @@
 - [[_COMMUNITY_Community 16|Community 16]]
 - [[_COMMUNITY_Community 17|Community 17]]
 - [[_COMMUNITY_Community 18|Community 18]]
-- [[_COMMUNITY_Community 19|Community 19]]
-- [[_COMMUNITY_Community 20|Community 20]]
 - [[_COMMUNITY_Community 21|Community 21]]
 - [[_COMMUNITY_Community 22|Community 22]]
 - [[_COMMUNITY_Community 23|Community 23]]
 - [[_COMMUNITY_Community 24|Community 24]]
 - [[_COMMUNITY_Community 25|Community 25]]
 - [[_COMMUNITY_Community 26|Community 26]]
-- [[_COMMUNITY_Community 27|Community 27]]
 - [[_COMMUNITY_Community 28|Community 28]]
 - [[_COMMUNITY_Community 29|Community 29]]
 - [[_COMMUNITY_Community 30|Community 30]]
@@ -72,203 +68,161 @@
 - [[_COMMUNITY_Community 55|Community 55]]
 - [[_COMMUNITY_Community 56|Community 56]]
 - [[_COMMUNITY_Community 57|Community 57]]
+- [[_COMMUNITY_Community 68|Community 68]]
+- [[_COMMUNITY_Community 69|Community 69]]
+- [[_COMMUNITY_Community 70|Community 70]]
+- [[_COMMUNITY_Community 71|Community 71]]
+- [[_COMMUNITY_Community 72|Community 72]]
+- [[_COMMUNITY_Community 73|Community 73]]
+- [[_COMMUNITY_Community 82|Community 82]]
+- [[_COMMUNITY_Community 83|Community 83]]
+- [[_COMMUNITY_Community 84|Community 84]]
+- [[_COMMUNITY_Community 86|Community 86]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `BudgetItem` - 51 edges
-2. `Transaction` - 49 edges
-3. `Period` - 38 edges
-4. `Category` - 38 edges
-5. `FinanceRepository` - 28 edges
-6. `BudgetItemForm` - 27 edges
-7. `TransactionForm` - 27 edges
-8. `Deprecated` - 26 edges
-9. `PeriodForm` - 26 edges
-10. `CategoryForm` - 26 edges
+1. `Period` - 79 edges
+2. `Category` - 79 edges
+3. `Transaction` - 79 edges
+4. `StagingTransaction` - 79 edges
+5. `StagingCCTransaction` - 79 edges
+6. `MerchantRule` - 78 edges
+7. `Account` - 76 edges
+8. `BudgetItem` - 76 edges
+9. `Goal` - 76 edges
+10. `RecurringPlan` - 75 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `BudgetItem` --references--> `Category`  [EXTRACTED]
   finance/services.py → README.md
-- `BudgetItem` --references--> `Period`  [EXTRACTED]
-  finance/services.py → README.md
 - `StagingReviewView` --implements--> `Base Template`  [EXTRACTED]
   finance/views.py → templates/finance/base.html
-- `_get_or_create_budget_item()` --references--> `BudgetItemEntity`  [EXTRACTED]
-  finance/services.py → android/app/src/main/java/com/moneymanager/data/repository/FinanceRepository.kt
-- `_get_or_create_budget_item()` --references--> `String`  [EXTRACTED]
-  finance/services.py → android/app/src/main/java/com/moneymanager/data/repository/FinanceRepository.kt
+- `_get_or_create_budget_item()` --calls--> `run()`  [INFERRED]
+  finance/services.py → bootstrap.py
+- `_parse_header()` --references--> `Map`  [EXTRACTED]
+  finance/services.py → android/app/src/main/java/com/moneymanager/domain/usecase/ParseStatementUseCases.kt
+- `StagingReviewView` --inherits--> `Screen`  [EXTRACTED]
+  finance/views.py → android/app/src/main/java/com/moneymanager/ui/navigation/NavGraph.kt
 
 ## Import Cycles
 - 1-file cycle: `finance/services.py -> finance/services.py`
 
-## Communities (68 total, 11 thin omitted)
+## Communities (78 total, 23 thin omitted)
 
 ### Community 0 - "Community 0"
-Cohesion: 0.13
-Nodes (64): BudgetItemWithStats, BankNotificationService, BudgetItem, Category, CreateView, date, Decimal, DeleteView (+56 more)
-
-### Community 1 - "Community 1"
-Cohesion: 0.09
-Nodes (39): AbstractExternalDependencyFactory, CapabilityNotationParser, DefaultVersionCatalog, ImmutableAttributesFactory, Inject, MinimalExternalModuleDependency, ObjectFactory, PluginDependency (+31 more)
+Cohesion: 0.28
+Nodes (97): Account, BudgetItem, Category, CreateView, DeleteView, Base Template, AccountForm, BudgetItemForm (+89 more)
 
 ### Community 2 - "Community 2"
-Cohesion: 0.08
-Nodes (39): CapabilityNotationParser, DefaultVersionCatalog, ImmutableAttributesFactory, Inject, MinimalExternalModuleDependency, ObjectFactory, PluginDependency, Provider (+31 more)
+Cohesion: 0.23
+Nodes (4): get_duplicate_staging_ids(), get_duplicate_staging_matches(), Return the set of staging row IDs whose (date, amount, description) triple     a, Return the ledger transaction that caused each staged duplicate warning.
 
 ### Community 3 - "Community 3"
-Cohesion: 0.07
-Nodes (29): Flow, Int, List, Long, TransactionEntity, BigDecimal, Boolean, BudgetItemEntity (+21 more)
+Cohesion: 0.18
+Nodes (7): date, _add_months(), Move a date forward without invalid month-end dates., record_transfer_service(), reverse_transaction_service(), TestCase, LedgerServiceTests
 
 ### Community 4 - "Community 4"
-Cohesion: 0.05
-Nodes (39): 1. Generate a Signing Keystore (One-time), 2. Configure Build Credentials, 3. Build the APK, Money Manager Android App, Architecture, Building & Deploying, Core Feature: Auto-Logging via Notifications, Database & Storage (+31 more)
+Cohesion: 0.11
+Nodes (18): 1. Set up the budget, 2. Add transactions, 3. Import a bank statement, 4. Import a credit-card statement, 5. Android notification capture, 6. Review and reporting, 7. Accounts, corrections, and reconciliation, 8. Planning and automation (+10 more)
 
 ### Community 5 - "Community 5"
-Cohesion: 0.08
-Nodes (16): BudgetItemEntity, Flow, List, Long, Flow, List, Long, PeriodEntity (+8 more)
+Cohesion: 0.09
+Nodes (17): BudgetItemDao, CategoryDao, PeriodDao, StagingCCTransactionDao, StagingTransactionDao, TransactionDao, BudgetItemDao, CategoryDao (+9 more)
 
 ### Community 6 - "Community 6"
-Cohesion: 0.06
-Nodes (28): Long, CategoryEntity, List, Long, NavController, NumberFormat, Long, StateFlow (+20 more)
+Cohesion: 0.22
+Nodes (8): Android workflow, Before a pull request, Database changes, Development guide, Estilos locales, Fixtures bancarios, Local web workflow, Project conventions
 
 ### Community 7 - "Community 7"
-Cohesion: 0.13
-Nodes (12): Flow, List, LocalDate, Long, String, BudgetItemDao, CategoryDao, PeriodDao (+4 more)
+Cohesion: 0.09
+Nodes (17): BudgetItemEntity, CategoryEntity, Flow, List, LocalDate, Long, PeriodEntity, StagingCCTransactionEntity (+9 more)
 
 ### Community 8 - "Community 8"
 Cohesion: 0.08
 Nodes (23): For /graphify add and --watch, For /graphify query, For the commit hook and native CLAUDE.md integration, For --update and --cluster-only, /graphify, Honesty Rules, Interpreter guard for subcommands, Part A - Structural extraction for code files (+15 more)
 
-### Community 9 - "Community 9"
-Cohesion: 0.09
-Nodes (20): Boolean, List, Long, NavController, String, BudgetItemWithStats, Long, NavController (+12 more)
-
 ### Community 10 - "Community 10"
 Cohesion: 0.22
 Nodes (21): create_database(), create_env_file(), create_venv(), die(), django_setup(), info(), install_deps(), load_env() (+13 more)
 
-### Community 11 - "Community 11"
-Cohesion: 0.15
-Nodes (17): BigDecimal, List, Modifier, PeriodEntity, String, Long, StateFlow, androidx (+9 more)
-
-### Community 12 - "Community 12"
-Cohesion: 0.18
-Nodes (7): Double, Flow, String, String, RawBankNotification, RawBankNotification, ParsedTransaction
-
 ### Community 13 - "Community 13"
-Cohesion: 0.18
-Nodes (17): BigDecimal, Boolean, CategoryEntity, DupAction, Int, List, Long, Modifier (+9 more)
+Cohesion: 0.06
+Nodes (34): BigDecimal, Boolean, CategoryEntity, CategoryViewModel, DupAction, List, Long, StagingTransactionEntity (+26 more)
 
 ### Community 14 - "Community 14"
-Cohesion: 0.23
-Nodes (12): BigDecimal, InputStream, List, LocalDate, String, _parse_cc_header(), _parse_header(), Map (+4 more)
+Cohesion: 0.20
+Nodes (13): BigDecimal, List, LocalDate, String, _parse_cc_header(), _parse_header(), InputStream, Map (+5 more)
 
 ### Community 15 - "Community 15"
-Cohesion: 0.22
-Nodes (6): CategoryEntity, Flow, Int, List, Long, CategoryDao
+Cohesion: 0.29
+Nodes (6): Android setup, First-use checklist, Installation, Manual Python setup, Option A: native macOS installer, Option B: Docker Compose
 
 ### Community 16 - "Community 16"
-Cohesion: 0.18
-Nodes (14): BudgetItemWithStats, DashboardViewModel, List, Modifier, NavController, NumberFormat, String, Color (+6 more)
+Cohesion: 0.25
+Nodes (7): Backup and recovery, Docker backup, Docker volume warning, Encrypted application bundle, Native PostgreSQL backup, Recovering a failed import, Recovery check
 
 ### Community 17 - "Community 17"
-Cohesion: 0.22
-Nodes (11): NavController, android, String, Uri, ImportCCViewModel, Error, Idle, ImportCCState (+3 more)
-
-### Community 18 - "Community 18"
-Cohesion: 0.22
-Nodes (11): NavController, android, String, Uri, ImportDatViewModel, Error, Idle, ImportDatState (+3 more)
-
-### Community 19 - "Community 19"
-Cohesion: 0.20
-Nodes (9): Long, NavController, List, Long, StateFlow, NavController, BudgetItemOption, TransactionFormViewModel (+1 more)
-
-### Community 20 - "Community 20"
-Cohesion: 0.18
-Nodes (7): java, Long, StateFlow, String, DupAction, StagingUiState, StagingViewModel
-
-### Community 21 - "Community 21"
-Cohesion: 0.29
-Nodes (5): Flow, List, Long, StagingCCTransactionEntity, StagingCCTransactionDao
-
-### Community 22 - "Community 22"
-Cohesion: 0.29
-Nodes (5): Flow, List, Long, StagingTransactionEntity, StagingTransactionDao
-
-### Community 23 - "Community 23"
-Cohesion: 0.31
-Nodes (7): Double, InputStream, Int, String, _parse_clp_amount(), org, ParseResult
-
-### Community 24 - "Community 24"
-Cohesion: 0.22
-Nodes (8): Boolean, StateFlow, NotificationDashboardScreen(), NotificationPermissionScreen(), NotificationUiState, NotificationViewModel, NotificationViewModel, ParsedTransaction
-
-### Community 25 - "Community 25"
-Cohesion: 0.20
-Nodes (6): DupAction, java, Long, StateFlow, String, StagingViewModel
+Cohesion: 0.33
+Nodes (5): Install, macOS installer, Manual launch, Uninstall, What it installs
 
 ### Community 26 - "Community 26"
 Cohesion: 0.31
-Nodes (7): BigDecimal, List, Long, Set, StagingCCTransactionEntity, StagingTransactionEntity, toBigDecimal()
-
-### Community 27 - "Community 27"
-Cohesion: 0.31
-Nodes (4): BigDecimal, String, NotificationListenerService, StatusBarNotification
-
-### Community 28 - "Community 28"
-Cohesion: 0.20
-Nodes (7): NavController, CategoryEntity, TransactionEntity, CategoriesViewModel, CategoriesViewModel, TransactionsViewModel, ViewModel
+Nodes (8): BigDecimal, List, Long, Set, StagingCCTransactionEntity, StagingTransactionEntity, DetectStagingDuplicatesUseCase, toBigDecimal()
 
 ### Community 29 - "Community 29"
-Cohesion: 0.27
-Nodes (8): Install, Launch, Money Manager — Mac Installer, Prerequisites (installed automatically if missing), info(), success(), warn(), uninstall.sh script
+Cohesion: 0.70
+Nodes (4): info(), success(), warn(), uninstall.sh script
 
 ### Community 30 - "Community 30"
-Cohesion: 0.36
-Nodes (6): Double, InputStream, String, _parse_amount(), DatParser, ParseResult
+Cohesion: 0.17
+Nodes (11): Decimal, calculate_safe_to_spend(), _clp(), contribute_to_goal(), generate_dashboard_pdf(), _parse_clp_amount(), parse_scotiabank_cc_statement(), Format a Decimal as Chilean peso string: $1.234.567 (+3 more)
 
 ### Community 31 - "Community 31"
-Cohesion: 0.29
-Nodes (5): Long, NavController, Long, CategoryFormViewModel, CategoryFormViewModel
+Cohesion: 0.15
+Nodes (12): first, amount, balance, date, type, second, amount, balance (+4 more)
 
 ### Community 32 - "Community 32"
-Cohesion: 0.29
-Nodes (5): Long, NavController, Long, PeriodFormViewModel, PeriodFormViewModel
+Cohesion: 0.50
+Nodes (3): Array, RoomMigrations, Migration
 
 ### Community 33 - "Community 33"
-Cohesion: 0.25
-Nodes (5): Bundle, ComponentActivity, NavHostController, NavGraph(), MoneyManagerTheme()
+Cohesion: 0.07
+Nodes (41): BigDecimal, Boolean, CategoryEntity, CategoryViewModel, DupAction, List, Long, StagingCCTransactionEntity (+33 more)
 
 ### Community 34 - "Community 34"
 Cohesion: 0.25
 Nodes (7): graphify reference: extra exports and benchmark, Step 6b - Wiki (only if --wiki flag), Step 7 - Neo4j export (only if --neo4j or --neo4j-push flag), Step 7b - SVG export (only if --svg flag), Step 7c - GraphML export (only if --graphml flag), Step 7d - MCP server (only if --mcp flag), Step 8 - Token reduction benchmark (only if total_words > 5000)
 
-### Community 35 - "Community 35"
-Cohesion: 0.48
-Nodes (4): PeriodEntity, StateFlow, DashboardUiState, DashboardViewModel
-
 ### Community 36 - "Community 36"
-Cohesion: 0.29
-Nodes (5): BudgetItemEntity, CategoryEntity, PeriodEntity, StagingCCTransactionEntity, TransactionEntity
+Cohesion: 0.20
+Nodes (9): BigDecimal, BudgetItemEntity, CategoryEntity, ImportBatchEntity, PeriodEntity, StagingCCTransactionEntity, StagingTransactionEntity, toBigDecimal() (+1 more)
 
 ### Community 37 - "Community 37"
-Cohesion: 0.29
-Nodes (6): Agent Directives (Caveman Mode), Agent Roles & Delegation, money-manager workspace instructions, Project Context, Repository Structure, Technology Stack
+Cohesion: 0.20
+Nodes (9): Agent Directives (Caveman Mode), Agent Roles & Delegation, graphify, Mandatory Graphify Workflow, money-manager workspace instructions, Project Context, Repository Structure, Safety Approval (+1 more)
 
 ### Community 38 - "Community 38"
-Cohesion: 0.29
-Nodes (6): Agent Directives (Caveman Mode), Agent Roles & Delegation, money-manager workspace instructions, Project Context, Repository Structure, Technology Stack
+Cohesion: 0.25
+Nodes (7): Agent Directives (Caveman Mode), Agent Roles & Delegation, money-manager workspace instructions, Project Context, Repository Structure, Safety Approval, Technology Stack
 
 ### Community 39 - "Community 39"
 Cohesion: 0.48
 Nodes (6): die(), info(), PATH, success(), warn(), setup.sh script
 
 ### Community 40 - "Community 40"
-Cohesion: 0.33
-Nodes (4): NavController, PeriodEntity, PeriodsViewModel, PeriodsViewModel
+Cohesion: 0.09
+Nodes (28): BigDecimal, Boolean, BudgetItemEntity, CategoryEntity, Flow, List, LocalDate, Long (+20 more)
 
 ### Community 41 - "Community 41"
 Cohesion: 0.33
 Nodes (5): For /graphify explain, For /graphify path, graphify reference: query, path, explain, Step 0 — Constrained query expansion (REQUIRED before traversal), Step 1 — Traversal
+
+### Community 42 - "Community 42"
+Cohesion: 0.60
+Nodes (3): LocalDate, String, Converters
+
+### Community 43 - "Community 43"
+Cohesion: 0.53
+Nodes (3): Boolean, Context, NotificationPermissionHelper
 
 ### Community 44 - "Community 44"
 Cohesion: 0.60
@@ -277,6 +231,10 @@ Nodes (4): die(), info(), PATH, run.sh script
 ### Community 45 - "Community 45"
 Cohesion: 0.70
 Nodes (4): die(), info(), success(), update.sh script
+
+### Community 46 - "Community 46"
+Cohesion: 0.20
+Nodes (8): _parse_amount(), _parse_date(), parse_scotiabank_statement(), _parse_signed_balance(), Parse a debit/credit amount, which is always stored as positive., Parse balances without losing their sign., Return a reviewable category suggestion from a user-confirmed merchant rule., suggest_category()
 
 ### Community 47 - "Community 47"
 Cohesion: 0.50
@@ -290,25 +248,45 @@ Nodes (3): For git commit hook, For native CLAUDE.md integration, graphify refer
 Cohesion: 0.50
 Nodes (3): For --cluster-only, For --update (incremental re-extraction), graphify reference: incremental update and cluster-only
 
+### Community 69 - "Community 69"
+Cohesion: 0.33
+Nodes (6): Daily operations, Docker deployment, Environment variables, Persistence and safety, Requirements, Start the stack
+
+### Community 70 - "Community 70"
+Cohesion: 0.07
+Nodes (25): Android app, Bank-notification capture, Build and test, Data and upgrades, Money Manager for Android, Related guides, Release signing, Requirements (+17 more)
+
+### Community 72 - "Community 72"
+Cohesion: 0.22
+Nodes (8): Build, Test, and Development Commands, Coding Style & Naming Conventions, Commit & Pull Request Guidelines, graphify, Project Structure & Module Organization, Repository Guidelines, Safety Approval, Testing Guidelines
+
+### Community 73 - "Community 73"
+Cohesion: 0.15
+Nodes (15): _advance_recurring_date(), _assert_period_open(), _bundle_key(), close_period_service(), duplicate_period_budget_items(), export_finance_bundle(), _get_or_create_unplanned_category(), import_finance_bundle() (+7 more)
+
+### Community 83 - "Community 83"
+Cohesion: 0.50
+Nodes (3): RawBankNotification, BankNotificationParser, Result
+
 ## Knowledge Gaps
-- **223 isolated node(s):** `PreToolUse`, `Inject`, `Inject`, `Bundle`, `PeriodEntity` (+218 more)
+- **216 isolated node(s):** `PreToolUse`, `Bundle`, `PeriodDao`, `CategoryDao`, `BudgetItemDao` (+211 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **11 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **23 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `BudgetItem` connect `Community 0` to `Community 46`, `Community 9`, `Community 11`, `Community 6`?**
-  _High betweenness centrality (0.284) - this node is a cross-community bridge._
-- **Why does `_parse_header()` connect `Community 14` to `Community 0`?**
-  _High betweenness centrality (0.220) - this node is a cross-community bridge._
-- **Why does `Map` connect `Community 14` to `Community 1`, `Community 2`?**
-  _High betweenness centrality (0.212) - this node is a cross-community bridge._
-- **Are the 35 inferred relationships involving `BudgetItem` (e.g. with `StagingTransactionDao.kt` and `Category`) actually correct?**
-  _`BudgetItem` has 35 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 35 inferred relationships involving `Transaction` (e.g. with `BudgetItem` and `Category`) actually correct?**
-  _`Transaction` has 35 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 33 inferred relationships involving `Period` (e.g. with `BudgetItem` and `Category`) actually correct?**
-  _`Period` has 33 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 33 inferred relationships involving `Category` (e.g. with `BudgetItem` and `Category`) actually correct?**
-  _`Category` has 33 INFERRED edges - model-reasoned connections that need verification._
+- **Why does `NavGraph()` connect `Community 33` to `Community 13`?**
+  _High betweenness centrality (0.091) - this node is a cross-community bridge._
+- **Why does `StagingReviewView` connect `Community 0` to `Community 33`, `Community 2`?**
+  _High betweenness centrality (0.087) - this node is a cross-community bridge._
+- **Why does `Transaction` connect `Community 0` to `Community 2`, `Community 3`, `Community 7`, `Community 73`, `Community 30`?**
+  _High betweenness centrality (0.071) - this node is a cross-community bridge._
+- **Are the 72 inferred relationships involving `Period` (e.g. with `Account` and `BudgetItem`) actually correct?**
+  _`Period` has 72 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 72 inferred relationships involving `Category` (e.g. with `Account` and `BudgetItem`) actually correct?**
+  _`Category` has 72 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 72 inferred relationships involving `Transaction` (e.g. with `Account` and `BudgetItem`) actually correct?**
+  _`Transaction` has 72 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 72 inferred relationships involving `StagingTransaction` (e.g. with `Account` and `BudgetItem`) actually correct?**
+  _`StagingTransaction` has 72 INFERRED edges - model-reasoned connections that need verification._

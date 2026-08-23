@@ -19,7 +19,8 @@ object DatabaseModule {
     @Singleton
     fun provideDatabase(@ApplicationContext ctx: Context): AppDatabase =
         Room.databaseBuilder(ctx, AppDatabase::class.java, AppDatabase.DATABASE_NAME)
-            .fallbackToDestructiveMigration()   // bump version + write proper Migration for prod
+            // Do not add fallbackToDestructiveMigration(): financial history must survive updates.
+            .addMigrations(*RoomMigrations.all)
             .build()
 
     @Provides fun periodDao(db: AppDatabase): PeriodDao               = db.periodDao()

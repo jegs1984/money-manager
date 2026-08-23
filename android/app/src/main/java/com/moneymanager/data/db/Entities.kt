@@ -8,6 +8,18 @@ import androidx.room.PrimaryKey
 import java.math.BigDecimal
 import java.time.LocalDate
 
+@Entity(tableName = "finance_import_batch", indices = [Index("content_hash")])
+data class ImportBatchEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    @ColumnInfo(name = "source_type") val sourceType: String,
+    val filename: String = "",
+    @ColumnInfo(name = "account_reference") val accountReference: String = "",
+    @ColumnInfo(name = "content_hash") val contentHash: String,
+    @ColumnInfo(name = "imported_at") val importedAt: Long = System.currentTimeMillis(),
+    @ColumnInfo(name = "parser_version") val parserVersion: String = "1",
+    val status: String = "STAGED",
+)
+
 // ─────────────────────────────────────────────
 // Period   →  finance_period
 // ─────────────────────────────────────────────
@@ -54,7 +66,7 @@ data class CategoryEntity(
     indices = [
         Index("period_id"),
         Index("category_id"),
-        Index(value = ["period_id", "category_id"], unique = true),
+        Index(value = ["period_id", "category_id", "type"], unique = true),
     ],
 )
 data class BudgetItemEntity(
@@ -108,6 +120,7 @@ data class TransactionEntity(
 data class StagingTransactionEntity(
     @PrimaryKey(autoGenerate = true)              val id: Long = 0,
     @ColumnInfo(name = "source_file")             val sourceFile: String? = null,
+    @ColumnInfo(name = "batch_id")                val batchId: Long? = null,
     @ColumnInfo(name = "account_number")          val accountNumber: String? = null,
     @ColumnInfo(name = "original_date")           val originalDate: LocalDate,
     @ColumnInfo(name = "description")             val description: String,
@@ -138,6 +151,7 @@ data class StagingTransactionEntity(
 data class StagingCCTransactionEntity(
     @PrimaryKey(autoGenerate = true)              val id: Long = 0,
     @ColumnInfo(name = "source_file")             val sourceFile: String? = null,
+    @ColumnInfo(name = "batch_id")                val batchId: Long? = null,
     @ColumnInfo(name = "card_number")             val cardNumber: String? = null,
     @ColumnInfo(name = "card_holder")             val cardHolder: String? = null,
     @ColumnInfo(name = "statement_date")          val statementDate: LocalDate? = null,

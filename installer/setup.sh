@@ -134,34 +134,12 @@ fi
 psql postgres -c "GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_USER;" 2>/dev/null || true
 success "Database ready"
 
-# ── 7. Schema + seed ──────────────────────────────────────────────────────────
-info "Running schema migrations..."
-PSQL_CMD="psql -U $DB_USER -d $DB_NAME"
-
-# Apply init_db.sql (idempotent — uses IF NOT EXISTS)
-$PSQL_CMD -f "$PROJECT_ROOT/sql/init_db.sql" 2>/dev/null || \
-    warn "init_db.sql had warnings (may already be applied)"
-
-# Apply CC staging migration (idempotent)
-if [[ -f "$PROJECT_ROOT/sql/migrate_add_cc_staging.sql" ]]; then
-    $PSQL_CMD -f "$PROJECT_ROOT/sql/migrate_add_cc_staging.sql" 2>/dev/null || true
-fi
-
-# Seed categories only if table is empty
-CATEGORY_COUNT=$($PSQL_CMD -tAc "SELECT COUNT(*) FROM finance_category;" 2>/dev/null || echo "0")
-if [[ "$CATEGORY_COUNT" -eq 0 ]]; then
-    info "Seeding categories..."
-    $PSQL_CMD -f "$PROJECT_ROOT/sql/categories.sql" 2>/dev/null || \
-        warn "categories.sql had warnings"
-else
-    warn "Categories already seeded ($CATEGORY_COUNT rows) — skipping"
-fi
-
-# Django sessions table
-info "Applying Django session table..."
+# ── 7. Schema ─────────────────────────────────────────────────────────────────
+# Django migrations are the schema authority. Historical SQL scripts are not an
+# installation path because applying both can leave an incompatible database.
+info "Applying Django migrations..."
 cd "$PROJECT_ROOT"
-"$VENV_PYTHON" manage.py migrate sessions --run-syncdb 2>/dev/null || \
-    "$VENV_PYTHON" manage.py migrate 2>/dev/null || true
+"$VENV_PYTHON" manage.py migrate --noinput
 success "Schema ready"
 
 # ── 8. .env file ──────────────────────────────────────────────────────────────

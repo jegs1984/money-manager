@@ -36,15 +36,15 @@
 <div class="grid grid-cols-2 gap-4 lg:grid-cols-4 mb-4">
   <div class="card">
     <p class="font-mono text-xs text-zinc-500 uppercase tracking-widest mb-2">Projected Income</p>
-    <p class="font-mono text-2xl font-semibold text-emerald-400">${{ total_income_projected|floatformat:0 }}</p>
+    <p class="font-mono text-2xl font-semibold text-emerald-400">{{ total_income_projected|clp }}</p>
   </div>
   <div class="card">
     <p class="font-mono text-xs text-zinc-500 uppercase tracking-widest mb-2">Projected Expenses</p>
-    <p class="font-mono text-2xl font-semibold text-red-400">${{ total_expense_projected|floatformat:0 }}</p>
+    <p class="font-mono text-2xl font-semibold text-red-400">{{ total_expense_projected|clp }}</p>
   </div>
   <div class="card">
     <p class="font-mono text-xs text-zinc-500 uppercase tracking-widest mb-2">Projection</p>
-    <p class="font-mono text-2xl font-semibold {% if projection >= 0 %}text-emerald-400{% else %}text-red-400{% endif %}">${{ projection|floatformat:0 }}</p>
+    <p class="font-mono text-2xl font-semibold {% if projection >= 0 %}text-emerald-400{% else %}text-red-400{% endif %}">{{ projection|clp }}</p>
   </div>
   <div class="card">
     <p class="font-mono text-xs text-zinc-500 uppercase tracking-widest mb-2">Used</p>
@@ -56,17 +56,17 @@
 <div class="grid grid-cols-2 gap-4 lg:grid-cols-4 mb-6">
   <div class="card">
     <p class="font-mono text-xs text-zinc-500 uppercase tracking-widest mb-2">Income</p>
-    <p class="font-mono text-2xl font-semibold text-emerald-400">${{ total_income_real|floatformat:0 }}</p>
-    <p class="text-xs text-zinc-600 mt-1">of ${{ total_income_projected|floatformat:0 }} projected</p>
+    <p class="font-mono text-2xl font-semibold text-emerald-400">{{ total_income_real|clp }}</p>
+    <p class="text-xs text-zinc-600 mt-1">of {{ total_income_projected|clp }} projected</p>
   </div>
   <div class="card">
     <p class="font-mono text-xs text-zinc-500 uppercase tracking-widest mb-2">Expenses</p>
-    <p class="font-mono text-2xl font-semibold text-red-400">${{ total_expense_real|floatformat:0 }}</p>
-    <p class="text-xs text-zinc-600 mt-1">of ${{ total_expense_projected|floatformat:0 }} projected</p>
+    <p class="font-mono text-2xl font-semibold text-red-400">{{ total_expense_real|clp }}</p>
+    <p class="text-xs text-zinc-600 mt-1">of {{ total_expense_projected|clp }} projected</p>
   </div>
   <div class="card">
     <p class="font-mono text-xs text-zinc-500 uppercase tracking-widest mb-2">Safe to Spend</p>
-    <p class="font-mono text-2xl font-semibold {% if safe_to_spend >= 0 %}text-emerald-400{% else %}text-red-400{% endif %}">${{ safe_to_spend|floatformat:0 }}</p>
+    <p class="font-mono text-2xl font-semibold {% if safe_to_spend >= 0 %}text-emerald-400{% else %}text-red-400{% endif %}">{{ safe_to_spend|clp }}</p>
   </div>
   <div class="card">
     <p class="font-mono text-xs text-zinc-500 uppercase tracking-widest mb-2">Burn Capacity</p>
@@ -109,11 +109,11 @@
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
       </svg>
       <span class="font-mono text-xs text-zinc-500 uppercase tracking-widest">Income ·</span>
-      <span class="font-semibold text-emerald-300 text-sm">{{ grp.group }}</span>
+      <a href="{% url 'finance:transaction_list' %}?group={{ grp.group|urlencode }}" class="font-semibold text-emerald-300 text-sm underline">{{ grp.group }}</a>
     </div>
     <div class="flex items-center gap-6 font-mono text-xs">
-      <span class="text-zinc-500">Projected <span class="text-zinc-300">${{ grp.projected|floatformat:0 }}</span></span>
-      <span class="text-zinc-500">Actual <span class="text-emerald-400">${{ grp.actual|floatformat:0 }}</span></span>
+      <span class="text-zinc-500">Projected <span class="text-zinc-300">{{ grp.projected|clp }}</span></span>
+      <span class="text-zinc-500">Actual <span class="text-emerald-400">{{ grp.actual|clp }}</span></span>
       <span class="{% if grp.diff >= 0 %}text-emerald-400{% else %}text-red-400{% endif %}">
         {% if grp.diff >= 0 %}+{% endif %}{{ grp.diff|floatformat:0 }}
       </span>
@@ -127,16 +127,16 @@
           <th class="px-4 py-2 text-right font-mono text-xs text-zinc-600 uppercase tracking-widest">Projected</th>
           <th class="px-4 py-2 text-right font-mono text-xs text-zinc-600 uppercase tracking-widest">Actual</th>
           <th class="px-4 py-2 text-right font-mono text-xs text-zinc-600 uppercase tracking-widest">Diff</th>
-          <th class="px-4 py-2 font-mono text-xs text-zinc-600 uppercase tracking-widest w-28">Cap.</th>
+          <th class="px-4 py-2 font-mono text-xs text-zinc-600 uppercase tracking-widest w-28">Uso del presupuesto</th>
           <th class="px-4 py-2 text-right font-mono text-xs text-zinc-600 uppercase tracking-widest w-20">—</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-zinc-800/40">
         {% for item in grp.items %}
         <tr class="group hover:bg-zinc-800/30 transition-colors">
-          <td class="px-5 py-2.5 font-medium text-zinc-200">{{ item.category.name }}</td>
-          <td class="px-4 py-2.5 text-right font-mono text-zinc-400">${{ item.projected_amount|floatformat:0 }}</td>
-          <td class="px-4 py-2.5 text-right font-mono text-emerald-400">${{ item.total_real|floatformat:0 }}</td>
+          <td class="px-5 py-2.5 font-medium text-zinc-200"><a class="underline hover:text-emerald-300" href="{% url 'finance:transaction_list' %}?category={{ item.category_id }}">{{ item.category.name }}</a></td>
+          <td class="px-4 py-2.5 text-right font-mono text-zinc-400">{{ item.projected_amount|clp }}</td>
+          <td class="px-4 py-2.5 text-right font-mono text-emerald-400">{{ item.total_real|clp }}</td>
           <td class="px-4 py-2.5 text-right font-mono text-xs {% if item.diff >= 0 %}text-emerald-400{% else %}text-red-400{% endif %}">
             {% if item.diff >= 0 %}+{% endif %}{{ item.diff|floatformat:0 }}
           </td>
@@ -150,7 +150,7 @@
             {% else %}<span class="font-mono text-xs text-zinc-700">—</span>{% endif %}
           </td>
           <td class="px-4 py-2.5 text-right">
-            <div class="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div class="flex justify-end gap-3 flex">
               <a href="{% url 'finance:budgetitem_update' item.pk %}" class="text-xs text-zinc-500 hover:text-zinc-300">edit</a>
               <a href="{% url 'finance:budgetitem_delete' item.pk %}" class="text-xs text-zinc-500 hover:text-red-400">del</a>
             </div>
@@ -175,11 +175,11 @@
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
       </svg>
       <span class="font-mono text-xs text-zinc-500 uppercase tracking-widest">Expense ·</span>
-      <span class="font-semibold text-red-300 text-sm">{{ grp.group }}</span>
+      <a href="{% url 'finance:transaction_list' %}?group={{ grp.group|urlencode }}" class="font-semibold text-red-300 text-sm underline">{{ grp.group }}</a>
     </div>
     <div class="flex items-center gap-6 font-mono text-xs">
-      <span class="text-zinc-500">Projected <span class="text-zinc-300">${{ grp.projected|floatformat:0 }}</span></span>
-      <span class="text-zinc-500">Actual <span class="text-zinc-100">${{ grp.actual|floatformat:0 }}</span></span>
+      <span class="text-zinc-500">Projected <span class="text-zinc-300">{{ grp.projected|clp }}</span></span>
+      <span class="text-zinc-500">Actual <span class="text-zinc-100">{{ grp.actual|clp }}</span></span>
       <span class="{% if grp.diff >= 0 %}text-emerald-400{% else %}text-red-400{% endif %}">
         {% if grp.diff >= 0 %}+{% endif %}{{ grp.diff|floatformat:0 }}
       </span>
@@ -193,16 +193,16 @@
           <th class="px-4 py-2 text-right font-mono text-xs text-zinc-600 uppercase tracking-widest">Projected</th>
           <th class="px-4 py-2 text-right font-mono text-xs text-zinc-600 uppercase tracking-widest">Actual</th>
           <th class="px-4 py-2 text-right font-mono text-xs text-zinc-600 uppercase tracking-widest">Diff</th>
-          <th class="px-4 py-2 font-mono text-xs text-zinc-600 uppercase tracking-widest w-28">Cap.</th>
+          <th class="px-4 py-2 font-mono text-xs text-zinc-600 uppercase tracking-widest w-28">Uso del presupuesto</th>
           <th class="px-4 py-2 text-right font-mono text-xs text-zinc-600 uppercase tracking-widest w-20">—</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-zinc-800/40">
         {% for item in grp.items %}
         <tr class="group hover:bg-zinc-800/30 transition-colors">
-          <td class="px-5 py-2.5 font-medium text-zinc-200">{{ item.category.name }}</td>
-          <td class="px-4 py-2.5 text-right font-mono text-zinc-400">${{ item.projected_amount|floatformat:0 }}</td>
-          <td class="px-4 py-2.5 text-right font-mono text-zinc-100">${{ item.total_real|floatformat:0 }}</td>
+          <td class="px-5 py-2.5 font-medium text-zinc-200"><a class="underline hover:text-emerald-300" href="{% url 'finance:transaction_list' %}?category={{ item.category_id }}">{{ item.category.name }}</a></td>
+          <td class="px-4 py-2.5 text-right font-mono text-zinc-400">{{ item.projected_amount|clp }}</td>
+          <td class="px-4 py-2.5 text-right font-mono text-zinc-100">{{ item.total_real|clp }}</td>
           <td class="px-4 py-2.5 text-right font-mono text-xs {% if item.diff >= 0 %}text-emerald-400{% else %}text-red-400{% endif %}">
             {% if item.diff >= 0 %}+{% endif %}{{ item.diff|floatformat:0 }}
           </td>
@@ -216,7 +216,7 @@
             {% else %}<span class="font-mono text-xs text-zinc-700">—</span>{% endif %}
           </td>
           <td class="px-4 py-2.5 text-right">
-            <div class="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div class="flex justify-end gap-3 flex">
               <a href="{% url 'finance:budgetitem_update' item.pk %}" class="text-xs text-zinc-500 hover:text-zinc-300">edit</a>
               <a href="{% url 'finance:budgetitem_delete' item.pk %}" class="text-xs text-zinc-500 hover:text-red-400">del</a>
             </div>

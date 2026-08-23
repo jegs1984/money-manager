@@ -1,3 +1,19 @@
+# graphify
+
+## Safety Approval
+
+Before running any potentially dangerous command or action, explain the exact impact and ask the user for explicit approval. This includes destructive filesystem or database changes, privileged/system-wide changes, external side effects, and commands that may overwrite, delete, expose, or irreversibly alter data. Do not proceed until approval is given.
+
+This project has a knowledge graph at `graphify-out/` with cross-file relationships and community structure.
+
+## Mandatory Graphify Workflow
+
+- For every codebase question, first run `graphify query "<question>"` when `graphify-out/graph.json` exists. Use `graphify explain "<concept>"` for a focused node and `graphify path "<A>" "<B>"` for relationships.
+- Do not replace Graphify with broad `grep`, `rg`, `find`, or raw source browsing for discovery. Read source only to modify or debug identified code, or if the graph lacks needed detail.
+- Treat dirty `graphify-out/` files as expected after updates; use Graphify unless the user explicitly opts out or the task concerns stale graph output.
+- Use `graphify-out/wiki/index.md` for broad navigation when available. Read `graphify-out/GRAPH_REPORT.md` only for architecture-wide context or after focused queries are insufficient.
+- After modifying code, run `graphify update .` to refresh the AST graph. Documentation-only changes do not require an update.
+
 # money-manager workspace instructions
 
 ## Project Context

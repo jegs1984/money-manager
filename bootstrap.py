@@ -7,8 +7,8 @@ It will:
   1. Create a Python virtual environment  (./venv)
   2. Install dependencies from requirements.txt
   3. Copy .env.example → .env  (if .env does not exist)
-  4. Create the PostgreSQL database and apply the SQL schema (sql/init_db.sql)
-  5. Run Django fake-initial migrations so the ORM is in sync
+  4. Create the PostgreSQL database (when local PostgreSQL tools are available)
+  5. Apply Django migrations, which are the schema authority
   6. Print startup instructions
 
 Usage

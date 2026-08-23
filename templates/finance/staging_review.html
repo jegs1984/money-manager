@@ -16,6 +16,7 @@
 {% endblock %}
 
 {% block content %}
+<ol class="mb-4 flex flex-wrap gap-2 text-xs text-zinc-400" aria-label="Progreso de importación"><li>1. Cargar</li><li aria-hidden="true">→</li><li>2. Validar</li><li aria-hidden="true">→</li><li class="font-semibold text-emerald-300">3. Categorizar</li><li aria-hidden="true">→</li><li>4. Confirmar</li></ol>
 {# Hidden delete form — shared by per-row and bulk delete #}
 <form id="delete-form" method="post" action="{% url 'finance:staging_delete' %}" class="hidden">
   {% csrf_token %}
@@ -35,6 +36,13 @@
 
 {% else %}
 
+{% if batch %}
+<div class="mb-4 grid gap-2 rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3 text-xs text-zinc-300 sm:grid-cols-3 lg:grid-cols-4">
+  <span><strong>Archivo:</strong> {{ batch.filename|default:"Notificaciones" }}</span><span><strong>Cuenta:</strong> {{ batch.account_reference|default:"Sin cuenta" }}</span><span><strong>Fechas:</strong> {{ batch_summary.from_date|date:"d/m/Y" }}–{{ batch_summary.to_date|date:"d/m/Y" }}</span><span><strong>Importado:</strong> {{ batch.imported_at|date:"d/m/Y H:i" }}</span>
+  <span><strong>Filas:</strong> {{ batch_summary.total }}</span><span><strong>Duplicados:</strong> {{ batch_summary.duplicates }}</span><span><strong>Asignadas:</strong> {{ batch_summary.assigned }}</span><span><strong>Omitidas/confirmadas:</strong> {{ batch_summary.skipped }}/{{ batch_summary.committed }}</span>
+</div>
+{% endif %}
+
 {% if duplicate_ids %}
 <div class="mb-4 flex items-center gap-3 rounded-lg border border-amber-800/50 bg-amber-950/30 px-4 py-3">
   <svg class="h-5 w-5 shrink-0 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -50,19 +58,28 @@
 
 <form method="post" id="staging-form">
   {% csrf_token %}
+  {% if batch %}<input type="hidden" name="batch" value="{{ batch.pk }}">{% endif %}
   {{ formset.management_form }}
+  <div class="card mb-3 grid gap-2 md:grid-cols-5" aria-label="Filtrar filas de revisión">
+    <input id="review-search" class="form-input" placeholder="Buscar descripción o documento" type="search">
+    <select id="review-type" class="form-select"><option value="">Todos los tipos</option><option value="IN">Ingreso</option><option value="OUT">Gasto</option></select>
+    <select id="review-category" class="form-select"><option value="">Todas las categorías</option>{% for category in formset.empty_form.assigned_category.field.queryset %}<option value="{{ category.pk }}">{{ category.name }}</option>{% endfor %}</select>
+    <select id="review-sort" class="form-select"><option value="date">Fecha</option><option value="amount">Monto</option><option value="description">Descripción</option></select>
+    <button id="apply-selected" type="button" class="btn-secondary justify-center">Aplicar categoría a seleccionadas</button>
+  </div>
 
   <div class="card overflow-hidden p-0 mb-28">
     <div class="overflow-x-auto">
       <table class="w-full text-sm">
         <thead>
           <tr class="border-b border-zinc-800 bg-zinc-900/50">
+            <th class="px-2 py-2.5"><input id="select-all-rows" type="checkbox" class="form-checkbox" aria-label="Seleccionar todas las filas visibles"></th>
             <th class="px-4 py-2.5 text-left  font-mono text-xs text-zinc-600 uppercase tracking-widest w-24">Date</th>
             <th class="px-4 py-2.5 text-left  font-mono text-xs text-zinc-600 uppercase tracking-widest">Description</th>
             <th class="px-4 py-2.5 text-left  font-mono text-xs text-zinc-600 uppercase tracking-widest w-24">Doc #</th>
             <th class="px-4 py-2.5 text-right font-mono text-xs text-zinc-600 uppercase tracking-widest w-32">Amount</th>
             <th class="px-4 py-2.5 text-right font-mono text-xs text-zinc-600 uppercase tracking-widest w-32">Balance</th>
-            <th class="px-4 py-2.5 text-left  font-mono text-xs text-zinc-600 uppercase tracking-widest w-8">T</th>
+            <th class="px-4 py-2.5 text-left font-mono text-xs text-zinc-600 uppercase tracking-widest">Tipo</th>
             <th class="px-4 py-2.5 text-left  font-mono text-xs text-zinc-600 uppercase tracking-widest">Category / Action</th>
             <th class="px-4 py-2.5 w-10"></th>{# delete button column #}
           </tr>
@@ -75,10 +92,10 @@
           {% if sid in duplicate_ids %}
           {# ── DUPLICATE ROW ──────────────────────────────────────────────── #}
           <tr class="bg-amber-950/20 border-l-2 border-amber-600/60 hover:bg-amber-950/30 transition-colors"
-              id="row-{{ sid }}" data-sid="{{ sid }}">
+              id="row-{{ sid }}" data-sid="{{ sid }}" data-date="{{ form.instance.original_date|date:'Y-m-d' }}" data-amount="{{ form.instance.amount }}">
             {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
 
-            <td class="px-4 py-2.5 font-mono text-xs text-zinc-400 whitespace-nowrap">
+            <td class="px-2 py-2.5"><input type="checkbox" class="row-select form-checkbox" aria-label="Seleccionar {{ form.instance.description }}"></td><td class="px-4 py-2.5 font-mono text-xs text-zinc-400 whitespace-nowrap">
               {{ form.instance.original_date|date:"d/m/Y" }}
             </td>
             <td class="px-4 py-2.5 text-zinc-300 max-w-xs">
@@ -90,20 +107,21 @@
                         clip-rule="evenodd"/>
                 </svg>
                 <span class="font-mono text-xs text-amber-400/80">Already in ledger</span>
+                {% with match=duplicate_matches|get_item:sid %}{% if match %}<span class="font-mono text-xs text-amber-200">Coincide con {{ match.date|date:"d/m/Y" }} · {{ match.budget_item.category.name }} · {{ match.real_amount|clp }}{% if match.source_fingerprint %} · importado{% endif %}</span>{% endif %}{% endwith %}
               </span>
             </td>
             <td class="px-4 py-2.5 font-mono text-xs text-zinc-600">{{ form.instance.doc_number|default:"—" }}</td>
             <td class="px-4 py-2.5 text-right font-mono text-sm font-semibold whitespace-nowrap
               {% if form.instance.type == 'IN' %}text-emerald-400{% else %}text-red-400{% endif %}">
-              {% if form.instance.type == 'OUT' %}-{% endif %}${{ form.instance.amount|floatformat:0 }}
+              {% if form.instance.type == 'OUT' %}-{% endif %}{{ form.instance.amount|clp }}
             </td>
             <td class="px-4 py-2.5 text-right font-mono text-xs text-zinc-500 whitespace-nowrap">
-              {% if form.instance.balance %}${{ form.instance.balance|floatformat:0 }}{% else %}—{% endif %}
+              {% if form.instance.balance %}{{ form.instance.balance|clp }}{% else %}—{% endif %}
             </td>
             <td class="px-4 py-2.5">
               <span class="rounded px-1.5 py-0.5 font-mono text-xs
                 {% if form.instance.type == 'IN' %}bg-emerald-900/50 text-emerald-300{% else %}bg-red-900/50 text-red-300{% endif %}">
-                {{ form.instance.type }}
+                {{ form.instance.type|direction_label }}
               </span>
             </td>
             <td class="px-4 py-3">
@@ -135,10 +153,10 @@
 
           {% else %}
           {# ── NORMAL ROW ─────────────────────────────────────────────────── #}
-          <tr class="hover:bg-zinc-800/20 transition-colors" id="row-{{ sid }}" data-sid="{{ sid }}">
+          <tr class="hover:bg-zinc-800/20 transition-colors" id="row-{{ sid }}" data-sid="{{ sid }}" data-date="{{ form.instance.original_date|date:'Y-m-d' }}" data-amount="{{ form.instance.amount }}">
             {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
 
-            <td class="px-4 py-2.5 font-mono text-xs text-zinc-400 whitespace-nowrap">
+            <td class="px-2 py-2.5"><input type="checkbox" class="row-select form-checkbox" aria-label="Seleccionar {{ form.instance.description }}"></td><td class="px-4 py-2.5 font-mono text-xs text-zinc-400 whitespace-nowrap">
               {{ form.instance.original_date|date:"d/m/Y" }}
             </td>
             <td class="px-4 py-2.5 text-zinc-300 max-w-xs">
@@ -146,14 +164,15 @@
               {% if form.instance.account_number %}
                 <span class="font-mono text-xs text-zinc-600">{{ form.instance.account_number }}</span>
               {% endif %}
+              {% if form.instance.assigned_category %}<span class="block text-xs text-emerald-300">Sugerencia de regla comercial: revísala antes de confirmar.</span>{% endif %}
             </td>
             <td class="px-4 py-2.5 font-mono text-xs text-zinc-600">{{ form.instance.doc_number|default:"—" }}</td>
             <td class="px-4 py-2.5 text-right font-mono text-sm font-semibold whitespace-nowrap
               {% if form.instance.type == 'IN' %}text-emerald-400{% else %}text-red-400{% endif %}">
-              {% if form.instance.type == 'OUT' %}-{% endif %}${{ form.instance.amount|floatformat:0 }}
+              {% if form.instance.type == 'OUT' %}-{% endif %}{{ form.instance.amount|clp }}
             </td>
             <td class="px-4 py-2.5 text-right font-mono text-xs text-zinc-500 whitespace-nowrap">
-              {% if form.instance.balance %}${{ form.instance.balance|floatformat:0 }}{% else %}—{% endif %}
+              {% if form.instance.balance %}{{ form.instance.balance|clp }}{% else %}—{% endif %}
             </td>
             <td class="px-4 py-2.5">
               <span class="rounded px-1.5 py-0.5 font-mono text-xs
@@ -189,7 +208,7 @@
   </div>
 
   <!-- Sticky action bar -->
-  <div class="fixed bottom-0 left-56 right-0 z-50 border-t border-zinc-800 bg-zinc-950/95 backdrop-blur px-6 py-3">
+  <div class="fixed bottom-0 left-0 right-0 z-50 border-t border-zinc-800 bg-zinc-950/95 backdrop-blur px-3 py-3 md:left-56 md:px-6">
     <div class="flex items-center justify-between">
       <p class="font-mono text-xs text-zinc-500" id="row-count-label">
         <span id="row-count">{{ pending_count }}</span> row{{ pending_count|pluralize }} staged
@@ -227,7 +246,7 @@
 <script>
 (function () {
   const CSRF = '{{ csrf_token }}';
-  const DELETE_URL = '{% url "finance:staging_delete" %}';
+  const DELETE_URL = '{% url "finance:staging_delete" %}{% if batch %}?batch={{ batch.pk }}{% endif %}';
 
   // ── helpers ──────────────────────────────────────────────────────────────
 
@@ -301,7 +320,8 @@
     btnAll.addEventListener('click', async function () {
       const count = document.querySelectorAll('#staging-tbody tr[data-sid]').length;
       if (!count) return;
-      if (!confirm('Delete all ' + count + ' staged transaction' + (count === 1 ? '' : 's') + '? This cannot be undone.')) return;
+      const batchName = '{{ batch.filename|default:"Notificaciones"|escapejs }}';
+      if (prompt('Eliminar ' + count + ' filas del lote “' + batchName + '”. Escribe ELIMINAR para confirmar:') !== 'ELIMINAR') return;
       btnAll.disabled = true;
       try {
         const data = await deleteIds([], true);
@@ -333,6 +353,18 @@
   {% endif %}
   {% endwith %}
   {% endfor %}
+
+  // ── local review tools: filter, sort, select and bulk categorise ─────────
+  const search = document.getElementById('review-search'), type = document.getElementById('review-type'), category = document.getElementById('review-category'), sort = document.getElementById('review-sort');
+  const rows = () => Array.from(document.querySelectorAll('#staging-tbody tr[data-sid]'));
+  function filterRows() {
+    const term = search.value.toLowerCase();
+    rows().forEach(row => { const select = row.querySelector('select'); const matches = row.textContent.toLowerCase().includes(term) && (!type.value || row.textContent.includes(type.value)) && (!category.value || select.value === category.value); row.hidden = !matches; });
+  }
+  [search, type, category].forEach(control => control && control.addEventListener('input', filterRows));
+  sort && sort.addEventListener('change', () => { const tbody = document.getElementById('staging-tbody'); rows().sort((a,b) => (sort.value === 'amount' ? Number(a.dataset.amount)-Number(b.dataset.amount) : sort.value === 'description' ? a.textContent.localeCompare(b.textContent) : a.dataset.date.localeCompare(b.dataset.date))).forEach(row => tbody.appendChild(row)); });
+  document.getElementById('select-all-rows')?.addEventListener('change', e => rows().filter(row => !row.hidden).forEach(row => row.querySelector('.row-select').checked = e.target.checked));
+  document.getElementById('apply-selected')?.addEventListener('click', () => { if (!category.value) { category.focus(); return; } rows().filter(row => row.querySelector('.row-select').checked).forEach(row => { row.querySelector('select').value = category.value; }); });
 
 })();
 </script>

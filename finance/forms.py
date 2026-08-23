@@ -2,7 +2,7 @@ from django import forms
 from django.forms import modelformset_factory
 from django.utils import timezone
 
-from .models import BudgetItem, Category, Period, StagingCCTransaction, StagingTransaction, Transaction
+from .models import Account, BudgetItem, Category, Goal, MerchantRule, Period, Reconciliation, RecurringPlan, StagingCCTransaction, StagingTransaction, Transaction, Transfer
 
 
 class PeriodForm(forms.ModelForm):
@@ -25,6 +25,88 @@ class CategoryForm(forms.ModelForm):
             'name':  forms.TextInput(attrs={'class': 'form-input'}),
             'group': forms.Select(attrs={'class': 'form-select'}),
         }
+
+
+class AccountForm(forms.ModelForm):
+    class Meta:
+        model = Account
+        fields = ['name', 'kind', 'external_reference', 'opening_balance', 'is_active']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-input'}),
+            'kind': forms.Select(attrs={'class': 'form-select'}),
+            'external_reference': forms.TextInput(attrs={'class': 'form-input'}),
+            'opening_balance': forms.NumberInput(attrs={'class': 'form-input', 'step': '0.01'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-checkbox'}),
+        }
+
+
+class TransferForm(forms.ModelForm):
+    class Meta:
+        model = Transfer
+        fields = ['source_account', 'destination_account', 'date', 'amount', 'description']
+        widgets = {
+            'source_account': forms.Select(attrs={'class': 'form-select'}),
+            'destination_account': forms.Select(attrs={'class': 'form-select'}),
+            'date': forms.DateInput(attrs={'type': 'date', 'class': 'form-input'}),
+            'amount': forms.NumberInput(attrs={'class': 'form-input', 'step': '0.01', 'min': '0.01'}),
+            'description': forms.TextInput(attrs={'class': 'form-input'}),
+        }
+
+
+class ReconciliationForm(forms.ModelForm):
+    class Meta:
+        model = Reconciliation
+        fields = ['account', 'statement_date', 'statement_balance', 'notes']
+        widgets = {
+            'account': forms.Select(attrs={'class': 'form-select'}),
+            'statement_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-input'}),
+            'statement_balance': forms.NumberInput(attrs={'class': 'form-input', 'step': '0.01'}),
+            'notes': forms.Textarea(attrs={'class': 'form-input', 'rows': 3}),
+        }
+
+
+class MerchantRuleForm(forms.ModelForm):
+    class Meta:
+        model = MerchantRule
+        fields = ['description_pattern', 'category', 'transaction_type', 'is_active']
+        widgets = {
+            'description_pattern': forms.TextInput(attrs={'class': 'form-input'}),
+            'category': forms.Select(attrs={'class': 'form-select'}),
+            'transaction_type': forms.Select(attrs={'class': 'form-select'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-checkbox'}),
+        }
+
+
+class RecurringPlanForm(forms.ModelForm):
+    class Meta:
+        model = RecurringPlan
+        fields = ['name', 'category', 'account', 'transaction_type', 'amount', 'frequency', 'next_date', 'description', 'is_active']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-input'}), 'category': forms.Select(attrs={'class': 'form-select'}),
+            'account': forms.Select(attrs={'class': 'form-select'}), 'transaction_type': forms.Select(attrs={'class': 'form-select'}),
+            'amount': forms.NumberInput(attrs={'class': 'form-input', 'step': '0.01', 'min': '0.01'}), 'frequency': forms.Select(attrs={'class': 'form-select'}),
+            'next_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-input'}), 'description': forms.TextInput(attrs={'class': 'form-input'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-checkbox'}),
+        }
+
+
+class GoalForm(forms.ModelForm):
+    class Meta:
+        model = Goal
+        fields = ['name', 'target_amount', 'saved_amount', 'target_date', 'notes']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-input'}), 'target_amount': forms.NumberInput(attrs={'class': 'form-input', 'step': '0.01', 'min': '0.01'}),
+            'saved_amount': forms.NumberInput(attrs={'class': 'form-input', 'step': '0.01', 'min': '0'}), 'target_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-input'}),
+            'notes': forms.Textarea(attrs={'class': 'form-input', 'rows': 3}),
+        }
+
+
+class BundleExportForm(forms.Form):
+    passphrase = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-input'}), min_length=12)
+
+
+class BundleImportForm(BundleExportForm):
+    bundle = forms.FileField(widget=forms.ClearableFileInput(attrs={'class': 'form-input', 'accept': '.mmbundle'}))
 
 class BudgetItemForm(forms.ModelForm):
     class Meta:
@@ -61,6 +143,13 @@ class TransactionForm(forms.ModelForm):
         }
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['budget_item'].required = True
+        self.fields['budget_item'].queryset = BudgetItem.objects.select_related(
+            'period', 'category'
+        ).order_by('-period__start_date', 'category__name', 'type')
+        self.fields['budget_item'].label_from_instance = lambda item: (
+            f'{item.period.name} · {item.category.name} ({item.type})'
+        )
         # Only set the default if this is a new form (not editing an existing instance)
         if not self.instance.pk and 'date' in self.fields:
             self.fields['date'].initial = timezone.now().date()
@@ -71,6 +160,7 @@ class StatementUploadForm(forms.Form):
         label='Bank Statement (.dat / .csv / .txt)',
         widget=forms.ClearableFileInput(attrs={'accept': '.dat,.csv,.txt', 'class': 'hidden', 'id': 'id_statement_file'}),
     )
+    import_again = forms.BooleanField(required=False, label='Import again if this file was already imported')
 
 
 class CategoryModelChoiceField(forms.ModelChoiceField):
@@ -113,6 +203,7 @@ class CCStatementUploadForm(forms.Form):
             attrs={'accept': '.xls,.xlsx', 'class': 'hidden', 'id': 'id_cc_statement_file'}
         ),
     )
+    import_again = forms.BooleanField(required=False, label='Import again if this file was already imported')
 
 
 class StagingCCTransactionReviewForm(forms.ModelForm):

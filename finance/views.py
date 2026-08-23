@@ -1,26 +1,32 @@
+import csv
 from decimal import Decimal
+from datetime import timedelta
 
 from django.contrib import messages
 from django.db.models import F, Sum, Value, Case, When
 from django.db.models.functions import Coalesce
 from django.http import HttpResponse, JsonResponse
-from django.shortcuts import redirect
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.views.decorators.http import require_POST
+from django.utils import timezone
 from django.views.generic import (
     CreateView, DeleteView, FormView, ListView, TemplateView, UpdateView, View,
 )
 
 from .forms import (
-    BudgetItemForm, CategoryForm, PeriodForm,
+    AccountForm, BudgetItemForm, BundleExportForm, BundleImportForm, CategoryForm, GoalForm, MerchantRuleForm, PeriodForm, ReconciliationForm, RecurringPlanForm, TransferForm,
     StagingReviewFormset, StatementUploadForm, TransactionForm,
     CCStatementUploadForm, StagingCCReviewFormset,
 )
-from .models import BudgetItem, Category, Period, StagingCCTransaction, StagingTransaction, Transaction
+from .models import Account, BudgetItem, Category, Goal, ImportBatch, InstallmentObligation, MerchantRule, Period, RecurringPlan, StagingCCTransaction, StagingTransaction, Transaction
 from .services import (
-    calculate_safe_to_spend, generate_dashboard_pdf, get_duplicate_staging_ids,
+    calculate_safe_to_spend, generate_dashboard_pdf, get_duplicate_staging_ids, get_duplicate_staging_matches,
     parse_scotiabank_statement, process_staging_batch,
     parse_scotiabank_cc_statement, process_cc_staging_batch,
+    calculate_account_balance, close_period_service, reconcile_account_service,
+    record_transfer_service, reverse_transaction_service,
+    export_finance_bundle, import_finance_bundle, materialize_recurring_plans,
 )
 
 
@@ -61,9 +67,28 @@ class DashboardView(TemplateView):
             )
             ctx.update(stats)
             ctx['budget_items'] = items
+            item_list = list(items)
+            ctx['needs_attention'] = {
+                'uncategorised': StagingTransaction.objects.filter(is_processed=False, assigned_category__isnull=True).count()
+                    + StagingCCTransaction.objects.filter(is_processed=False, assigned_category__isnull=True).count(),
+                'duplicates': len(get_duplicate_staging_ids(active_period, StagingTransaction.objects.filter(is_processed=False))),
+                'near_budget': sum(1 for item in item_list if item.type == 'OUT' and item.projected_amount and item.total_real >= item.projected_amount * Decimal('0.80') and item.total_real < item.projected_amount),
+                'over_budget': sum(1 for item in item_list if item.type == 'OUT' and item.total_real > item.projected_amount),
+            }
 
         ctx['active_period'] = active_period
         ctx['all_periods']   = all_periods
+        today = timezone.localdate()
+        ctx['upcoming_bills'] = list(RecurringPlan.objects.filter(is_active=True, next_date__gte=today, next_date__lte=today + timedelta(days=30)).select_related('category').order_by('next_date'))
+        ctx['upcoming_installments'] = list(InstallmentObligation.objects.filter(is_complete=False, next_due_date__gte=today, next_due_date__lte=today + timedelta(days=30)).select_related('category').order_by('next_due_date'))
+        forecast = []
+        for offset in range(7):
+            forecast_date = today + timedelta(days=offset)
+            income = sum((plan.amount for plan in ctx['upcoming_bills'] if plan.next_date == forecast_date and plan.transaction_type == 'IN'), Decimal('0'))
+            expenses = sum((plan.amount for plan in ctx['upcoming_bills'] if plan.next_date == forecast_date and plan.transaction_type == 'OUT'), Decimal('0'))
+            expenses += sum((item.installment_value for item in ctx['upcoming_installments'] if item.next_due_date == forecast_date), Decimal('0'))
+            forecast.append({'date': forecast_date, 'income': income, 'expenses': expenses, 'net': income - expenses})
+        ctx['cash_forecast'] = forecast
         return ctx
 
 
@@ -165,6 +190,19 @@ class GroupDashboardView(TemplateView):
         return ctx
 
 
+class TrendView(TemplateView):
+    template_name = 'finance/trend.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        rows = []
+        for period in Period.objects.order_by('start_date'):
+            stats = calculate_safe_to_spend(period.pk)
+            rows.append({'period': period, **stats})
+        context['rows'] = rows
+        return context
+
+
 # ─────────────────────────────────────────────
 # Period CRUD
 # ─────────────────────────────────────────────
@@ -195,9 +233,46 @@ class PeriodDeleteView(DeleteView):
     success_url   = reverse_lazy('finance:period_list')
 
 
-class PeriodDuplicateBudgetView(View):
-    """Stub — implement as needed."""
+class PeriodCloseView(View):
     def post(self, request, pk, *args, **kwargs):
+        try:
+            close_period_service(pk)
+        except (Period.DoesNotExist, ValueError) as exc:
+            messages.error(request, str(exc))
+        else:
+            messages.success(request, 'Period closed. Its ledger is now read-only.')
+        return redirect('finance:period_list')
+
+
+class PeriodDuplicateBudgetView(View):
+    """Preview and confirm copying a period's budget skeleton."""
+    def get(self, request, pk, *args, **kwargs):
+        source = Period.objects.get(pk=pk)
+        candidates = Period.objects.exclude(pk=pk).order_by('-start_date')
+        return self.render_to_response({
+            'source': source,
+            'source_item_count': source.budget_items.count(),
+            'candidate_periods': candidates,
+        })
+
+    template_name = 'finance/period_duplicate_budget.html'
+
+    def render_to_response(self, context):
+        from django.shortcuts import render
+        return render(self.request, self.template_name, context)
+
+    def post(self, request, pk, *args, **kwargs):
+        from .services import duplicate_period_budget_items
+        target_id = request.POST.get('target_period')
+        if not target_id or not target_id.isdigit() or int(target_id) == pk:
+            messages.error(request, 'Choose a different target period.')
+            return redirect('finance:period_duplicate_budget', pk=pk)
+        try:
+            result = duplicate_period_budget_items(pk, int(target_id))
+        except Period.DoesNotExist:
+            messages.error(request, 'The selected period no longer exists.')
+            return redirect('finance:period_list')
+        messages.success(request, f"Copied {result['created']} budget item(s); {result['skipped']} already existed.")
         return redirect('finance:period_list')
 
 
@@ -229,6 +304,126 @@ class CategoryDeleteView(DeleteView):
     model         = Category
     template_name = 'finance/confirm_delete.html'
     success_url   = reverse_lazy('finance:category_list')
+
+
+# ─────────────────────────────────────────────
+# Accounts, transfers, and reconciliation
+# ─────────────────────────────────────────────
+
+class AccountListView(ListView):
+    model = Account
+    template_name = 'finance/account_list.html'
+    context_object_name = 'accounts'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['accounts_with_balances'] = [
+            (account, calculate_account_balance(account.pk))
+            for account in context['accounts']
+        ]
+        return context
+
+
+class AccountCreateView(CreateView):
+    model = Account
+    form_class = AccountForm
+    template_name = 'finance/financial_form.html'
+    success_url = reverse_lazy('finance:account_list')
+
+
+class AccountUpdateView(UpdateView):
+    model = Account
+    form_class = AccountForm
+    template_name = 'finance/financial_form.html'
+    success_url = reverse_lazy('finance:account_list')
+
+
+class TransferCreateView(FormView):
+    template_name = 'finance/financial_form.html'
+    form_class = TransferForm
+    success_url = reverse_lazy('finance:account_list')
+
+    def form_valid(self, form):
+        try:
+            record_transfer_service(
+                form.cleaned_data['source_account'].pk,
+                form.cleaned_data['destination_account'].pk,
+                form.cleaned_data['date'],
+                form.cleaned_data['amount'],
+                form.cleaned_data['description'],
+            )
+        except ValueError as exc:
+            form.add_error(None, str(exc))
+            return self.form_invalid(form)
+        messages.success(self.request, 'Transfer recorded without changing your budget totals.')
+        return super().form_valid(form)
+
+
+class ReconciliationCreateView(FormView):
+    template_name = 'finance/financial_form.html'
+    form_class = ReconciliationForm
+    success_url = reverse_lazy('finance:account_list')
+
+    def form_valid(self, form):
+        reconciliation = reconcile_account_service(
+            form.cleaned_data['account'].pk,
+            form.cleaned_data['statement_date'],
+            form.cleaned_data['statement_balance'],
+            form.cleaned_data['notes'],
+        )
+        difference = reconciliation.statement_balance - reconciliation.calculated_balance
+        messages.success(self.request, f'Reconciliation saved. Difference: ${difference:,.0f}.')
+        return super().form_valid(form)
+
+
+class MerchantRuleListView(ListView):
+    model = MerchantRule
+    template_name = 'finance/simple_list.html'
+    context_object_name = 'rows'
+
+
+class MerchantRuleCreateView(CreateView):
+    model = MerchantRule
+    form_class = MerchantRuleForm
+    template_name = 'finance/financial_form.html'
+    success_url = reverse_lazy('finance:merchant_rule_list')
+
+
+class RecurringPlanListView(ListView):
+    model = RecurringPlan
+    template_name = 'finance/simple_list.html'
+    context_object_name = 'rows'
+
+    def post(self, request, *args, **kwargs):
+        created = materialize_recurring_plans()
+        messages.success(request, f'{created} recurring transaction(s) added for review in the ledger.')
+        return redirect('finance:recurring_plan_list')
+
+
+class RecurringPlanCreateView(CreateView):
+    model = RecurringPlan
+    form_class = RecurringPlanForm
+    template_name = 'finance/financial_form.html'
+    success_url = reverse_lazy('finance:recurring_plan_list')
+
+
+class GoalListView(ListView):
+    model = Goal
+    template_name = 'finance/simple_list.html'
+    context_object_name = 'rows'
+
+
+class GoalCreateView(CreateView):
+    model = Goal
+    form_class = GoalForm
+    template_name = 'finance/financial_form.html'
+    success_url = reverse_lazy('finance:goal_list')
+
+
+class InstallmentObligationListView(ListView):
+    model = InstallmentObligation
+    template_name = 'finance/installment_list.html'
+    context_object_name = 'obligations'
 
 
 # ─────────────────────────────────────────────
@@ -266,7 +461,29 @@ class TransactionListView(ListView):
     paginate_by         = 50
 
     def get_queryset(self):
-        return Transaction.objects.select_related('budget_item__category', 'budget_item__period')
+        queryset = Transaction.objects.select_related('budget_item__category', 'budget_item__period', 'account')
+        query = self.request.GET.get('q', '').strip()
+        category_id = self.request.GET.get('category')
+        group = self.request.GET.get('group', '').strip()
+        date_from = self.request.GET.get('from')
+        date_to = self.request.GET.get('to')
+        if query:
+            from django.db.models import Q
+            queryset = queryset.filter(Q(description__icontains=query) | Q(notes__icontains=query))
+        if category_id and category_id.isdigit():
+            queryset = queryset.filter(budget_item__category_id=category_id)
+        if group:
+            queryset = queryset.filter(budget_item__category__group=group)
+        if date_from:
+            queryset = queryset.filter(date__gte=date_from)
+        if date_to:
+            queryset = queryset.filter(date__lte=date_to)
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['categories'] = Category.objects.order_by('name')
+        return context
 
 
 class TransactionCreateView(CreateView):
@@ -289,6 +506,62 @@ class TransactionDeleteView(DeleteView):
     success_url   = reverse_lazy('finance:dashboard')
 
 
+class TransactionReverseView(View):
+    def post(self, request, pk, *args, **kwargs):
+        try:
+            reverse_transaction_service(pk, request.POST.get('notes', ''))
+        except (Transaction.DoesNotExist, ValueError) as exc:
+            messages.error(request, str(exc))
+        else:
+            messages.success(request, 'A compensating reversal was added; the original transaction is preserved.')
+        return redirect('finance:transaction_list')
+
+
+class TransactionCSVExportView(View):
+    def get(self, request, *args, **kwargs):
+        response = HttpResponse(content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = 'attachment; filename="money-manager-transactions.csv"'
+        writer = csv.writer(response)
+        writer.writerow(['date', 'description', 'amount', 'type', 'category', 'period', 'account', 'notes'])
+        for tx in Transaction.objects.select_related('budget_item__category', 'budget_item__period', 'account').order_by('date', 'pk'):
+            writer.writerow([
+                tx.date, tx.description, tx.real_amount, tx.budget_item.type if tx.budget_item else '',
+                tx.budget_item.category.name if tx.budget_item else '', tx.budget_item.period.name if tx.budget_item else '',
+                tx.account.name if tx.account else '', tx.notes or '',
+            ])
+        return response
+
+
+class BundleExportView(FormView):
+    template_name = 'finance/bundle_form.html'
+    form_class = BundleExportForm
+
+    def form_valid(self, form):
+        try:
+            data = export_finance_bundle(form.cleaned_data['passphrase'])
+        except ImportError:
+            form.add_error(None, 'Encrypted bundles need the cryptography package. Reinstall dependencies first.')
+            return self.form_invalid(form)
+        response = HttpResponse(data, content_type='application/octet-stream')
+        response['Content-Disposition'] = 'attachment; filename="money-manager.mmbundle"'
+        return response
+
+
+class BundleImportView(FormView):
+    template_name = 'finance/bundle_form.html'
+    form_class = BundleImportForm
+    success_url = reverse_lazy('finance:dashboard')
+
+    def form_valid(self, form):
+        try:
+            result = import_finance_bundle(form.cleaned_data['bundle'].read(), form.cleaned_data['passphrase'])
+        except (ImportError, ValueError) as exc:
+            form.add_error(None, str(exc))
+            return self.form_invalid(form)
+        messages.success(self.request, f"Imported {result['transactions']} transaction(s) from an encrypted bundle.")
+        return super().form_valid(form)
+
+
 # ─────────────────────────────────────────────
 # Statement Upload
 # ─────────────────────────────────────────────
@@ -299,7 +572,13 @@ class StatementUploadView(FormView):
 
     def form_valid(self, form):
         file_obj = form.cleaned_data['statement_file']
-        result   = parse_scotiabank_statement(file_obj, source_filename=file_obj.name)
+        result   = parse_scotiabank_statement(
+            file_obj, source_filename=file_obj.name,
+            import_again=form.cleaned_data['import_again'],
+        )
+        if result.get('already_imported'):
+            messages.warning(self.request, 'This file was already imported. Tick “import again” to stage another copy.')
+            return redirect('finance:staging_review')
         if result['count']:
             messages.success(
                 self.request,
@@ -314,7 +593,7 @@ class StatementUploadView(FormView):
                 f"No transactions found. {result['skipped']} rows skipped. "
                 "Check the file format.",
             )
-        return redirect('finance:staging_review')
+        return redirect(f"{reverse_lazy('finance:staging_review')}?batch={result['batch_id']}")
 
     def form_invalid(self, form):
         messages.error(self.request, 'Invalid upload. Please select a valid statement file.')
@@ -329,7 +608,12 @@ class StagingReviewView(TemplateView):
     template_name = 'finance/staging_review.html'
 
     def _qs(self):
-        return StagingTransaction.objects.filter(is_processed=False).order_by('original_date')
+        batch_id = self.request.GET.get('batch') or self.request.POST.get('batch')
+        qs = StagingTransaction.objects.filter(is_processed=False)
+        if batch_id and batch_id.isdigit():
+            return qs.filter(batch_id=batch_id).order_by('original_date')
+        batch = qs.exclude(batch__isnull=True).order_by('-batch__imported_at').values_list('batch_id', flat=True).first()
+        return qs.filter(batch_id=batch).order_by('original_date') if batch else qs.filter(batch__isnull=True).order_by('original_date')
 
     def _active_period(self):
         return (
@@ -342,12 +626,25 @@ class StagingReviewView(TemplateView):
         qs  = self._qs()
         period = self._active_period()
         duplicate_ids = get_duplicate_staging_ids(period, qs) if period else set()
+        ctx['duplicate_matches'] = get_duplicate_staging_matches(qs) if period else {}
 
         ctx['formset']       = StagingReviewFormset(queryset=qs)
         ctx['pending_count'] = qs.count()
         ctx['duplicate_ids'] = duplicate_ids
         ctx['active_period'] = period
         ctx['delete_url']    = 'finance:staging_delete'
+        ctx['batch'] = qs.first().batch if qs.first() else None
+        if ctx['batch']:
+            batch = ctx['batch']
+            ctx['batch_summary'] = {
+                'total': batch.total_rows or batch.staging_transactions.count(),
+                'duplicates': len(duplicate_ids),
+                'assigned': qs.exclude(assigned_category__isnull=True).count(),
+                'skipped': batch.skipped_rows,
+                'committed': batch.staging_transactions.filter(is_processed=True).count(),
+                'from_date': batch.staging_transactions.order_by('original_date').values_list('original_date', flat=True).first(),
+                'to_date': batch.staging_transactions.order_by('-original_date').values_list('original_date', flat=True).first(),
+            }
         return ctx
 
     def post(self, request, *args, **kwargs):
@@ -368,7 +665,7 @@ class StagingReviewView(TemplateView):
 
                 cat = f.cleaned_data.get('assigned_category')
                 if cat:
-                    entries.append({'staging_id': sid, 'category_id': cat.id})
+                    entries.append({'staging_id': sid, 'category_id': cat.id, 'batch_id': f.instance.batch_id})
 
             processed = process_staging_batch(entries, remove_ids=remove_ids)
             removed   = len(remove_ids)
@@ -378,10 +675,11 @@ class StagingReviewView(TemplateView):
             if removed:
                 msg_parts.append(f'{removed} duplicate{"s" if removed != 1 else ""} removed from staging')
             messages.success(request, '. '.join(msg_parts) + '.')
-            return redirect('finance:dashboard')
+            return redirect('finance:staging_review')
 
         period = self._active_period()
         duplicate_ids = get_duplicate_staging_ids(period, qs) if period else set()
+        ctx['duplicate_matches'] = get_duplicate_staging_matches(qs) if period else {}
         ctx = self.get_context_data()
         ctx['formset']       = formset
         ctx['duplicate_ids'] = duplicate_ids
@@ -404,16 +702,18 @@ class StagingDeleteView(View):
     """
 
     def post(self, request, *args, **kwargs):
+        batch_id = request.GET.get('batch') or request.POST.get('batch')
+        qs = StagingTransaction.objects.filter(is_processed=False)
+        if batch_id and batch_id.isdigit():
+            qs = qs.filter(batch_id=batch_id)
         delete_all = request.POST.get('all')
         if delete_all:
-            deleted, _ = StagingTransaction.objects.filter(is_processed=False).delete()
+            deleted, _ = qs.delete()
             n = deleted
         else:
             raw_ids = request.POST.getlist('ids')
             ids = [int(i) for i in raw_ids if i.isdigit()]
-            deleted, _ = StagingTransaction.objects.filter(
-                id__in=ids, is_processed=False
-            ).delete()
+            deleted, _ = qs.filter(id__in=ids).delete()
             n = deleted
 
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -435,11 +735,17 @@ class CCStatementUploadView(FormView):
     def form_valid(self, form):
         file_obj = form.cleaned_data['statement_file']
         try:
-            result = parse_scotiabank_cc_statement(file_obj, source_filename=file_obj.name)
+            result = parse_scotiabank_cc_statement(
+                file_obj, source_filename=file_obj.name,
+                import_again=form.cleaned_data['import_again'],
+            )
         except ValueError as e:
             messages.error(self.request, str(e))
             return self.form_invalid(form)
 
+        if result.get('already_imported'):
+            messages.warning(self.request, 'This file was already imported. Tick “import again” to stage another copy.')
+            return redirect('finance:cc_staging_review')
         if result['count']:
             messages.success(
                 self.request,
@@ -453,7 +759,7 @@ class CCStatementUploadView(FormView):
                 f"No transactions found. {result['skipped']} rows skipped. "
                 "Check the file format.",
             )
-        return redirect('finance:cc_staging_review')
+        return redirect(f"{reverse_lazy('finance:cc_staging_review')}?batch={result['batch_id']}")
 
     def form_invalid(self, form):
         messages.error(self.request, 'Invalid upload. Please select a valid .xls statement file.')
@@ -468,7 +774,12 @@ class CCStagingReviewView(TemplateView):
     template_name = 'finance/cc_staging_review.html'
 
     def _qs(self):
-        return StagingCCTransaction.objects.filter(is_processed=False).order_by('original_date')
+        batch_id = self.request.GET.get('batch') or self.request.POST.get('batch')
+        qs = StagingCCTransaction.objects.filter(is_processed=False)
+        if batch_id and batch_id.isdigit():
+            return qs.filter(batch_id=batch_id).order_by('original_date')
+        batch = qs.exclude(batch__isnull=True).order_by('-batch__imported_at').values_list('batch_id', flat=True).first()
+        return qs.filter(batch_id=batch).order_by('original_date') if batch else qs.filter(batch__isnull=True).order_by('original_date')
 
     def _active_period(self):
         return (
@@ -487,9 +798,21 @@ class CCStagingReviewView(TemplateView):
         ctx['duplicate_ids'] = duplicate_ids
         ctx['active_period'] = period
         ctx['delete_url']    = 'finance:cc_staging_delete'
+        ctx['batch'] = qs.first().batch if qs.first() else None
         first = qs.first()
         ctx['card_number'] = first.card_number if first else ''
         ctx['card_holder'] = first.card_holder if first else ''
+        if ctx['batch']:
+            batch = ctx['batch']
+            ctx['batch_summary'] = {
+                'total': batch.total_rows or batch.staging_cc_transactions.count(),
+                'duplicates': len(duplicate_ids),
+                'assigned': qs.exclude(assigned_category__isnull=True).count(),
+                'skipped': batch.skipped_rows,
+                'committed': batch.staging_cc_transactions.filter(is_processed=True).count(),
+                'from_date': batch.staging_cc_transactions.order_by('original_date').values_list('original_date', flat=True).first(),
+                'to_date': batch.staging_cc_transactions.order_by('-original_date').values_list('original_date', flat=True).first(),
+            }
         return ctx
 
     def post(self, request, *args, **kwargs):
@@ -510,7 +833,7 @@ class CCStagingReviewView(TemplateView):
 
                 cat = f.cleaned_data.get('assigned_category')
                 if cat:
-                    entries.append({'staging_id': sid, 'category_id': cat.id})
+                    entries.append({'staging_id': sid, 'category_id': cat.id, 'batch_id': f.instance.batch_id})
 
             processed = process_cc_staging_batch(entries, remove_ids=remove_ids)
             removed   = len(remove_ids)
@@ -541,16 +864,18 @@ class CCStagingDeleteView(View):
     """
 
     def post(self, request, *args, **kwargs):
+        batch_id = request.GET.get('batch') or request.POST.get('batch')
+        qs = StagingCCTransaction.objects.filter(is_processed=False)
+        if batch_id and batch_id.isdigit():
+            qs = qs.filter(batch_id=batch_id)
         delete_all = request.POST.get('all')
         if delete_all:
-            deleted, _ = StagingCCTransaction.objects.filter(is_processed=False).delete()
+            deleted, _ = qs.delete()
             n = deleted
         else:
             raw_ids = request.POST.getlist('ids')
             ids = [int(i) for i in raw_ids if i.isdigit()]
-            deleted, _ = StagingCCTransaction.objects.filter(
-                id__in=ids, is_processed=False
-            ).delete()
+            deleted, _ = qs.filter(id__in=ids).delete()
             n = deleted
 
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':

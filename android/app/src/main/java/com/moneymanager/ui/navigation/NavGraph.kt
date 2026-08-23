@@ -9,6 +9,7 @@ import com.moneymanager.ui.screen.DashboardScreen
 import com.moneymanager.ui.screen.StagingReviewScreen
 import com.moneymanager.ui.screen.CCStagingReviewScreen
 
+/** Every supported mobile screen is hosted by this single navigation graph. */
 sealed class Screen(val route: String) {
     object Dashboard      : Screen("dashboard")
     object StagingReview  : Screen("staging_review")

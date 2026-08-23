@@ -23,16 +23,25 @@ Abono > 0  → type IN  (money entering account)
 """
 
 import csv
+import hashlib
 import io
+import json
 import re
-from datetime import date, datetime
+import secrets
+import uuid
+from datetime import date, datetime, timedelta
 from decimal import Decimal, InvalidOperation
 
 from django.db import transaction as db_transaction
 from django.db.models import Sum, Value, Q
 from django.db.models.functions import Coalesce
+from django.core.serializers.json import DjangoJSONEncoder
 
-from .models import BudgetItem, Category, Period, StagingCCTransaction, StagingTransaction, Transaction
+from .models import (
+    Account, BudgetItem, Category, Goal, ImportBatch, InstallmentObligation, MerchantRule, Period, Reconciliation,
+    RecurringPlan,
+    StagingCCTransaction, StagingTransaction, Transaction, Transfer,
+)
 
 
 # ─────────────────────────────────────────────
@@ -40,6 +49,7 @@ from .models import BudgetItem, Category, Period, StagingCCTransaction, StagingT
 # ─────────────────────────────────────────────
 
 def _parse_amount(raw: str) -> Decimal:
+    """Parse a debit/credit amount, which is always stored as positive."""
     s = raw.strip().lstrip('+').lstrip('-').replace(',', '.').strip()
     s = re.sub(r'[^\d.]', '', s)
     if not s:
@@ -48,6 +58,24 @@ def _parse_amount(raw: str) -> Decimal:
         return Decimal(s).quantize(Decimal('0.01'))
     except InvalidOperation:
         return Decimal('0.00')
+
+
+def _parse_signed_balance(raw: str) -> Decimal:
+    """Parse balances without losing their sign."""
+    negative = raw.strip().startswith('-')
+    amount = _parse_amount(raw)
+    return -amount if negative else amount
+
+
+def suggest_category(description: str, transaction_type: str) -> Category | None:
+    """Return a reviewable category suggestion from a user-confirmed merchant rule."""
+    normalized = description.casefold()
+    for rule in MerchantRule.objects.filter(is_active=True).select_related('category'):
+        if rule.transaction_type and rule.transaction_type != transaction_type:
+            continue
+        if rule.description_pattern.casefold() in normalized:
+            return rule.category
+    return None
 
 
 def _parse_header(lines: list[str]) -> dict:
@@ -92,33 +120,46 @@ _HEADER_TOKENS = {'fecha', 'descripcion', 'nrodoc', 'cargos', 'abonos', 'saldo'}
 # Public: Duplicate detection
 # ─────────────────────────────────────────────
 
-def get_duplicate_staging_ids(
-    period: Period,
-    staging_qs,  # QuerySet[StagingTransaction] | QuerySet[StagingCCTransaction]
-) -> set[int]:
+def get_duplicate_staging_ids(period: Period | None, staging_qs) -> set[int]:
     """
     Return the set of staging row IDs whose (date, amount, description) triple
     already exists in Transaction rows belonging to the given Period.
     """
-    existing = set(
-        Transaction.objects.filter(budget_item__period=period)
-        .values_list('date', 'real_amount', 'description')
-    )
-
     duplicate_ids: set[int] = set()
     for stx in staging_qs:
-        key = (stx.original_date, stx.amount, stx.description)
-        if key in existing:
+        row_period = Period.objects.filter(start_date__lte=stx.original_date, end_date__gte=stx.original_date).first()
+        if not row_period:
+            continue
+        existing = Transaction.objects.filter(budget_item__period=row_period).filter(
+            date=stx.original_date, real_amount=stx.amount, description=stx.description,
+        ).exists()
+        if existing:
             duplicate_ids.add(stx.pk)
 
     return duplicate_ids
+
+
+def get_duplicate_staging_matches(staging_qs) -> dict[int, Transaction]:
+    """Return the ledger transaction that caused each staged duplicate warning."""
+    matches = {}
+    for stx in staging_qs:
+        row_period = Period.objects.filter(start_date__lte=stx.original_date, end_date__gte=stx.original_date).first()
+        if not row_period:
+            continue
+        existing = Transaction.objects.select_related('budget_item__category').filter(
+            budget_item__period=row_period, date=stx.original_date,
+            real_amount=stx.amount, description=stx.description,
+        ).first()
+        if existing:
+            matches[stx.pk] = existing
+    return matches
 
 
 # ─────────────────────────────────────────────
 # Public: Bank ETL
 # ─────────────────────────────────────────────
 
-def parse_scotiabank_statement(file_obj, source_filename: str = '') -> dict:
+def parse_scotiabank_statement(file_obj, source_filename: str = '', import_again: bool = False) -> dict:
     if hasattr(file_obj, 'read'):
         raw = file_obj.read()
         if isinstance(raw, bytes):
@@ -127,6 +168,11 @@ def parse_scotiabank_statement(file_obj, source_filename: str = '') -> dict:
         raw = str(file_obj)
 
     raw = raw.replace('\r\n', '\n').replace('\r', '\n')
+    content_hash = hashlib.sha256(raw.encode('utf-8')).hexdigest()
+    existing_batch = ImportBatch.objects.filter(source_type='BANK', content_hash=content_hash).first()
+    if existing_batch and not import_again:
+        return {'count': 0, 'skipped': 0, 'already_imported': True, 'batch_id': existing_batch.pk,
+                'account_number': existing_batch.account_reference, 'date_from': '', 'date_to': ''}
     lines = raw.split('\n')
 
     meta           = _parse_header(lines)
@@ -172,7 +218,7 @@ def parse_scotiabank_statement(file_obj, source_filename: str = '') -> dict:
         abono = _parse_amount(row[4]) if len(row) > 4 else Decimal('0.00')
 
         balance_raw = row[5].strip() if len(row) > 5 else ''
-        balance = _parse_amount(balance_raw) if balance_raw else None
+        balance = _parse_signed_balance(balance_raw) if balance_raw else None
 
         if cargo > Decimal('0.00') and abono > Decimal('0.00'):
             tx_type, amount = 'OUT', cargo
@@ -195,10 +241,16 @@ def parse_scotiabank_statement(file_obj, source_filename: str = '') -> dict:
                 balance=balance,
                 type=tx_type,
                 is_processed=False,
-                assigned_category=None,
+                assigned_category=suggest_category(description, tx_type),
             )
         )
 
+    batch = ImportBatch.objects.create(
+        source_type='BANK', filename=source_filename, account_reference=account_number,
+        content_hash=content_hash, parser_version='scotiabank-dat-v1', total_rows=len(staging_records), skipped_rows=skipped,
+    )
+    for record in staging_records:
+        record.batch = batch
     StagingTransaction.objects.bulk_create(staging_records)
 
     return {
@@ -207,6 +259,8 @@ def parse_scotiabank_statement(file_obj, source_filename: str = '') -> dict:
         'account_number': account_number,
         'date_from':      meta.get('date_from', ''),
         'date_to':        meta.get('date_to', ''),
+        'batch_id':       batch.pk,
+        'already_imported': False,
     }
 
 
@@ -217,18 +271,43 @@ def parse_scotiabank_statement(file_obj, source_filename: str = '') -> dict:
 def _get_or_create_unplanned_category() -> Category:
     cat, _ = Category.objects.get_or_create(
         name='Unplanned/Extra',
-        defaults={'group': 'LIFESTYLE'},
+        defaults={'group': 'Gastos'},
     )
     return cat
 
 
 def _get_or_create_budget_item(period: Period, category: Category, tx_type: str) -> BudgetItem:
     item, _ = BudgetItem.objects.get_or_create(
-        period=period,
-        category=category,
+        period=period, category=category, type=tx_type,
         defaults={'type': tx_type, 'projected_amount': Decimal('0.00')},
     )
     return item
+
+
+def _assert_period_open(period: Period) -> None:
+    if period.closed_at:
+        raise ValueError(f'{period.name} is closed. Reopen it before changing its ledger.')
+
+
+def _get_or_create_import_account(reference: str | None, kind: str) -> Account | None:
+    if not reference:
+        return None
+    account, _ = Account.objects.get_or_create(
+        external_reference=reference,
+        defaults={
+            'name': f'{"Card" if kind == "CREDIT_CARD" else "Account"} {reference}',
+            'kind': kind,
+        },
+    )
+    return account
+
+
+def _add_months(value: date, months: int) -> date:
+    """Move a date forward without invalid month-end dates."""
+    import calendar
+    month_index = value.month - 1 + months
+    year, month = value.year + month_index // 12, month_index % 12 + 1
+    return value.replace(year=year, month=month, day=min(value.day, calendar.monthrange(year, month)[1]))
 
 
 # ─────────────────────────────────────────────
@@ -267,8 +346,10 @@ def process_staging_batch(staging_ids_with_categories: list[dict], remove_ids: s
 
         if period is None:
             continue
+        _assert_period_open(period)
 
         budget_item = _get_or_create_budget_item(period, category, stx.type)
+        account = _get_or_create_import_account(stx.account_number, 'CHECKING')
 
         Transaction.objects.create(
             budget_item=budget_item,
@@ -276,12 +357,21 @@ def process_staging_batch(staging_ids_with_categories: list[dict], remove_ids: s
             real_amount=stx.amount,
             description=stx.description,
             notes=None,
+            source_staging_transaction=stx,
+            source_fingerprint=f'bank-staging:{stx.pk}',
+            account=account,
         )
 
         stx.is_processed     = True
         stx.assigned_category = category
         stx.save(update_fields=['is_processed', 'assigned_category'])
         processed += 1
+
+    batch_ids = {entry.get('batch_id') for entry in staging_ids_with_categories if entry.get('batch_id')}
+    for batch in ImportBatch.objects.filter(id__in=batch_ids):
+        if not batch.staging_transactions.filter(is_processed=False).exists():
+            batch.status = 'COMMITTED'
+            batch.save(update_fields=['status'])
 
     return processed
 
@@ -304,6 +394,7 @@ def log_transaction_service(
     ).first()
     if period is None:
         raise ValueError(f'No Period covers date {tx_date}. Create one first.')
+    _assert_period_open(period)
     if description.strip() == '-':
         desc = category.name
     else:
@@ -323,6 +414,7 @@ def log_transaction_service(
 def rollover_period_balance(source_period_id: int, target_period_id: int) -> Decimal:
     source = Period.objects.get(id=source_period_id)
     target = Period.objects.get(id=target_period_id)
+    _assert_period_open(target)
     rollover_total = Decimal('0.00')
 
     for item in BudgetItem.objects.filter(period=source).prefetch_related('transactions'):
@@ -334,7 +426,7 @@ def rollover_period_balance(source_period_id: int, target_period_id: int) -> Dec
     if rollover_total != Decimal('0.00'):
         cat         = _get_or_create_unplanned_category()
         target_item = _get_or_create_budget_item(target, cat, 'IN')
-        Transaction.objects.create(
+        committed_transaction = Transaction.objects.create(
             budget_item=target_item,
             date=target.start_date,
             real_amount=abs(rollover_total),
@@ -365,15 +457,15 @@ def duplicate_period_budget_items(source_period_id: int, target_period_id: int) 
 
     source_items = BudgetItem.objects.filter(period=source).select_related('category')
 
-    existing_category_ids: set[int] = set(
-        BudgetItem.objects.filter(period=target).values_list('category_id', flat=True)
+    existing_keys: set[tuple[int, str]] = set(
+        BudgetItem.objects.filter(period=target).values_list('category_id', 'type')
     )
 
     to_create: list[BudgetItem] = []
     skipped = 0
 
     for item in source_items:
-        if item.category_id in existing_category_ids:
+        if (item.category_id, item.type) in existing_keys:
             skipped += 1
             continue
         to_create.append(BudgetItem(
@@ -436,19 +528,28 @@ def _parse_cc_header(rows: list[list[str]]) -> dict:
     return meta
 
 
-def parse_scotiabank_cc_statement(file_obj, source_filename: str = '') -> dict:
+def parse_scotiabank_cc_statement(file_obj, source_filename: str = '', import_again: bool = False) -> dict:
     import csv as csv_mod
     import io as io_mod
     import subprocess
     import tempfile
     import os
+    import shutil
 
     if hasattr(file_obj, 'read'):
         raw_bytes = file_obj.read()
     else:
         raw_bytes = file_obj
 
+    content_hash = hashlib.sha256(raw_bytes).hexdigest()
+    existing_batch = ImportBatch.objects.filter(source_type='CREDIT_CARD', content_hash=content_hash).first()
+    if existing_batch and not import_again:
+        return {'count': 0, 'skipped': 0, 'already_imported': True, 'batch_id': existing_batch.pk,
+                'card_number': existing_batch.account_reference, 'card_holder': '', 'statement_date': None}
+
     csv_text = None
+    tmp_path = None
+    out_dir = None
 
     try:
         import xlrd  # noqa: F401
@@ -486,12 +587,17 @@ def parse_scotiabank_cc_statement(file_obj, source_filename: str = '') -> dict:
                         break
                     except UnicodeDecodeError:
                         continue
-            try:
-                os.unlink(tmp_path)
-            except OSError:
-                pass
         except Exception:
             pass
+
+        finally:
+            if tmp_path:
+                try:
+                    os.unlink(tmp_path)
+                except OSError:
+                    pass
+            if out_dir:
+                shutil.rmtree(out_dir, ignore_errors=True)
 
     if csv_text is None:
         raise ValueError(
@@ -569,10 +675,17 @@ def parse_scotiabank_cc_statement(file_obj, source_filename: str = '') -> dict:
                 installment_value=abs(installment_value) if installment_value else None,
                 type=tx_type,
                 is_processed=False,
-                assigned_category=None,
+                assigned_category=suggest_category(description, tx_type),
             )
         )
 
+    batch = ImportBatch.objects.create(
+        source_type='CREDIT_CARD', filename=source_filename,
+        account_reference=meta.get('card_number', ''), content_hash=content_hash,
+        parser_version='scotiabank-xls-v1', total_rows=len(staging_records), skipped_rows=skipped,
+    )
+    for record in staging_records:
+        record.batch = batch
     StagingCCTransaction.objects.bulk_create(staging_records)
 
     return {
@@ -581,6 +694,8 @@ def parse_scotiabank_cc_statement(file_obj, source_filename: str = '') -> dict:
         'card_number':    meta.get('card_number', ''),
         'card_holder':    meta.get('card_holder', ''),
         'statement_date': meta.get('statement_date'),
+        'batch_id':       batch.pk,
+        'already_imported': False,
     }
 
 
@@ -619,23 +734,294 @@ def process_cc_staging_batch(
 
         if period is None:
             continue
+        _assert_period_open(period)
 
         budget_item = _get_or_create_budget_item(period, category, stx.type)
+        account = _get_or_create_import_account(stx.card_number, 'CREDIT_CARD')
 
-        Transaction.objects.create(
+        committed_transaction = Transaction.objects.create(
             budget_item=budget_item,
             date=stx.original_date,
             real_amount=stx.amount,
             description=stx.description,
             notes=f'[CC] {stx.card_number or ""} {stx.location or ""}'.strip() or None,
+            source_staging_cc_transaction=stx,
+            source_fingerprint=f'cc-staging:{stx.pk}',
+            account=account,
         )
+
+        if (
+            stx.type == 'OUT' and stx.installment_total and stx.installment_current
+            and stx.installment_total > stx.installment_current
+        ):
+            value = stx.installment_value or stx.amount
+            remaining = stx.installment_total - stx.installment_current
+            InstallmentObligation.objects.create(
+                source_transaction=committed_transaction,
+                category=category,
+                description=stx.description,
+                next_due_date=_add_months(stx.original_date, 1),
+                remaining_installments=remaining,
+                installment_value=value,
+                remaining_amount=value * remaining,
+            )
 
         stx.is_processed      = True
         stx.assigned_category = category
         stx.save(update_fields=['is_processed', 'assigned_category'])
         processed += 1
 
+    batch_ids = {entry.get('batch_id') for entry in staging_ids_with_categories if entry.get('batch_id')}
+    for batch in ImportBatch.objects.filter(id__in=batch_ids):
+        if not batch.staging_cc_transactions.filter(is_processed=False).exists():
+            batch.status = 'COMMITTED'
+            batch.save(update_fields=['status'])
+
     return processed
+
+
+# ─────────────────────────────────────────────
+# Public: financial operations
+# ─────────────────────────────────────────────
+
+@db_transaction.atomic
+def reverse_transaction_service(transaction_id: int, notes: str = '') -> Transaction:
+    original = Transaction.objects.select_for_update(of=('self',)).select_related(
+        'budget_item__period', 'budget_item__category'
+    ).get(pk=transaction_id)
+    if original.reversal_of_id or hasattr(original, 'reversal'):
+        raise ValueError('This transaction has already been reversed.')
+    period = original.budget_item.period
+    _assert_period_open(period)
+    reversal_type = 'OUT' if original.budget_item.type == 'IN' else 'IN'
+    reversal_item = _get_or_create_budget_item(period, original.budget_item.category, reversal_type)
+    return Transaction.objects.create(
+        account=original.account,
+        budget_item=reversal_item,
+        date=original.date,
+        real_amount=original.real_amount,
+        description=f'Reversal: {original.description}',
+        notes=notes or f'Reversal of transaction {original.pk}',
+        reversal_of=original,
+        source_fingerprint=f'reversal:{original.pk}',
+    )
+
+
+@db_transaction.atomic
+def record_transfer_service(
+    source_account_id: int,
+    destination_account_id: int,
+    transfer_date: date,
+    amount: Decimal,
+    description: str = '',
+) -> Transfer:
+    source = Account.objects.get(pk=source_account_id)
+    destination = Account.objects.get(pk=destination_account_id)
+    transfer = Transfer(
+        source_account=source,
+        destination_account=destination,
+        date=transfer_date,
+        amount=amount,
+        description=description,
+    )
+    transfer.full_clean()
+    transfer.save()
+    return transfer
+
+
+def calculate_account_balance(account_id: int) -> Decimal:
+    account = Account.objects.get(pk=account_id)
+    transaction_total = Decimal('0.00')
+    for tx in account.transactions.select_related('budget_item').all():
+        transaction_total += tx.real_amount if tx.budget_item.type == 'IN' else -tx.real_amount
+    outgoing = Transfer.objects.filter(source_account=account).aggregate(
+        total=Coalesce(Sum('amount'), Value(Decimal('0.00')))
+    )['total']
+    incoming = Transfer.objects.filter(destination_account=account).aggregate(
+        total=Coalesce(Sum('amount'), Value(Decimal('0.00')))
+    )['total']
+    return account.opening_balance + transaction_total + incoming - outgoing
+
+
+@db_transaction.atomic
+def reconcile_account_service(
+    account_id: int,
+    statement_date: date,
+    statement_balance: Decimal,
+    notes: str = '',
+) -> Reconciliation:
+    calculated_balance = calculate_account_balance(account_id)
+    reconciliation, _ = Reconciliation.objects.update_or_create(
+        account_id=account_id,
+        statement_date=statement_date,
+        defaults={
+            'statement_balance': statement_balance,
+            'calculated_balance': calculated_balance,
+            'notes': notes,
+        },
+    )
+    return reconciliation
+
+
+@db_transaction.atomic
+def close_period_service(period_id: int) -> Period:
+    period = Period.objects.select_for_update().get(pk=period_id)
+    if period.closed_at:
+        return period
+    has_pending = StagingTransaction.objects.filter(
+        is_processed=False,
+        original_date__range=(period.start_date, period.end_date),
+    ).exists() or StagingCCTransaction.objects.filter(
+        is_processed=False,
+        original_date__range=(period.start_date, period.end_date),
+    ).exists()
+    if has_pending:
+        raise ValueError('Review or discard every staged row in this period before closing it.')
+    from django.utils import timezone
+    period.closed_at = timezone.now()
+    period.is_active = False
+    period.save(update_fields=['closed_at', 'is_active'])
+    return period
+
+
+def _advance_recurring_date(current: date, frequency: str) -> date:
+    if frequency == 'WEEKLY':
+        return current + timedelta(days=7)
+    import calendar
+    year = current.year + (current.month // 12)
+    month = current.month % 12 + 1
+    return current.replace(year=year, month=month, day=min(current.day, calendar.monthrange(year, month)[1]))
+
+
+@db_transaction.atomic
+def materialize_recurring_plans(until: date | None = None) -> int:
+    """Create due recurring ledger entries once, retaining a stable source fingerprint."""
+    until = until or date.today()
+    created = 0
+    for plan in RecurringPlan.objects.select_for_update().filter(is_active=True, next_date__lte=until):
+        while plan.next_date <= until:
+            period = Period.objects.filter(start_date__lte=plan.next_date, end_date__gte=plan.next_date).first()
+            fingerprint = f'recurring:{plan.pk}:{plan.next_date.isoformat()}'
+            if period and not Transaction.objects.filter(source_fingerprint=fingerprint).exists():
+                _assert_period_open(period)
+                item = _get_or_create_budget_item(period, plan.category, plan.transaction_type)
+                Transaction.objects.create(
+                    account=plan.account,
+                    budget_item=item,
+                    date=plan.next_date,
+                    real_amount=plan.amount,
+                    description=plan.description,
+                    notes=f'Recurring plan: {plan.name}',
+                    source_fingerprint=fingerprint,
+                )
+                created += 1
+            plan.next_date = _advance_recurring_date(plan.next_date, plan.frequency)
+        plan.save(update_fields=['next_date'])
+    return created
+
+
+@db_transaction.atomic
+def contribute_to_goal(goal_id: int, amount: Decimal) -> Goal:
+    if amount <= 0:
+        raise ValueError('A goal contribution must be greater than zero.')
+    goal = Goal.objects.select_for_update().get(pk=goal_id)
+    goal.saved_amount += amount
+    goal.is_complete = goal.saved_amount >= goal.target_amount
+    goal.save(update_fields=['saved_amount', 'is_complete'])
+    return goal
+
+
+# ─────────────────────────────────────────────
+# Public: encrypted offline exchange
+# ─────────────────────────────────────────────
+
+_BUNDLE_MAGIC = b'MMB1'
+
+
+def _bundle_key(password: str, salt: bytes) -> bytes:
+    if not password:
+        raise ValueError('A bundle passphrase is required.')
+    return hashlib.scrypt(password.encode('utf-8'), salt=salt, n=2**14, r=8, p=1, dklen=32)
+
+
+def export_finance_bundle(password: str) -> bytes:
+    """Create a versioned AES-GCM encrypted backup/exchange bundle."""
+    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+    payload = {
+        'version': 1,
+        'bundle_id': str(uuid.uuid4()),
+        'categories': list(Category.objects.values('name', 'group')),
+        'periods': list(Period.objects.values('name', 'start_date', 'end_date', 'is_active', 'closed_at')),
+        'accounts': list(Account.objects.values('name', 'kind', 'external_reference', 'opening_balance', 'is_active')),
+        'budget_items': list(BudgetItem.objects.values('period__name', 'category__name', 'type', 'projected_amount')),
+        'transactions': list(Transaction.objects.values('id', 'account__name', 'budget_item__period__name', 'budget_item__category__name', 'budget_item__type', 'date', 'real_amount', 'description', 'notes')),
+        'transfers': list(Transfer.objects.values('source_account__name', 'destination_account__name', 'date', 'amount', 'description')),
+        'merchant_rules': list(MerchantRule.objects.values('description_pattern', 'category__name', 'transaction_type', 'is_active')),
+        'recurring_plans': list(RecurringPlan.objects.values('name', 'category__name', 'account__name', 'transaction_type', 'amount', 'frequency', 'next_date', 'description', 'is_active')),
+        'goals': list(Goal.objects.values('name', 'target_amount', 'saved_amount', 'target_date', 'notes', 'is_complete')),
+    }
+    raw = json.dumps(payload, cls=DjangoJSONEncoder, separators=(',', ':')).encode('utf-8')
+    salt, nonce = secrets.token_bytes(16), secrets.token_bytes(12)
+    encrypted = AESGCM(_bundle_key(password, salt)).encrypt(nonce, raw, _BUNDLE_MAGIC)
+    return _BUNDLE_MAGIC + salt + nonce + encrypted
+
+
+@db_transaction.atomic
+def import_finance_bundle(bundle: bytes, password: str) -> dict:
+    from cryptography.exceptions import InvalidTag
+    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+    if len(bundle) < 4 + 16 + 12 or not bundle.startswith(_BUNDLE_MAGIC):
+        raise ValueError('This is not a Money Manager encrypted bundle.')
+    salt, nonce, encrypted = bundle[4:20], bundle[20:32], bundle[32:]
+    try:
+        payload = json.loads(AESGCM(_bundle_key(password, salt)).decrypt(nonce, encrypted, _BUNDLE_MAGIC))
+    except (InvalidTag, ValueError, json.JSONDecodeError) as exc:
+        raise ValueError('The bundle could not be decrypted. Check its passphrase.') from exc
+    if payload.get('version') != 1 or not payload.get('bundle_id'):
+        raise ValueError('Unsupported bundle version.')
+
+    categories = {}
+    for row in payload.get('categories', []):
+        category, _ = Category.objects.get_or_create(name=row['name'], defaults={'group': row['group']})
+        categories[category.name] = category
+    periods = {}
+    for row in payload.get('periods', []):
+        period, _ = Period.objects.get_or_create(
+            name=row['name'], defaults={'start_date': row['start_date'], 'end_date': row['end_date'], 'is_active': False}
+        )
+        periods[period.name] = period
+    accounts = {}
+    for row in payload.get('accounts', []):
+        account, _ = Account.objects.get_or_create(
+            name=row['name'], defaults={k: row[k] for k in ('kind', 'external_reference', 'opening_balance', 'is_active')}
+        )
+        accounts[account.name] = account
+    budget_items = {}
+    for row in payload.get('budget_items', []):
+        period, category = periods.get(row['period__name']), categories.get(row['category__name'])
+        if period and category:
+            item, _ = BudgetItem.objects.get_or_create(
+                period=period, category=category, type=row['type'], defaults={'projected_amount': row['projected_amount']}
+            )
+            budget_items[(period.name, category.name, item.type)] = item
+    imported_transactions = 0
+    for row in payload.get('transactions', []):
+        item = budget_items.get((row['budget_item__period__name'], row['budget_item__category__name'], row['budget_item__type']))
+        if not item:
+            continue
+        fingerprint = f"bundle:{payload['bundle_id']}:transaction:{row['id']}"
+        _, created = Transaction.objects.get_or_create(
+            source_fingerprint=fingerprint,
+            defaults={
+                'account': accounts.get(row.get('account__name')),
+                'budget_item': item, 'date': row['date'], 'real_amount': row['real_amount'],
+                'description': row['description'], 'notes': row.get('notes') or '',
+            },
+        )
+        imported_transactions += int(created)
+    return {'transactions': imported_transactions, 'bundle_id': payload['bundle_id']}
 
 
 def calculate_safe_to_spend(period_id: int) -> dict:

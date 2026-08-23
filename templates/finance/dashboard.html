@@ -25,6 +25,21 @@
 </div>
 {% else %}
 
+<section class="mb-6 card" aria-labelledby="needs-attention-title">
+  <div class="mb-3 flex items-center justify-between"><h2 id="needs-attention-title" class="font-mono text-xs uppercase tracking-widest text-zinc-300">Necesita atención</h2><span class="text-xs text-zinc-400">Revisa antes de cerrar el período</span></div>
+  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <a class="rounded border border-zinc-800 p-3 hover:border-amber-600" href="{% url 'finance:staging_review' %}"><strong class="text-amber-300">{{ needs_attention.uncategorised }}</strong><span class="ml-1 text-sm">sin categoría</span></a>
+    <a class="rounded border border-zinc-800 p-3 hover:border-amber-600" href="{% url 'finance:staging_review' %}"><strong class="text-amber-300">{{ needs_attention.duplicates }}</strong><span class="ml-1 text-sm">duplicados por decidir</span></a>
+    <a class="rounded border border-zinc-800 p-3 hover:border-amber-600" href="#budget-analysis"><strong class="text-amber-300">{{ needs_attention.near_budget }}</strong><span class="ml-1 text-sm">categorías cerca del límite</span></a>
+    <a class="rounded border border-zinc-800 p-3 hover:border-red-500" href="#budget-analysis"><strong class="text-red-300">{{ needs_attention.over_budget }}</strong><span class="ml-1 text-sm">categorías sobre presupuesto</span></a>
+  </div>
+</section>
+
+<section class="mb-6 grid gap-4 lg:grid-cols-2" aria-label="Próximos compromisos y flujo de caja">
+  <div class="card"><h2 class="mb-3 font-mono text-xs uppercase tracking-widest text-zinc-300">Próximos cobros y pagos</h2><ul class="space-y-2 text-sm">{% for plan in upcoming_bills %}<li class="flex justify-between"><span>{{ plan.next_date|date:"d/m" }} · {{ plan.description }}</span><span>{{ plan.amount|clp }}</span></li>{% endfor %}{% for item in upcoming_installments %}<li class="flex justify-between"><span>{{ item.next_due_date|date:"d/m" }} · cuota {{ item.description }}</span><span>{{ item.installment_value|clp }}</span></li>{% endfor %}{% if not upcoming_bills and not upcoming_installments %}<li class="text-zinc-400">No hay compromisos en los próximos 30 días.</li>{% endif %}</ul></div>
+  <div class="card"><h2 class="mb-3 font-mono text-xs uppercase tracking-widest text-zinc-300">Pronóstico diario (7 días)</h2><div class="space-y-1 text-sm">{% for day in cash_forecast %}<div class="flex justify-between"><span>{{ day.date|date:"D d/m" }}</span><span>{% if day.net < 0 %}Salida{% else %}Disponible{% endif %} {{ day.net|clp }}</span></div>{% endfor %}</div></div>
+</section>
+
 <!-- Period selector + info bar -->
 <div class="mb-5 flex flex-wrap items-end gap-4">
   <div>
@@ -48,19 +63,19 @@
   <div class="card">
     <p class="font-mono text-xs text-zinc-500 uppercase tracking-widest mb-2">Projected Income</p>
     <p class="font-mono text-2xl font-semibold text-emerald-400">
-      ${{ total_income_projected|floatformat:0 }}
+      {{ total_income_projected|clp }}
     </p>
   </div>
   <div class="card">
     <p class="font-mono text-xs text-zinc-500 uppercase tracking-widest mb-2">Projected Expenses</p>
     <p class="font-mono text-2xl font-semibold text-red-400">
-      ${{ total_expense_projected|floatformat:0 }}
+      {{ total_expense_projected|clp }}
     </p>
   </div>
   <div class="card">
     <p class="font-mono text-xs text-zinc-500 uppercase tracking-widest mb-2">Projection</p>
     <p class="font-mono text-2xl font-semibold {% if projection >= 0 %}text-emerald-400{% else %}text-red-400{% endif %}">
-      ${{ projection|floatformat:0 }}
+      {{ projection|clp }}
     </p>
   </div>
 </div>
@@ -69,18 +84,18 @@
 <div class="grid grid-cols-2 gap-4 lg:grid-cols-4 mb-6">
   <div class="card">
     <p class="font-mono text-xs text-zinc-500 uppercase tracking-widest mb-2">Income</p>
-    <p class="font-mono text-2xl font-semibold text-emerald-400">${{ total_income_real|floatformat:0 }}</p>
-    <p class="text-xs text-zinc-600 mt-1">of ${{ total_income_projected|floatformat:0 }} projected</p>
+    <p class="font-mono text-2xl font-semibold text-emerald-400">{{ total_income_real|clp }}</p>
+    <p class="text-xs text-zinc-600 mt-1">of {{ total_income_projected|clp }} projected</p>
   </div>
   <div class="card">
     <p class="font-mono text-xs text-zinc-500 uppercase tracking-widest mb-2">Expenses</p>
-    <p class="font-mono text-2xl font-semibold text-red-400">${{ total_expense_real|floatformat:0 }}</p>
-    <p class="text-xs text-zinc-600 mt-1">of ${{ total_expense_projected|floatformat:0 }} projected</p>
+    <p class="font-mono text-2xl font-semibold text-red-400">{{ total_expense_real|clp }}</p>
+    <p class="text-xs text-zinc-600 mt-1">of {{ total_expense_projected|clp }} projected</p>
   </div>  
   <div class="card">
     <p class="font-mono text-xs text-zinc-500 uppercase tracking-widest mb-2">Safe to Spend (Remaining)</p>
     <p class="font-mono text-2xl font-semibold {% if safe_to_spend >= 0 %}text-emerald-400{% else %}text-red-400{% endif %}">
-      ${{ safe_to_spend|floatformat:0 }}
+      {{ safe_to_spend|clp }}
     </p>
   </div>
   <div class="card">
@@ -105,7 +120,7 @@
 
 <!-- Budget item analysis -->
 {% if budget_items %}
-<div class="card overflow-hidden p-0">
+<div id="budget-analysis" class="card overflow-hidden p-0">
   <div class="px-5 py-3 border-b border-zinc-800 flex items-center justify-between">
     <span class="font-mono text-xs text-zinc-500 uppercase tracking-widest">Budget Analysis</span>
     <a href="{% url 'finance:dashboard_pdf' %}?period={{ active_period.id }}"
@@ -124,12 +139,12 @@
         <tr class="border-b border-zinc-800 bg-zinc-900/50">
           <th class="px-4 py-2.5 text-left  font-mono text-xs text-zinc-600 uppercase tracking-widest">Category</th>
           <th class="px-4 py-2.5 text-left  font-mono text-xs text-zinc-600 uppercase tracking-widest">Group</th>
-          <th class="px-4 py-2.5 text-left  font-mono text-xs text-zinc-600 uppercase tracking-widest">T</th>
+          <th class="px-4 py-2.5 text-left  font-mono text-xs text-zinc-600 uppercase tracking-widest">Type</th>
           <th class="px-4 py-2.5 text-right font-mono text-xs text-zinc-600 uppercase tracking-widest">Projected</th>
           <th class="px-4 py-2.5 text-right font-mono text-xs text-zinc-600 uppercase tracking-widest">Actual</th>
           <th class="px-4 py-2.5 text-right font-mono text-xs text-zinc-600 uppercase tracking-widest">Diff</th>
-          <th class="px-4 py-2.5 font-mono text-xs text-zinc-600 uppercase tracking-widest w-28">Cap.</th>
-          <th class="px-4 py-2.5 text-right font-mono text-xs text-zinc-600 uppercase tracking-widest">—</th>
+          <th class="px-4 py-2.5 font-mono text-xs text-zinc-600 uppercase tracking-widest w-28">Progress</th>
+          <th class="px-4 py-2.5 text-right font-mono text-xs text-zinc-600 uppercase tracking-widest">Actions</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-zinc-800/60">
@@ -138,9 +153,8 @@
           <td class="px-4 py-2.5 font-medium text-zinc-200">{{ item.category.name }}</td>
           <td class="px-4 py-2.5">
             <span class="rounded-full px-2 py-0.5 font-mono text-xs
-              {% if item.category.group == 'ESSENTIAL' %}bg-blue-900/50   text-blue-300
-              {% elif item.category.group == 'LIFESTYLE'  %}bg-purple-900/50 text-purple-300
-              {% elif item.category.group == 'SAVINGS'    %}bg-emerald-900/50 text-emerald-300
+              {% if item.category.group == 'Gastos' %}bg-purple-900/50 text-purple-300
+              {% elif item.category.group == 'AhorroeInversion' %}bg-emerald-900/50 text-emerald-300
               {% else %}bg-amber-900/50 text-amber-300{% endif %}">
               {{ item.category.group }}
             </span>
@@ -148,8 +162,8 @@
           <td class="px-4 py-2.5">
             <span class="font-mono text-xs {% if item.type == 'IN' %}text-emerald-400{% else %}text-red-400{% endif %}">{{ item.type }}</span>
           </td>
-          <td class="px-4 py-2.5 text-right font-mono text-zinc-300">${{ item.projected_amount|floatformat:0 }}</td>
-          <td class="px-4 py-2.5 text-right font-mono {% if item.type == 'IN' %}text-emerald-400{% else %}text-zinc-100{% endif %}">${{ item.total_real|floatformat:0 }}</td>
+          <td class="px-4 py-2.5 text-right font-mono text-zinc-300">{{ item.projected_amount|clp }}</td>
+          <td class="px-4 py-2.5 text-right font-mono {% if item.type == 'IN' %}text-emerald-400{% else %}text-zinc-100{% endif %}">{{ item.total_real|clp }}</td>
           <td class="px-4 py-2.5 text-right font-mono text-xs {% if item.diff >= 0 %}text-emerald-400{% else %}text-red-400{% endif %}">
             {% if item.diff >= 0 %}+{% endif %}{{ item.diff|floatformat:0 }}
           </td>
@@ -163,7 +177,7 @@
             {% else %}<span class="font-mono text-xs text-zinc-700">—</span>{% endif %}
           </td>
           <td class="px-4 py-2.5 text-right">
-            <div class="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div class="flex justify-end gap-3 flex">
               <a href="{% url 'finance:budgetitem_update' item.pk %}" class="text-xs text-zinc-500 hover:text-zinc-300">edit</a>
               <a href="{% url 'finance:budgetitem_delete' item.pk %}" class="text-xs text-zinc-500 hover:text-red-400">del</a>
             </div>
