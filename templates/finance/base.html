@@ -33,6 +33,11 @@
         By Group
       </a>
       <a href="{% url 'finance:trend' %}" class="nav-link {% if request.resolver_match.url_name == 'trend' %}nav-link-active{% endif %}">Tendencias</a>
+      <a href="{% url 'finance:cash_flow_forecast' %}" class="nav-link {% if request.resolver_match.url_name == 'cash_flow_forecast' %}nav-link-active{% endif %}">
+        <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+        Proyección de Flujo
+      </a>
+
 
       <a href="{% url 'finance:statement_upload' %}"
          class="nav-link {% if request.resolver_match.url_name == 'statement_upload' %}nav-link-active{% endif %}" {% if request.resolver_match.url_name == 'statement_upload' %}aria-current="page"{% endif %}>

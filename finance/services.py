@@ -843,6 +843,115 @@ def calculate_account_balance(account_id: int) -> Decimal:
     return account.opening_balance + transaction_total + incoming - outgoing
 
 
+def build_cash_flow_forecast(months: int = 3, start_date: date = None) -> dict:
+    if start_date is None:
+        start_date = date.today()
+
+    active_accounts = Account.objects.filter(is_active=True)
+    account_balances = {}
+    starting_balance = Decimal('0.00')
+    for acc in active_accounts:
+        bal = calculate_account_balance(acc.pk)
+        account_balances[acc.name] = str(bal)
+        starting_balance += bal
+
+    monthly_forecasts = []
+    current_balance = starting_balance
+    total_inflows = Decimal('0.00')
+    total_outflows = Decimal('0.00')
+    shortfall_alerts = []
+
+    recurring_plans = list(RecurringPlan.objects.filter(is_active=True).select_related('category', 'account'))
+    installment_obligations = list(InstallmentObligation.objects.filter(is_complete=False).select_related('category'))
+
+    cur_year = start_date.year
+    cur_month = start_date.month
+
+    for i in range(months):
+        target_year = cur_year + (cur_month - 1 + i) // 12
+        target_month = (cur_month - 1 + i) % 12 + 1
+        month_label = f"{target_year:04d}-{target_month:02d}"
+
+        month_inflow = Decimal('0.00')
+        month_outflow = Decimal('0.00')
+        item_details = []
+
+        # 1. Recurring Plans
+        for plan in recurring_plans:
+            multiplier = Decimal('4.00') if plan.frequency == 'WEEKLY' else Decimal('1.00')
+            plan_amount = plan.amount * multiplier
+            if plan.transaction_type == 'IN':
+                month_inflow += plan_amount
+                item_details.append({
+                    'source': f'Recurring Plan: {plan.name}',
+                    'category': plan.category.name,
+                    'type': 'IN',
+                    'amount': str(plan_amount),
+                })
+            else:
+                month_outflow += plan_amount
+                item_details.append({
+                    'source': f'Recurring Plan: {plan.name}',
+                    'category': plan.category.name,
+                    'type': 'OUT',
+                    'amount': str(plan_amount),
+                })
+
+        # 2. Installment Obligations
+        for inst in installment_obligations:
+            inst_due = inst.next_due_date
+            due_months_from_start = (inst_due.year - cur_year) * 12 + (inst_due.month - cur_month)
+            months_diff = i - due_months_from_start
+            if 0 <= months_diff < inst.remaining_installments:
+                month_outflow += inst.installment_value
+                item_details.append({
+                    'source': f'Installment: {inst.description} ({months_diff + 1}/{inst.remaining_installments})',
+                    'category': inst.category.name,
+                    'type': 'OUT',
+                    'amount': str(inst.installment_value),
+                })
+
+        net_flow = month_inflow - month_outflow
+        ending_balance = current_balance + net_flow
+
+        is_shortfall = ending_balance < Decimal('0.00')
+        if is_shortfall:
+            shortfall_alerts.append({
+                'month': month_label,
+                'projected_balance': str(ending_balance),
+                'shortfall_amount': str(abs(ending_balance)),
+            })
+
+        monthly_forecasts.append({
+            'month': month_label,
+            'starting_balance': str(current_balance),
+            'inflows': str(month_inflow),
+            'outflows': str(month_outflow),
+            'net_flow': str(net_flow),
+            'ending_balance': str(ending_balance),
+            'is_shortfall': is_shortfall,
+            'items': item_details,
+        })
+
+        total_inflows += month_inflow
+        total_outflows += month_outflow
+        current_balance = ending_balance
+
+    return {
+        'months_projected': months,
+        'start_date': start_date.strftime('%Y-%m-%d'),
+        'starting_total_balance': str(starting_balance),
+        'ending_total_balance': str(current_balance),
+        'total_inflows': str(total_inflows),
+        'total_outflows': str(total_outflows),
+        'net_cash_flow': str(total_inflows - total_outflows),
+        'account_balances': account_balances,
+        'monthly_forecasts': monthly_forecasts,
+        'shortfall_alerts': shortfall_alerts,
+    }
+
+
+
 @db_transaction.atomic
 def reconcile_account_service(
     account_id: int,

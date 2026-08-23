@@ -6,9 +6,10 @@ import json
 
 from django.test import TestCase
 
-from finance.models import Category, InstallmentObligation, MerchantRule, Period, StagingCCTransaction, StagingTransaction, Transaction
+from finance.models import Account, Category, InstallmentObligation, MerchantRule, Period, RecurringPlan, StagingCCTransaction, StagingTransaction, Transaction
 from finance.services import (
     _get_or_create_budget_item,
+    build_cash_flow_forecast,
     process_cc_staging_batch,
     process_staging_batch,
     parse_scotiabank_statement,
@@ -85,3 +86,32 @@ class LedgerServiceTests(TestCase):
         self.assertEqual(result['count'], 0)
         self.assertEqual(result['skipped'], 1)
         self.assertEqual(Transaction.objects.count(), 0)
+
+    def test_cash_flow_forecast_calculates_monthly_inflows_and_outflows(self):
+        acc = Account.objects.create(name='Checking', opening_balance=Decimal('1000.00'), is_active=True)
+        RecurringPlan.objects.create(
+            name='Salary', category=self.category, account=acc,
+            transaction_type='IN', amount=Decimal('5000.00'), frequency='MONTHLY',
+            next_date=date(2026, 1, 1), description='Monthly Salary'
+        )
+        RecurringPlan.objects.create(
+            name='Rent', category=self.category, account=acc,
+            transaction_type='OUT', amount=Decimal('2000.00'), frequency='MONTHLY',
+            next_date=date(2026, 1, 1), description='Apartment Rent'
+        )
+
+        forecast = build_cash_flow_forecast(months=3, start_date=date(2026, 1, 1))
+        self.assertEqual(forecast['starting_total_balance'], '1000.00')
+        self.assertEqual(len(forecast['monthly_forecasts']), 3)
+        m1 = forecast['monthly_forecasts'][0]
+        self.assertEqual(m1['inflows'], '5000.00')
+        self.assertEqual(m1['outflows'], '2000.00')
+        self.assertEqual(m1['net_flow'], '3000.00')
+        self.assertEqual(m1['ending_balance'], '4000.00')
+        self.assertFalse(m1['is_shortfall'])
+
+    def test_cash_flow_forecast_view_returns_200(self):
+        response = self.client.get('/forecast/')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('forecast', response.context)
+

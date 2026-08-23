@@ -27,6 +27,7 @@ from .services import (
     calculate_account_balance, close_period_service, reconcile_account_service,
     record_transfer_service, reverse_transaction_service,
     export_finance_bundle, import_finance_bundle, materialize_recurring_plans,
+    build_cash_flow_forecast,
 )
 
 
@@ -201,6 +202,24 @@ class TrendView(TemplateView):
             rows.append({'period': period, **stats})
         context['rows'] = rows
         return context
+
+
+class CashFlowForecastView(TemplateView):
+    template_name = 'finance/cash_flow_forecast.html'
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        try:
+            months = int(self.request.GET.get('months', 3))
+        except (TypeError, ValueError):
+            months = 3
+        if months not in [1, 3, 6]:
+            months = 3
+
+        ctx['forecast'] = build_cash_flow_forecast(months=months)
+        ctx['selected_months'] = months
+        return ctx
+
 
 
 # ─────────────────────────────────────────────
