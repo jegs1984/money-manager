@@ -180,8 +180,8 @@
     "semantic_hash": ""
   },
   "finance/services.py": {
-    "mtime": 1787448926.622767,
-    "ast_hash": "8171c1aba7175062008d44dbab2a1d30",
+    "mtime": 1787450983.1122317,
+    "ast_hash": "698104b2ff0f2ce405fe71ebd011a410",
     "semantic_hash": ""
   },
   "finance/urls.py": {
@@ -190,8 +190,8 @@
     "semantic_hash": ""
   },
   "finance/views.py": {
-    "mtime": 1787448952.9774315,
-    "ast_hash": "b18be607c360fb4949254ba2f7e69fc2",
+    "mtime": 1787449427.0330498,
+    "ast_hash": "9723d4abd13bef368eb27495554e672f",
     "semantic_hash": ""
   },
   "installer/run.sh": {
@@ -240,8 +240,8 @@
     "semantic_hash": ""
   },
   ".claude/CLAUDE.md": {
-    "mtime": 1787437933.4376888,
-    "ast_hash": "f63d317b2678ab7a20a8bfd7bd475ea5",
+    "mtime": 1787450763.1448734,
+    "ast_hash": "d1dc165a9f3d8d85ae668ac0426acadd",
     "semantic_hash": ""
   },
   ".claude/skills/graphify/SKILL.md": {
@@ -295,13 +295,13 @@
     "semantic_hash": ""
   },
   "CLAUDE.md": {
-    "mtime": 1787437933.437105,
-    "ast_hash": "8beb732c9278ab51826f8df0f3590ea6",
+    "mtime": 1787450771.0722067,
+    "ast_hash": "d25c4cae816a9f19a5b54ebdd69732a4",
     "semantic_hash": ""
   },
   "GEMINI.md": {
-    "mtime": 1787437933.4382613,
-    "ast_hash": "22dbff44894931c23b50a9a95e38c826",
+    "mtime": 1787450789.9929,
+    "ast_hash": "45fde8096240ef9bf20051929bb8c4fe",
     "semantic_hash": ""
   },
   "README.md": {
@@ -420,8 +420,8 @@
     "semantic_hash": ""
   },
   "AGENTS.md": {
-    "mtime": 1787437933.4365454,
-    "ast_hash": "a6e0c62e983a2c6acef498eda1923dbc",
+    "mtime": 1787450779.7359183,
+    "ast_hash": "385244327a69eca0457049b1ccde6e52",
     "semantic_hash": ""
   },
   "docker-compose.yml": {
@@ -490,8 +490,8 @@
     "semantic_hash": ""
   },
   "finance/tests/test_services.py": {
-    "mtime": 1787448995.2533474,
-    "ast_hash": "cc07af64d453681259fe4a18e635b4ac",
+    "mtime": 1787449438.9134574,
+    "ast_hash": "fd8eb38727b1476494b11ca77735e481",
     "semantic_hash": ""
   },
   "docs/BACKUP_AND_RECOVERY.md": {
@@ -622,6 +622,16 @@
   "templates/finance/velocity_alerts.html": {
     "mtime": 1787448970.0191076,
     "ast_hash": "b7534f114f2d0115b4b9884b95aa412f",
+    "semantic_hash": ""
+  },
+  "finance/migrations/0008_transactionsplit.py": {
+    "mtime": 1787450983.6458485,
+    "ast_hash": "96c275304181b429adccb8be026b2cc5",
+    "semantic_hash": ""
+  },
+  ".agents/AGENTS.md": {
+    "mtime": 1787450124.1735625,
+    "ast_hash": "a12e7ac73dbed06a0551f5af7771c946",
     "semantic_hash": ""
   }
 }

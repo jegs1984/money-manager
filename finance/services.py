@@ -425,7 +425,8 @@ def rollover_period_balance(source_period_id: int, target_period_id: int) -> Dec
 
     if rollover_total != Decimal('0.00'):
         cat         = _get_or_create_unplanned_category()
-        target_item = _get_or_create_budget_item(target, cat, 'IN')
+        rollover_type = 'IN' if rollover_total > Decimal('0.00') else 'OUT'
+        target_item = _get_or_create_budget_item(target, cat, rollover_type)
         committed_transaction = Transaction.objects.create(
             budget_item=target_item,
             date=target.start_date,
@@ -946,12 +947,15 @@ def build_cash_flow_forecast(months: int = 3, start_date: date = None) -> dict:
     if start_date is None:
         start_date = date.today()
 
+    def format_amount(amount: Decimal) -> str:
+        return f'{amount:.2f}'
+
     active_accounts = Account.objects.filter(is_active=True)
     account_balances = {}
     starting_balance = Decimal('0.00')
     for acc in active_accounts:
         bal = calculate_account_balance(acc.pk)
-        account_balances[acc.name] = str(bal)
+        account_balances[acc.name] = format_amount(bal)
         starting_balance += bal
 
     monthly_forecasts = []
@@ -985,7 +989,7 @@ def build_cash_flow_forecast(months: int = 3, start_date: date = None) -> dict:
                     'source': f'Recurring Plan: {plan.name}',
                     'category': plan.category.name,
                     'type': 'IN',
-                    'amount': str(plan_amount),
+                    'amount': format_amount(plan_amount),
                 })
             else:
                 month_outflow += plan_amount
@@ -993,7 +997,7 @@ def build_cash_flow_forecast(months: int = 3, start_date: date = None) -> dict:
                     'source': f'Recurring Plan: {plan.name}',
                     'category': plan.category.name,
                     'type': 'OUT',
-                    'amount': str(plan_amount),
+                    'amount': format_amount(plan_amount),
                 })
 
         # 2. Installment Obligations
@@ -1008,7 +1012,7 @@ def build_cash_flow_forecast(months: int = 3, start_date: date = None) -> dict:
                     'source': f'Installment: {inst.description} ({installment_index + 1}/{inst.remaining_installments})',
                     'category': inst.category.name,
                     'type': 'OUT',
-                    'amount': str(inst.installment_value),
+                    'amount': format_amount(inst.installment_value),
                 })
 
         net_flow = month_inflow - month_outflow
@@ -1018,17 +1022,17 @@ def build_cash_flow_forecast(months: int = 3, start_date: date = None) -> dict:
         if is_shortfall:
             shortfall_alerts.append({
                 'month': month_label,
-                'projected_balance': str(ending_balance),
-                'shortfall_amount': str(abs(ending_balance)),
+                'projected_balance': format_amount(ending_balance),
+                'shortfall_amount': format_amount(abs(ending_balance)),
             })
 
         monthly_forecasts.append({
             'month': month_label,
-            'starting_balance': str(current_balance),
-            'inflows': str(month_inflow),
-            'outflows': str(month_outflow),
-            'net_flow': str(net_flow),
-            'ending_balance': str(ending_balance),
+            'starting_balance': format_amount(current_balance),
+            'inflows': format_amount(month_inflow),
+            'outflows': format_amount(month_outflow),
+            'net_flow': format_amount(net_flow),
+            'ending_balance': format_amount(ending_balance),
             'is_shortfall': is_shortfall,
             'items': item_details,
         })
@@ -1040,11 +1044,11 @@ def build_cash_flow_forecast(months: int = 3, start_date: date = None) -> dict:
     return {
         'months_projected': months,
         'start_date': start_date.strftime('%Y-%m-%d'),
-        'starting_total_balance': str(starting_balance),
-        'ending_total_balance': str(current_balance),
-        'total_inflows': str(total_inflows),
-        'total_outflows': str(total_outflows),
-        'net_cash_flow': str(total_inflows - total_outflows),
+        'starting_total_balance': format_amount(starting_balance),
+        'ending_total_balance': format_amount(current_balance),
+        'total_inflows': format_amount(total_inflows),
+        'total_outflows': format_amount(total_outflows),
+        'net_cash_flow': format_amount(total_inflows - total_outflows),
         'account_balances': account_balances,
         'monthly_forecasts': monthly_forecasts,
         'shortfall_alerts': shortfall_alerts,

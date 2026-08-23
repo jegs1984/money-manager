@@ -4062,6 +4062,26 @@
       "norm_label": "migration"
     },
     {
+      "label": "0008_transactionsplit.py",
+      "file_type": "code",
+      "source_file": "finance/migrations/0008_transactionsplit.py",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "migrations_0008_transactionsplit",
+      "community": 76,
+      "norm_label": "0008_transactionsplit.py"
+    },
+    {
+      "label": "Migration",
+      "file_type": "code",
+      "source_file": "finance/migrations/0008_transactionsplit.py",
+      "source_location": "L5",
+      "_origin": "ast",
+      "id": "migrations_0008_transactionsplit_migration",
+      "community": 76,
+      "norm_label": "migration"
+    },
+    {
       "label": "__init__.py",
       "file_type": "code",
       "source_file": "finance/migrations/__init__.py",
@@ -4398,7 +4418,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "finance_services",
-      "community": 73,
+      "community": 68,
       "norm_label": "services.py"
     },
     {
@@ -4408,7 +4428,7 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "finance_services_parse_amount",
-      "community": 73,
+      "community": 74,
       "norm_label": "_parse_amount()"
     },
     {
@@ -4428,7 +4448,7 @@
       "source_location": "L63",
       "_origin": "ast",
       "id": "finance_services_parse_signed_balance",
-      "community": 73,
+      "community": 74,
       "norm_label": "_parse_signed_balance()"
     },
     {
@@ -4538,7 +4558,7 @@
       "source_location": "L271",
       "_origin": "ast",
       "id": "finance_services_get_or_create_unplanned_category",
-      "community": 3,
+      "community": 40,
       "norm_label": "_get_or_create_unplanned_category()"
     },
     {
@@ -4578,7 +4598,7 @@
       "source_location": "L292",
       "_origin": "ast",
       "id": "finance_services_get_or_create_import_account",
-      "community": 3,
+      "community": 40,
       "norm_label": "_get_or_create_import_account()"
     },
     {
@@ -4608,7 +4628,7 @@
       "source_location": "L318",
       "_origin": "ast",
       "id": "finance_services_process_staging_batch",
-      "community": 3,
+      "community": 40,
       "norm_label": "process_staging_batch()"
     },
     {
@@ -4635,57 +4655,57 @@
       "label": "duplicate_period_budget_items()",
       "file_type": "code",
       "source_file": "finance/services.py",
-      "source_location": "L443",
+      "source_location": "L444",
       "_origin": "ast",
       "id": "finance_services_duplicate_period_budget_items",
-      "community": 73,
+      "community": 68,
       "norm_label": "duplicate_period_budget_items()"
     },
     {
       "label": "_parse_clp_amount()",
       "file_type": "code",
       "source_file": "finance/services.py",
-      "source_location": "L487",
+      "source_location": "L488",
       "_origin": "ast",
       "id": "finance_services_parse_clp_amount",
-      "community": 73,
+      "community": 68,
       "norm_label": "_parse_clp_amount()"
     },
     {
       "label": "_parse_cc_header()",
       "file_type": "code",
       "source_file": "finance/services.py",
-      "source_location": "L505",
+      "source_location": "L506",
       "_origin": "ast",
       "id": "finance_services_parse_cc_header",
-      "community": 73,
+      "community": 14,
       "norm_label": "_parse_cc_header()"
     },
     {
       "label": "parse_scotiabank_cc_statement()",
       "file_type": "code",
       "source_file": "finance/services.py",
-      "source_location": "L531",
+      "source_location": "L532",
       "_origin": "ast",
       "id": "finance_services_parse_scotiabank_cc_statement",
-      "community": 73,
+      "community": 68,
       "norm_label": "parse_scotiabank_cc_statement()"
     },
     {
       "label": "process_cc_staging_batch()",
       "file_type": "code",
       "source_file": "finance/services.py",
-      "source_location": "L703",
+      "source_location": "L704",
       "_origin": "ast",
       "id": "finance_services_process_cc_staging_batch",
-      "community": 3,
+      "community": 40,
       "norm_label": "process_cc_staging_batch()"
     },
     {
       "label": "reverse_transaction_service()",
       "file_type": "code",
       "source_file": "finance/services.py",
-      "source_location": "L788",
+      "source_location": "L789",
       "_origin": "ast",
       "id": "finance_services_reverse_transaction_service",
       "community": 3,
@@ -4695,7 +4715,7 @@
       "label": "create_transaction_splits_service()",
       "file_type": "code",
       "source_file": "finance/services.py",
-      "source_location": "L811",
+      "source_location": "L812",
       "_origin": "ast",
       "id": "finance_services_create_transaction_splits_service",
       "community": 3,
@@ -4705,7 +4725,7 @@
       "label": "get_shared_expenses_summary()",
       "file_type": "code",
       "source_file": "finance/services.py",
-      "source_location": "L848",
+      "source_location": "L849",
       "_origin": "ast",
       "id": "finance_services_get_shared_expenses_summary",
       "community": 3,
@@ -4715,17 +4735,17 @@
       "label": "record_transfer_service()",
       "file_type": "code",
       "source_file": "finance/services.py",
-      "source_location": "L910",
+      "source_location": "L911",
       "_origin": "ast",
       "id": "finance_services_record_transfer_service",
-      "community": 73,
+      "community": 68,
       "norm_label": "record_transfer_service()"
     },
     {
       "label": "Transfer",
       "file_type": "code",
       "source_file": "finance/services.py",
-      "source_location": "L910",
+      "source_location": "L911",
       "_origin": "ast",
       "id": "transfer",
       "community": 0,
@@ -4735,27 +4755,27 @@
       "label": "calculate_account_balance()",
       "file_type": "code",
       "source_file": "finance/services.py",
-      "source_location": "L931",
+      "source_location": "L932",
       "_origin": "ast",
       "id": "finance_services_calculate_account_balance",
-      "community": 68,
+      "community": 30,
       "norm_label": "calculate_account_balance()"
     },
     {
       "label": "build_cash_flow_forecast()",
       "file_type": "code",
       "source_file": "finance/services.py",
-      "source_location": "L945",
+      "source_location": "L946",
       "_origin": "ast",
       "id": "finance_services_build_cash_flow_forecast",
-      "community": 68,
+      "community": 30,
       "norm_label": "build_cash_flow_forecast()"
     },
     {
       "label": "get_budget_velocity_alerts()",
       "file_type": "code",
       "source_file": "finance/services.py",
-      "source_location": "L1053",
+      "source_location": "L1058",
       "_origin": "ast",
       "id": "finance_services_get_budget_velocity_alerts",
       "community": 3,
@@ -4765,7 +4785,7 @@
       "label": "reconcile_account_service()",
       "file_type": "code",
       "source_file": "finance/services.py",
-      "source_location": "L1147",
+      "source_location": "L1152",
       "_origin": "ast",
       "id": "finance_services_reconcile_account_service",
       "community": 68,
@@ -4775,7 +4795,7 @@
       "label": "Reconciliation",
       "file_type": "code",
       "source_file": "finance/services.py",
-      "source_location": "L1147",
+      "source_location": "L1152",
       "_origin": "ast",
       "id": "reconciliation",
       "community": 0,
@@ -4785,17 +4805,17 @@
       "label": "close_period_service()",
       "file_type": "code",
       "source_file": "finance/services.py",
-      "source_location": "L1167",
+      "source_location": "L1172",
       "_origin": "ast",
       "id": "finance_services_close_period_service",
-      "community": 73,
+      "community": 68,
       "norm_label": "close_period_service()"
     },
     {
       "label": "_advance_recurring_date()",
       "file_type": "code",
       "source_file": "finance/services.py",
-      "source_location": "L1187",
+      "source_location": "L1192",
       "_origin": "ast",
       "id": "finance_services_advance_recurring_date",
       "community": 73,
@@ -4805,7 +4825,7 @@
       "label": "materialize_recurring_plans()",
       "file_type": "code",
       "source_file": "finance/services.py",
-      "source_location": "L1197",
+      "source_location": "L1202",
       "_origin": "ast",
       "id": "finance_services_materialize_recurring_plans",
       "community": 73,
@@ -4815,17 +4835,17 @@
       "label": "contribute_to_goal()",
       "file_type": "code",
       "source_file": "finance/services.py",
-      "source_location": "L1224",
+      "source_location": "L1229",
       "_origin": "ast",
       "id": "finance_services_contribute_to_goal",
-      "community": 73,
+      "community": 68,
       "norm_label": "contribute_to_goal()"
     },
     {
       "label": "Goal",
       "file_type": "code",
       "source_file": "finance/services.py",
-      "source_location": "L1224",
+      "source_location": "L1229",
       "_origin": "ast",
       "id": "goal",
       "community": 0,
@@ -4835,47 +4855,47 @@
       "label": "_bundle_key()",
       "file_type": "code",
       "source_file": "finance/services.py",
-      "source_location": "L1241",
+      "source_location": "L1246",
       "_origin": "ast",
       "id": "finance_services_bundle_key",
-      "community": 73,
+      "community": 68,
       "norm_label": "_bundle_key()"
     },
     {
       "label": "export_finance_bundle()",
       "file_type": "code",
       "source_file": "finance/services.py",
-      "source_location": "L1247",
+      "source_location": "L1252",
       "_origin": "ast",
       "id": "finance_services_export_finance_bundle",
-      "community": 73,
+      "community": 68,
       "norm_label": "export_finance_bundle()"
     },
     {
       "label": "import_finance_bundle()",
       "file_type": "code",
       "source_file": "finance/services.py",
-      "source_location": "L1271",
+      "source_location": "L1276",
       "_origin": "ast",
       "id": "finance_services_import_finance_bundle",
-      "community": 73,
+      "community": 68,
       "norm_label": "import_finance_bundle()"
     },
     {
       "label": "calculate_safe_to_spend()",
       "file_type": "code",
       "source_file": "finance/services.py",
-      "source_location": "L1327",
+      "source_location": "L1332",
       "_origin": "ast",
       "id": "finance_services_calculate_safe_to_spend",
-      "community": 2,
+      "community": 46,
       "norm_label": "calculate_safe_to_spend()"
     },
     {
       "label": "_clp()",
       "file_type": "code",
       "source_file": "finance/services.py",
-      "source_location": "L1365",
+      "source_location": "L1370",
       "_origin": "ast",
       "id": "finance_services_clp",
       "community": 46,
@@ -4885,7 +4905,7 @@
       "label": "generate_dashboard_pdf()",
       "file_type": "code",
       "source_file": "finance/services.py",
-      "source_location": "L1372",
+      "source_location": "L1377",
       "_origin": "ast",
       "id": "finance_services_generate_dashboard_pdf",
       "community": 46,
@@ -4898,7 +4918,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "finance_services_rationale_1",
-      "community": 73,
+      "community": 68,
       "norm_label": "services.py =========== business logic layer.  all db writes go through here; vi"
     },
     {
@@ -4908,7 +4928,7 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "finance_services_rationale_52",
-      "community": 73,
+      "community": 74,
       "norm_label": "parse a debit/credit amount, which is always stored as positive."
     },
     {
@@ -4918,7 +4938,7 @@
       "source_location": "L64",
       "_origin": "ast",
       "id": "finance_services_rationale_64",
-      "community": 73,
+      "community": 74,
       "norm_label": "parse balances without losing their sign."
     },
     {
@@ -4965,19 +4985,19 @@
       "label": "Copy all BudgetItems from source_period into target_period, preserving     categ",
       "file_type": "rationale",
       "source_file": "finance/services.py",
-      "source_location": "L444",
+      "source_location": "L445",
       "_origin": "ast",
-      "id": "finance_services_rationale_444",
-      "community": 73,
+      "id": "finance_services_rationale_445",
+      "community": 68,
       "norm_label": "copy all budgetitems from source_period into target_period, preserving     categ"
     },
     {
       "label": "Create due recurring ledger entries once, retaining a stable source fingerprint.",
       "file_type": "rationale",
       "source_file": "finance/services.py",
-      "source_location": "L1198",
+      "source_location": "L1203",
       "_origin": "ast",
-      "id": "finance_services_rationale_1198",
+      "id": "finance_services_rationale_1203",
       "community": 73,
       "norm_label": "create due recurring ledger entries once, retaining a stable source fingerprint."
     },
@@ -4985,19 +5005,19 @@
       "label": "Create a versioned AES-GCM encrypted backup/exchange bundle.",
       "file_type": "rationale",
       "source_file": "finance/services.py",
-      "source_location": "L1248",
+      "source_location": "L1253",
       "_origin": "ast",
-      "id": "finance_services_rationale_1248",
-      "community": 73,
+      "id": "finance_services_rationale_1253",
+      "community": 68,
       "norm_label": "create a versioned aes-gcm encrypted backup/exchange bundle."
     },
     {
       "label": "Format a Decimal as Chilean peso string: $1.234.567",
       "file_type": "rationale",
       "source_file": "finance/services.py",
-      "source_location": "L1366",
+      "source_location": "L1371",
       "_origin": "ast",
-      "id": "finance_services_rationale_1366",
+      "id": "finance_services_rationale_1371",
       "community": 46,
       "norm_label": "format a decimal as chilean peso string: $1.234.567"
     },
@@ -5005,9 +5025,9 @@
       "label": "Build and return PDF bytes for the Dashboard projected budget report.      Conte",
       "file_type": "rationale",
       "source_file": "finance/services.py",
-      "source_location": "L1373",
+      "source_location": "L1378",
       "_origin": "ast",
-      "id": "finance_services_rationale_1373",
+      "id": "finance_services_rationale_1378",
       "community": 46,
       "norm_label": "build and return pdf bytes for the dashboard projected budget report.      conte"
     },
@@ -5028,7 +5048,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "templatetags_finance_format",
-      "community": 30,
+      "community": 3,
       "norm_label": "finance_format.py"
     },
     {
@@ -5048,7 +5068,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "templatetags_finance_format_get_item",
-      "community": 30,
+      "community": 3,
       "norm_label": "get_item()"
     },
     {
@@ -5058,7 +5078,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "templatetags_finance_format_direction_label",
-      "community": 30,
+      "community": 3,
       "norm_label": "direction_label()"
     },
     {
@@ -5225,10 +5245,10 @@
       "label": "LedgerServiceTests",
       "file_type": "code",
       "source_file": "finance/tests/test_services.py",
-      "source_location": "L25",
+      "source_location": "L26",
       "_origin": "ast",
       "id": "tests_test_services_ledgerservicetests",
-      "community": 3,
+      "community": 73,
       "norm_label": "ledgerservicetests"
     },
     {
@@ -5238,14 +5258,14 @@
       "source_location": "",
       "_origin": "ast",
       "id": "testcase",
-      "community": 3,
+      "community": 73,
       "norm_label": "testcase"
     },
     {
       "label": ".setUp()",
       "file_type": "code",
       "source_file": "finance/tests/test_services.py",
-      "source_location": "L26",
+      "source_location": "L27",
       "_origin": "ast",
       "id": "tests_test_services_ledgerservicetests_setup",
       "community": 73,
@@ -5255,7 +5275,7 @@
       "label": ".test_chilean_money_formatter_uses_dots_and_no_float_rounding()",
       "file_type": "code",
       "source_file": "finance/tests/test_services.py",
-      "source_location": "L32",
+      "source_location": "L33",
       "_origin": "ast",
       "id": "tests_test_services_ledgerservicetests_test_chilean_money_formatter_uses_dots_and_no_float_rounding",
       "community": 3,
@@ -5265,27 +5285,27 @@
       "label": ".test_budget_items_keep_income_and_expense_separate()",
       "file_type": "code",
       "source_file": "finance/tests/test_services.py",
-      "source_location": "L36",
+      "source_location": "L37",
       "_origin": "ast",
       "id": "tests_test_services_ledgerservicetests_test_budget_items_keep_income_and_expense_separate",
-      "community": 3,
+      "community": 73,
       "norm_label": ".test_budget_items_keep_income_and_expense_separate()"
     },
     {
       "label": ".test_staged_row_has_immutable_ledger_provenance()",
       "file_type": "code",
       "source_file": "finance/tests/test_services.py",
-      "source_location": "L42",
+      "source_location": "L43",
       "_origin": "ast",
       "id": "tests_test_services_ledgerservicetests_test_staged_row_has_immutable_ledger_provenance",
-      "community": 3,
+      "community": 73,
       "norm_label": ".test_staged_row_has_immutable_ledger_provenance()"
     },
     {
       "label": ".test_reversal_preserves_original_and_offsets_direction()",
       "file_type": "code",
       "source_file": "finance/tests/test_services.py",
-      "source_location": "L51",
+      "source_location": "L52",
       "_origin": "ast",
       "id": "tests_test_services_ledgerservicetests_test_reversal_preserves_original_and_offsets_direction",
       "community": 3,
@@ -5295,7 +5315,7 @@
       "label": ".test_merchant_rules_only_suggest_matching_direction()",
       "file_type": "code",
       "source_file": "finance/tests/test_services.py",
-      "source_location": "L60",
+      "source_location": "L61",
       "_origin": "ast",
       "id": "tests_test_services_ledgerservicetests_test_merchant_rules_only_suggest_matching_direction",
       "community": 73,
@@ -5305,17 +5325,17 @@
       "label": ".test_credit_card_installment_creates_future_obligation()",
       "file_type": "code",
       "source_file": "finance/tests/test_services.py",
-      "source_location": "L65",
+      "source_location": "L66",
       "_origin": "ast",
       "id": "tests_test_services_ledgerservicetests_test_credit_card_installment_creates_future_obligation",
-      "community": 3,
+      "community": 73,
       "norm_label": ".test_credit_card_installment_creates_future_obligation()"
     },
     {
       "label": ".test_sanitized_statement_fixture_preserves_signed_balances_and_batch_counts()",
       "file_type": "code",
       "source_file": "finance/tests/test_services.py",
-      "source_location": "L77",
+      "source_location": "L78",
       "_origin": "ast",
       "id": "tests_test_services_ledgerservicetests_test_sanitized_statement_fixture_preserves_signed_balances_and_batch_counts",
       "community": 73,
@@ -5325,7 +5345,7 @@
       "label": ".test_malformed_statement_rows_are_skipped_without_creating_ledger_entries()",
       "file_type": "code",
       "source_file": "finance/tests/test_services.py",
-      "source_location": "L87",
+      "source_location": "L88",
       "_origin": "ast",
       "id": "tests_test_services_ledgerservicetests_test_malformed_statement_rows_are_skipped_without_creating_ledger_entries",
       "community": 73,
@@ -5335,27 +5355,27 @@
       "label": ".test_cash_flow_forecast_calculates_monthly_inflows_and_outflows()",
       "file_type": "code",
       "source_file": "finance/tests/test_services.py",
-      "source_location": "L93",
+      "source_location": "L94",
       "_origin": "ast",
       "id": "tests_test_services_ledgerservicetests_test_cash_flow_forecast_calculates_monthly_inflows_and_outflows",
-      "community": 68,
+      "community": 30,
       "norm_label": ".test_cash_flow_forecast_calculates_monthly_inflows_and_outflows()"
     },
     {
       "label": ".test_cash_flow_forecast_view_returns_200()",
       "file_type": "code",
       "source_file": "finance/tests/test_services.py",
-      "source_location": "L116",
+      "source_location": "L117",
       "_origin": "ast",
       "id": "tests_test_services_ledgerservicetests_test_cash_flow_forecast_view_returns_200",
-      "community": 3,
+      "community": 73,
       "norm_label": ".test_cash_flow_forecast_view_returns_200()"
     },
     {
       "label": ".test_transaction_splits_service_creates_splits_when_totals_match()",
       "file_type": "code",
       "source_file": "finance/tests/test_services.py",
-      "source_location": "L121",
+      "source_location": "L122",
       "_origin": "ast",
       "id": "tests_test_services_ledgerservicetests_test_transaction_splits_service_creates_splits_when_totals_match",
       "community": 3,
@@ -5365,7 +5385,7 @@
       "label": ".test_transaction_splits_service_raises_error_when_totals_mismatch()",
       "file_type": "code",
       "source_file": "finance/tests/test_services.py",
-      "source_location": "L135",
+      "source_location": "L136",
       "_origin": "ast",
       "id": "tests_test_services_ledgerservicetests_test_transaction_splits_service_raises_error_when_totals_mismatch",
       "community": 3,
@@ -5375,7 +5395,7 @@
       "label": ".test_shared_expenses_summary_aggregates_reimbursable_and_shared_items()",
       "file_type": "code",
       "source_file": "finance/tests/test_services.py",
-      "source_location": "L146",
+      "source_location": "L147",
       "_origin": "ast",
       "id": "tests_test_services_ledgerservicetests_test_shared_expenses_summary_aggregates_reimbursable_and_shared_items",
       "community": 3,
@@ -5385,17 +5405,17 @@
       "label": ".test_shared_expense_list_view_returns_200()",
       "file_type": "code",
       "source_file": "finance/tests/test_services.py",
-      "source_location": "L161",
+      "source_location": "L162",
       "_origin": "ast",
       "id": "tests_test_services_ledgerservicetests_test_shared_expense_list_view_returns_200",
-      "community": 3,
+      "community": 73,
       "norm_label": ".test_shared_expense_list_view_returns_200()"
     },
     {
       "label": ".test_get_budget_velocity_alerts_detects_overbudget_items()",
       "file_type": "code",
       "source_file": "finance/tests/test_services.py",
-      "source_location": "L166",
+      "source_location": "L167",
       "_origin": "ast",
       "id": "tests_test_services_ledgerservicetests_test_get_budget_velocity_alerts_detects_overbudget_items",
       "community": 3,
@@ -5405,10 +5425,10 @@
       "label": ".test_budget_velocity_alerts_view_returns_200()",
       "file_type": "code",
       "source_file": "finance/tests/test_services.py",
-      "source_location": "L179",
+      "source_location": "L180",
       "_origin": "ast",
       "id": "tests_test_services_ledgerservicetests_test_budget_velocity_alerts_view_returns_200",
-      "community": 3,
+      "community": 73,
       "norm_label": ".test_budget_velocity_alerts_view_returns_200()"
     },
     {
@@ -5528,7 +5548,7 @@
       "source_location": "L200",
       "_origin": "ast",
       "id": "finance_views_trendview_get_context_data",
-      "community": 2,
+      "community": 46,
       "norm_label": ".get_context_data()"
     },
     {
@@ -5548,7 +5568,7 @@
       "source_location": "L213",
       "_origin": "ast",
       "id": "finance_views_cashflowforecastview_get_context_data",
-      "community": 68,
+      "community": 30,
       "norm_label": ".get_context_data()"
     },
     {
@@ -5668,7 +5688,7 @@
       "source_location": "L276",
       "_origin": "ast",
       "id": "finance_views_periodcloseview_post",
-      "community": 73,
+      "community": 68,
       "norm_label": ".post()"
     },
     {
@@ -5768,7 +5788,7 @@
       "source_location": "L357",
       "_origin": "ast",
       "id": "finance_views_accountlistview_get_context_data",
-      "community": 68,
+      "community": 30,
       "norm_label": ".get_context_data()"
     },
     {
@@ -6118,7 +6138,7 @@
       "source_location": "L644",
       "_origin": "ast",
       "id": "finance_views_bundleexportview_form_valid",
-      "community": 73,
+      "community": 68,
       "norm_label": ".form_valid()"
     },
     {
@@ -6325,7 +6345,7 @@
       "label": "CCStagingDeleteView",
       "file_type": "code",
       "source_file": "finance/views.py",
-      "source_location": "L965",
+      "source_location": "L966",
       "_origin": "ast",
       "id": "finance_views_ccstagingdeleteview",
       "community": 0,
@@ -6335,7 +6355,7 @@
       "label": ".post()",
       "file_type": "code",
       "source_file": "finance/views.py",
-      "source_location": "L971",
+      "source_location": "L972",
       "_origin": "ast",
       "id": "finance_views_ccstagingdeleteview_post",
       "community": 2,
@@ -6345,7 +6365,7 @@
       "label": "UserManualView",
       "file_type": "code",
       "source_file": "finance/views.py",
-      "source_location": "L994",
+      "source_location": "L995",
       "_origin": "ast",
       "id": "finance_views_usermanualview",
       "community": 0,
@@ -6375,9 +6395,9 @@
       "label": "POST /cc/staging/delete/     Same contract as StagingDeleteView but operates on",
       "file_type": "rationale",
       "source_file": "finance/views.py",
-      "source_location": "L966",
+      "source_location": "L967",
       "_origin": "ast",
-      "id": "finance_views_rationale_966",
+      "id": "finance_views_rationale_967",
       "community": 0,
       "norm_label": "post /cc/staging/delete/     same contract as stagingdeleteview but operates on"
     },
@@ -6728,6 +6748,36 @@
       "norm_label": "start.sh script"
     },
     {
+      "label": "AGENTS.md",
+      "file_type": "document",
+      "source_file": ".agents/AGENTS.md",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "agents_agents",
+      "community": 75,
+      "norm_label": "agents.md"
+    },
+    {
+      "label": "Workspace Agent Rules",
+      "file_type": "document",
+      "source_file": ".agents/AGENTS.md",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "agents_agents_workspace_agent_rules",
+      "community": 75,
+      "norm_label": "workspace agent rules"
+    },
+    {
+      "label": "Communication Style",
+      "file_type": "document",
+      "source_file": ".agents/AGENTS.md",
+      "source_location": "L3",
+      "_origin": "ast",
+      "id": "agents_agents_communication_style",
+      "community": 75,
+      "norm_label": "communication style"
+    },
+    {
       "label": "CLAUDE.md",
       "file_type": "document",
       "source_file": ".claude/CLAUDE.md",
@@ -6756,6 +6806,16 @@
       "id": "claude_claude_safety_approval",
       "community": 55,
       "norm_label": "safety approval"
+    },
+    {
+      "label": "Communication Style",
+      "file_type": "document",
+      "source_file": ".claude/CLAUDE.md",
+      "source_location": "L13",
+      "_origin": "ast",
+      "id": "claude_claude_communication_style",
+      "community": 55,
+      "norm_label": "communication style"
     },
     {
       "label": "SKILL.md",
@@ -7508,6 +7568,16 @@
       "norm_label": "graphify"
     },
     {
+      "label": "Communication Style",
+      "file_type": "document",
+      "source_file": "AGENTS.md",
+      "source_location": "L47",
+      "_origin": "ast",
+      "id": "agents_communication_style",
+      "community": 72,
+      "norm_label": "communication style"
+    },
+    {
       "label": "CLAUDE.md",
       "file_type": "document",
       "source_file": "CLAUDE.md",
@@ -7536,6 +7606,16 @@
       "id": "claude_safety_approval",
       "community": 54,
       "norm_label": "safety approval"
+    },
+    {
+      "label": "Communication Style",
+      "file_type": "document",
+      "source_file": "CLAUDE.md",
+      "source_location": "L18",
+      "_origin": "ast",
+      "id": "claude_communication_style",
+      "community": 54,
+      "norm_label": "communication style"
     },
     {
       "label": "GEMINI.md",
@@ -7636,6 +7716,16 @@
       "id": "gemini_agent_roles_delegation",
       "community": 37,
       "norm_label": "agent roles & delegation"
+    },
+    {
+      "label": "Communication Style",
+      "file_type": "document",
+      "source_file": "GEMINI.md",
+      "source_location": "L42",
+      "_origin": "ast",
+      "id": "gemini_communication_style",
+      "community": 37,
+      "norm_label": "communication style"
     },
     {
       "label": "README.md",
@@ -16019,9 +16109,9 @@
       "source_file": "finance/forms.py",
       "source_location": "L231",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "finance_forms",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 1.0
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "contains",
@@ -16172,9 +16262,9 @@
       "source_file": "finance/forms.py",
       "source_location": "L5",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "finance_forms",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 1.0
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "imports",
@@ -16335,9 +16425,9 @@
       "source_file": "finance/forms.py",
       "source_location": "L5",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_forms_periodform",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -16436,9 +16526,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_budgetvelocityalertsview",
-      "target": "finance_forms_periodform",
-      "confidence_score": 0.5
+      "target": "finance_forms_periodform"
     },
     {
       "relation": "uses",
@@ -16466,9 +16556,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_cashflowforecastview",
-      "target": "finance_forms_periodform",
-      "confidence_score": 0.5
+      "target": "finance_forms_periodform"
     },
     {
       "relation": "uses",
@@ -16716,9 +16806,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_sharedexpenselistview",
-      "target": "finance_forms_periodform",
-      "confidence_score": 0.5
+      "target": "finance_forms_periodform"
     },
     {
       "relation": "uses",
@@ -16806,9 +16896,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_transactionsplitview",
-      "target": "finance_forms_periodform",
-      "confidence_score": 0.5
+      "target": "finance_forms_periodform"
     },
     {
       "relation": "uses",
@@ -16846,9 +16936,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_usermanualview",
-      "target": "finance_forms_periodform",
-      "confidence_score": 0.5
+      "target": "finance_forms_periodform"
     },
     {
       "relation": "uses",
@@ -16976,9 +17066,9 @@
       "source_file": "finance/forms.py",
       "source_location": "L5",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_forms_meta",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -17126,9 +17216,9 @@
       "source_file": "finance/forms.py",
       "source_location": "L5",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_forms_categoryform",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -17227,9 +17317,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_budgetvelocityalertsview",
-      "target": "finance_forms_categoryform",
-      "confidence_score": 0.5
+      "target": "finance_forms_categoryform"
     },
     {
       "relation": "uses",
@@ -17257,9 +17347,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_cashflowforecastview",
-      "target": "finance_forms_categoryform",
-      "confidence_score": 0.5
+      "target": "finance_forms_categoryform"
     },
     {
       "relation": "uses",
@@ -17507,9 +17597,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_sharedexpenselistview",
-      "target": "finance_forms_categoryform",
-      "confidence_score": 0.5
+      "target": "finance_forms_categoryform"
     },
     {
       "relation": "uses",
@@ -17597,9 +17687,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_transactionsplitview",
-      "target": "finance_forms_categoryform",
-      "confidence_score": 0.5
+      "target": "finance_forms_categoryform"
     },
     {
       "relation": "uses",
@@ -17637,9 +17727,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_usermanualview",
-      "target": "finance_forms_categoryform",
-      "confidence_score": 0.5
+      "target": "finance_forms_categoryform"
     },
     {
       "relation": "uses",
@@ -17757,9 +17847,9 @@
       "source_file": "finance/forms.py",
       "source_location": "L5",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_forms_accountform",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -17848,9 +17938,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_budgetvelocityalertsview",
-      "target": "finance_forms_accountform",
-      "confidence_score": 0.5
+      "target": "finance_forms_accountform"
     },
     {
       "relation": "uses",
@@ -17878,9 +17968,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_cashflowforecastview",
-      "target": "finance_forms_accountform",
-      "confidence_score": 0.5
+      "target": "finance_forms_accountform"
     },
     {
       "relation": "uses",
@@ -18128,9 +18218,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_sharedexpenselistview",
-      "target": "finance_forms_accountform",
-      "confidence_score": 0.5
+      "target": "finance_forms_accountform"
     },
     {
       "relation": "uses",
@@ -18218,9 +18308,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_transactionsplitview",
-      "target": "finance_forms_accountform",
-      "confidence_score": 0.5
+      "target": "finance_forms_accountform"
     },
     {
       "relation": "uses",
@@ -18258,9 +18348,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_usermanualview",
-      "target": "finance_forms_accountform",
-      "confidence_score": 0.5
+      "target": "finance_forms_accountform"
     },
     {
       "relation": "uses",
@@ -18378,9 +18468,9 @@
       "source_file": "finance/forms.py",
       "source_location": "L5",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_forms_transferform",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -18469,9 +18559,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_budgetvelocityalertsview",
-      "target": "finance_forms_transferform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transferform"
     },
     {
       "relation": "uses",
@@ -18499,9 +18589,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_cashflowforecastview",
-      "target": "finance_forms_transferform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transferform"
     },
     {
       "relation": "uses",
@@ -18749,9 +18839,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_sharedexpenselistview",
-      "target": "finance_forms_transferform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transferform"
     },
     {
       "relation": "uses",
@@ -18839,9 +18929,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_transactionsplitview",
-      "target": "finance_forms_transferform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transferform"
     },
     {
       "relation": "uses",
@@ -18879,9 +18969,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_usermanualview",
-      "target": "finance_forms_transferform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transferform"
     },
     {
       "relation": "uses",
@@ -18999,9 +19089,9 @@
       "source_file": "finance/forms.py",
       "source_location": "L5",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_forms_reconciliationform",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -19090,9 +19180,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_budgetvelocityalertsview",
-      "target": "finance_forms_reconciliationform",
-      "confidence_score": 0.5
+      "target": "finance_forms_reconciliationform"
     },
     {
       "relation": "uses",
@@ -19120,9 +19210,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_cashflowforecastview",
-      "target": "finance_forms_reconciliationform",
-      "confidence_score": 0.5
+      "target": "finance_forms_reconciliationform"
     },
     {
       "relation": "uses",
@@ -19370,9 +19460,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_sharedexpenselistview",
-      "target": "finance_forms_reconciliationform",
-      "confidence_score": 0.5
+      "target": "finance_forms_reconciliationform"
     },
     {
       "relation": "uses",
@@ -19460,9 +19550,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_transactionsplitview",
-      "target": "finance_forms_reconciliationform",
-      "confidence_score": 0.5
+      "target": "finance_forms_reconciliationform"
     },
     {
       "relation": "uses",
@@ -19500,9 +19590,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_usermanualview",
-      "target": "finance_forms_reconciliationform",
-      "confidence_score": 0.5
+      "target": "finance_forms_reconciliationform"
     },
     {
       "relation": "uses",
@@ -19620,9 +19710,9 @@
       "source_file": "finance/forms.py",
       "source_location": "L5",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_forms_merchantruleform",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -19711,9 +19801,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_budgetvelocityalertsview",
-      "target": "finance_forms_merchantruleform",
-      "confidence_score": 0.5
+      "target": "finance_forms_merchantruleform"
     },
     {
       "relation": "uses",
@@ -19741,9 +19831,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_cashflowforecastview",
-      "target": "finance_forms_merchantruleform",
-      "confidence_score": 0.5
+      "target": "finance_forms_merchantruleform"
     },
     {
       "relation": "uses",
@@ -19991,9 +20081,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_sharedexpenselistview",
-      "target": "finance_forms_merchantruleform",
-      "confidence_score": 0.5
+      "target": "finance_forms_merchantruleform"
     },
     {
       "relation": "uses",
@@ -20081,9 +20171,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_transactionsplitview",
-      "target": "finance_forms_merchantruleform",
-      "confidence_score": 0.5
+      "target": "finance_forms_merchantruleform"
     },
     {
       "relation": "uses",
@@ -20121,9 +20211,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_usermanualview",
-      "target": "finance_forms_merchantruleform",
-      "confidence_score": 0.5
+      "target": "finance_forms_merchantruleform"
     },
     {
       "relation": "uses",
@@ -20241,9 +20331,9 @@
       "source_file": "finance/forms.py",
       "source_location": "L5",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_forms_recurringplanform",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -20332,9 +20422,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_budgetvelocityalertsview",
-      "target": "finance_forms_recurringplanform",
-      "confidence_score": 0.5
+      "target": "finance_forms_recurringplanform"
     },
     {
       "relation": "uses",
@@ -20362,9 +20452,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_cashflowforecastview",
-      "target": "finance_forms_recurringplanform",
-      "confidence_score": 0.5
+      "target": "finance_forms_recurringplanform"
     },
     {
       "relation": "uses",
@@ -20612,9 +20702,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_sharedexpenselistview",
-      "target": "finance_forms_recurringplanform",
-      "confidence_score": 0.5
+      "target": "finance_forms_recurringplanform"
     },
     {
       "relation": "uses",
@@ -20702,9 +20792,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_transactionsplitview",
-      "target": "finance_forms_recurringplanform",
-      "confidence_score": 0.5
+      "target": "finance_forms_recurringplanform"
     },
     {
       "relation": "uses",
@@ -20742,9 +20832,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_usermanualview",
-      "target": "finance_forms_recurringplanform",
-      "confidence_score": 0.5
+      "target": "finance_forms_recurringplanform"
     },
     {
       "relation": "uses",
@@ -20862,9 +20952,9 @@
       "source_file": "finance/forms.py",
       "source_location": "L5",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_forms_goalform",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -20953,9 +21043,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_budgetvelocityalertsview",
-      "target": "finance_forms_goalform",
-      "confidence_score": 0.5
+      "target": "finance_forms_goalform"
     },
     {
       "relation": "uses",
@@ -20983,9 +21073,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_cashflowforecastview",
-      "target": "finance_forms_goalform",
-      "confidence_score": 0.5
+      "target": "finance_forms_goalform"
     },
     {
       "relation": "uses",
@@ -21233,9 +21323,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_sharedexpenselistview",
-      "target": "finance_forms_goalform",
-      "confidence_score": 0.5
+      "target": "finance_forms_goalform"
     },
     {
       "relation": "uses",
@@ -21323,9 +21413,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_transactionsplitview",
-      "target": "finance_forms_goalform",
-      "confidence_score": 0.5
+      "target": "finance_forms_goalform"
     },
     {
       "relation": "uses",
@@ -21363,9 +21453,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_usermanualview",
-      "target": "finance_forms_goalform",
-      "confidence_score": 0.5
+      "target": "finance_forms_goalform"
     },
     {
       "relation": "uses",
@@ -21483,9 +21573,9 @@
       "source_file": "finance/forms.py",
       "source_location": "L5",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_forms_bundleexportform",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -21584,9 +21674,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_budgetvelocityalertsview",
-      "target": "finance_forms_bundleexportform",
-      "confidence_score": 0.5
+      "target": "finance_forms_bundleexportform"
     },
     {
       "relation": "uses",
@@ -21614,9 +21704,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_cashflowforecastview",
-      "target": "finance_forms_bundleexportform",
-      "confidence_score": 0.5
+      "target": "finance_forms_bundleexportform"
     },
     {
       "relation": "uses",
@@ -21864,9 +21954,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_sharedexpenselistview",
-      "target": "finance_forms_bundleexportform",
-      "confidence_score": 0.5
+      "target": "finance_forms_bundleexportform"
     },
     {
       "relation": "uses",
@@ -21954,9 +22044,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_transactionsplitview",
-      "target": "finance_forms_bundleexportform",
-      "confidence_score": 0.5
+      "target": "finance_forms_bundleexportform"
     },
     {
       "relation": "uses",
@@ -21994,9 +22084,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_usermanualview",
-      "target": "finance_forms_bundleexportform",
-      "confidence_score": 0.5
+      "target": "finance_forms_bundleexportform"
     },
     {
       "relation": "uses",
@@ -22114,9 +22204,9 @@
       "source_file": "finance/forms.py",
       "source_location": "L5",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_forms_bundleimportform",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -22205,9 +22295,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_budgetvelocityalertsview",
-      "target": "finance_forms_bundleimportform",
-      "confidence_score": 0.5
+      "target": "finance_forms_bundleimportform"
     },
     {
       "relation": "uses",
@@ -22235,9 +22325,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_cashflowforecastview",
-      "target": "finance_forms_bundleimportform",
-      "confidence_score": 0.5
+      "target": "finance_forms_bundleimportform"
     },
     {
       "relation": "uses",
@@ -22485,9 +22575,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_sharedexpenselistview",
-      "target": "finance_forms_bundleimportform",
-      "confidence_score": 0.5
+      "target": "finance_forms_bundleimportform"
     },
     {
       "relation": "uses",
@@ -22575,9 +22665,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_transactionsplitview",
-      "target": "finance_forms_bundleimportform",
-      "confidence_score": 0.5
+      "target": "finance_forms_bundleimportform"
     },
     {
       "relation": "uses",
@@ -22615,9 +22705,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_usermanualview",
-      "target": "finance_forms_bundleimportform",
-      "confidence_score": 0.5
+      "target": "finance_forms_bundleimportform"
     },
     {
       "relation": "uses",
@@ -22755,9 +22845,9 @@
       "source_file": "finance/forms.py",
       "source_location": "L5",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_forms_budgetitemform",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -22856,9 +22946,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_budgetvelocityalertsview",
-      "target": "finance_forms_budgetitemform",
-      "confidence_score": 0.5
+      "target": "finance_forms_budgetitemform"
     },
     {
       "relation": "uses",
@@ -22886,9 +22976,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_cashflowforecastview",
-      "target": "finance_forms_budgetitemform",
-      "confidence_score": 0.5
+      "target": "finance_forms_budgetitemform"
     },
     {
       "relation": "uses",
@@ -23136,9 +23226,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_sharedexpenselistview",
-      "target": "finance_forms_budgetitemform",
-      "confidence_score": 0.5
+      "target": "finance_forms_budgetitemform"
     },
     {
       "relation": "uses",
@@ -23226,9 +23316,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_transactionsplitview",
-      "target": "finance_forms_budgetitemform",
-      "confidence_score": 0.5
+      "target": "finance_forms_budgetitemform"
     },
     {
       "relation": "uses",
@@ -23266,9 +23356,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_usermanualview",
-      "target": "finance_forms_budgetitemform",
-      "confidence_score": 0.5
+      "target": "finance_forms_budgetitemform"
     },
     {
       "relation": "calls",
@@ -23437,9 +23527,9 @@
       "source_file": "finance/forms.py",
       "source_location": "L5",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_forms_transactionform",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -23538,9 +23628,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_budgetvelocityalertsview",
-      "target": "finance_forms_transactionform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionform"
     },
     {
       "relation": "uses",
@@ -23568,9 +23658,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_cashflowforecastview",
-      "target": "finance_forms_transactionform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionform"
     },
     {
       "relation": "uses",
@@ -23818,9 +23908,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_sharedexpenselistview",
-      "target": "finance_forms_transactionform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionform"
     },
     {
       "relation": "uses",
@@ -23908,9 +23998,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_transactionsplitview",
-      "target": "finance_forms_transactionform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionform"
     },
     {
       "relation": "uses",
@@ -23948,9 +24038,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_usermanualview",
-      "target": "finance_forms_transactionform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionform"
     },
     {
       "relation": "calls",
@@ -24089,9 +24179,9 @@
       "source_file": "finance/forms.py",
       "source_location": "L5",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_forms_statementuploadform",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -24190,9 +24280,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_budgetvelocityalertsview",
-      "target": "finance_forms_statementuploadform",
-      "confidence_score": 0.5
+      "target": "finance_forms_statementuploadform"
     },
     {
       "relation": "uses",
@@ -24220,9 +24310,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_cashflowforecastview",
-      "target": "finance_forms_statementuploadform",
-      "confidence_score": 0.5
+      "target": "finance_forms_statementuploadform"
     },
     {
       "relation": "uses",
@@ -24470,9 +24560,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_sharedexpenselistview",
-      "target": "finance_forms_statementuploadform",
-      "confidence_score": 0.5
+      "target": "finance_forms_statementuploadform"
     },
     {
       "relation": "uses",
@@ -24560,9 +24650,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_transactionsplitview",
-      "target": "finance_forms_statementuploadform",
-      "confidence_score": 0.5
+      "target": "finance_forms_statementuploadform"
     },
     {
       "relation": "uses",
@@ -24600,9 +24690,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_usermanualview",
-      "target": "finance_forms_statementuploadform",
-      "confidence_score": 0.5
+      "target": "finance_forms_statementuploadform"
     },
     {
       "relation": "uses",
@@ -24740,9 +24830,9 @@
       "source_file": "finance/forms.py",
       "source_location": "L5",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_forms_categorymodelchoicefield",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -24900,9 +24990,9 @@
       "source_file": "finance/forms.py",
       "source_location": "L5",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_forms_stagingtransactionreviewform",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -25051,9 +25141,9 @@
       "source_file": "finance/forms.py",
       "source_location": "L5",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_forms_ccstatementuploadform",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -25142,9 +25232,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_budgetvelocityalertsview",
-      "target": "finance_forms_ccstatementuploadform",
-      "confidence_score": 0.5
+      "target": "finance_forms_ccstatementuploadform"
     },
     {
       "relation": "uses",
@@ -25172,9 +25262,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_cashflowforecastview",
-      "target": "finance_forms_ccstatementuploadform",
-      "confidence_score": 0.5
+      "target": "finance_forms_ccstatementuploadform"
     },
     {
       "relation": "uses",
@@ -25422,9 +25512,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_sharedexpenselistview",
-      "target": "finance_forms_ccstatementuploadform",
-      "confidence_score": 0.5
+      "target": "finance_forms_ccstatementuploadform"
     },
     {
       "relation": "uses",
@@ -25512,9 +25602,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_transactionsplitview",
-      "target": "finance_forms_ccstatementuploadform",
-      "confidence_score": 0.5
+      "target": "finance_forms_ccstatementuploadform"
     },
     {
       "relation": "uses",
@@ -25552,9 +25642,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_usermanualview",
-      "target": "finance_forms_ccstatementuploadform",
-      "confidence_score": 0.5
+      "target": "finance_forms_ccstatementuploadform"
     },
     {
       "relation": "method",
@@ -25682,9 +25772,9 @@
       "source_file": "finance/forms.py",
       "source_location": "L5",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_forms_stagingcctransactionreviewform",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -25702,9 +25792,9 @@
       "source_file": "finance/forms.py",
       "source_location": "L5",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_forms_transactionsplitform",
-      "target": "finance_models_account",
-      "confidence_score": 0.5
+      "target": "finance_models_account"
     },
     {
       "relation": "uses",
@@ -25712,9 +25802,9 @@
       "source_file": "finance/forms.py",
       "source_location": "L5",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_forms_transactionsplitform",
-      "target": "finance_models_budgetitem",
-      "confidence_score": 0.5
+      "target": "finance_models_budgetitem"
     },
     {
       "relation": "uses",
@@ -25722,9 +25812,9 @@
       "source_file": "finance/forms.py",
       "source_location": "L5",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_forms_transactionsplitform",
-      "target": "finance_models_category",
-      "confidence_score": 0.5
+      "target": "finance_models_category"
     },
     {
       "relation": "uses",
@@ -25732,9 +25822,9 @@
       "source_file": "finance/forms.py",
       "source_location": "L5",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_forms_transactionsplitform",
-      "target": "finance_models_goal",
-      "confidence_score": 0.5
+      "target": "finance_models_goal"
     },
     {
       "relation": "uses",
@@ -25742,9 +25832,9 @@
       "source_file": "finance/forms.py",
       "source_location": "L5",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_forms_transactionsplitform",
-      "target": "finance_models_merchantrule",
-      "confidence_score": 0.5
+      "target": "finance_models_merchantrule"
     },
     {
       "relation": "uses",
@@ -25752,9 +25842,9 @@
       "source_file": "finance/forms.py",
       "source_location": "L5",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_forms_transactionsplitform",
-      "target": "finance_models_period",
-      "confidence_score": 0.5
+      "target": "finance_models_period"
     },
     {
       "relation": "uses",
@@ -25762,9 +25852,9 @@
       "source_file": "finance/forms.py",
       "source_location": "L5",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_forms_transactionsplitform",
-      "target": "finance_models_reconciliation",
-      "confidence_score": 0.5
+      "target": "finance_models_reconciliation"
     },
     {
       "relation": "uses",
@@ -25772,9 +25862,9 @@
       "source_file": "finance/forms.py",
       "source_location": "L5",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_forms_transactionsplitform",
-      "target": "finance_models_recurringplan",
-      "confidence_score": 0.5
+      "target": "finance_models_recurringplan"
     },
     {
       "relation": "uses",
@@ -25782,9 +25872,9 @@
       "source_file": "finance/forms.py",
       "source_location": "L5",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_forms_transactionsplitform",
-      "target": "finance_models_stagingcctransaction",
-      "confidence_score": 0.5
+      "target": "finance_models_stagingcctransaction"
     },
     {
       "relation": "uses",
@@ -25792,9 +25882,9 @@
       "source_file": "finance/forms.py",
       "source_location": "L5",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_forms_transactionsplitform",
-      "target": "finance_models_stagingtransaction",
-      "confidence_score": 0.5
+      "target": "finance_models_stagingtransaction"
     },
     {
       "relation": "uses",
@@ -25802,9 +25892,9 @@
       "source_file": "finance/forms.py",
       "source_location": "L5",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_forms_transactionsplitform",
-      "target": "finance_models_transaction",
-      "confidence_score": 0.5
+      "target": "finance_models_transaction"
     },
     {
       "relation": "uses",
@@ -25812,9 +25902,9 @@
       "source_file": "finance/forms.py",
       "source_location": "L5",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_forms_transactionsplitform",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -25822,9 +25912,9 @@
       "source_file": "finance/forms.py",
       "source_location": "L5",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_forms_transactionsplitform",
-      "target": "finance_models_transfer",
-      "confidence_score": 0.5
+      "target": "finance_models_transfer"
     },
     {
       "relation": "imports",
@@ -25833,9 +25923,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "finance_views",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 1.0
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "uses",
@@ -25843,9 +25933,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_accountcreateview",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "uses",
@@ -25853,9 +25943,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_accountlistview",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "uses",
@@ -25863,9 +25953,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_accountupdateview",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "uses",
@@ -25873,9 +25963,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_budgetitemcreateview",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "uses",
@@ -25883,9 +25973,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_budgetitemdeleteview",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "uses",
@@ -25893,9 +25983,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_budgetitemupdateview",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "uses",
@@ -25903,9 +25993,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_budgetvelocityalertsview",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "uses",
@@ -25913,9 +26003,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_bundleexportview",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "uses",
@@ -25923,9 +26013,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_bundleimportview",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "uses",
@@ -25933,9 +26023,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_cashflowforecastview",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "uses",
@@ -25943,9 +26033,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_categorycreateview",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "uses",
@@ -25953,9 +26043,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_categorydeleteview",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "uses",
@@ -25963,9 +26053,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_categorylistview",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "uses",
@@ -25973,9 +26063,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_categoryupdateview",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "uses",
@@ -25983,9 +26073,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_ccstagingdeleteview",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "uses",
@@ -25993,9 +26083,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_ccstagingreviewview",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "uses",
@@ -26003,9 +26093,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_ccstatementuploadview",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "uses",
@@ -26013,9 +26103,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_dashboardpdfview",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "uses",
@@ -26023,9 +26113,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_dashboardview",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "uses",
@@ -26033,9 +26123,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_goalcreateview",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "uses",
@@ -26043,9 +26133,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_goallistview",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "uses",
@@ -26053,9 +26143,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_groupdashboardview",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "uses",
@@ -26063,9 +26153,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_installmentobligationlistview",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "uses",
@@ -26073,9 +26163,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_merchantrulecreateview",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "uses",
@@ -26083,9 +26173,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_merchantrulelistview",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "uses",
@@ -26093,9 +26183,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_periodcloseview",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "uses",
@@ -26103,9 +26193,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_periodcreateview",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "uses",
@@ -26113,9 +26203,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_perioddeleteview",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "uses",
@@ -26123,9 +26213,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_periodduplicatebudgetview",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "uses",
@@ -26133,9 +26223,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_periodlistview",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "uses",
@@ -26143,9 +26233,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_periodupdateview",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "uses",
@@ -26153,9 +26243,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_reconciliationcreateview",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "uses",
@@ -26163,9 +26253,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_recurringplancreateview",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "uses",
@@ -26173,9 +26263,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_recurringplanlistview",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "uses",
@@ -26183,9 +26273,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_sharedexpenselistview",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "uses",
@@ -26193,9 +26283,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_stagingdeleteview",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "uses",
@@ -26203,9 +26293,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_stagingreviewview",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "uses",
@@ -26213,9 +26303,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_statementuploadview",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "uses",
@@ -26223,9 +26313,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_transactioncreateview",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "uses",
@@ -26233,9 +26323,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_transactioncsvexportview",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "uses",
@@ -26243,9 +26333,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_transactiondeleteview",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "uses",
@@ -26253,9 +26343,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_transactionlistview",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "uses",
@@ -26263,9 +26353,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_transactionreverseview",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "uses",
@@ -26273,9 +26363,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_transactionsplitview",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "uses",
@@ -26283,9 +26373,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_transactionupdateview",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "uses",
@@ -26293,9 +26383,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_transfercreateview",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "uses",
@@ -26303,9 +26393,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_trendview",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "uses",
@@ -26313,9 +26403,9 @@
       "source_file": "finance/views.py",
       "source_location": "L17",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_usermanualview",
-      "target": "finance_forms_transactionsplitform",
-      "confidence_score": 0.5
+      "target": "finance_forms_transactionsplitform"
     },
     {
       "relation": "contains",
@@ -26426,6 +26516,16 @@
       "confidence_score": 1.0,
       "source": "migrations_0007_importbatch_row_counts",
       "target": "migrations_0007_importbatch_row_counts_migration"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "finance/migrations/0008_transactionsplit.py",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "migrations_0008_transactionsplit",
+      "target": "migrations_0008_transactionsplit_migration",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -26583,9 +26683,9 @@
       "source_file": "finance/models.py",
       "source_location": "L197",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "finance_models",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 1.0
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "contains",
@@ -26798,9 +26898,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_budgetvelocityalertsview",
-      "target": "finance_models_period",
-      "confidence_score": 0.5
+      "target": "finance_models_period"
     },
     {
       "relation": "uses",
@@ -26828,9 +26928,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_cashflowforecastview",
-      "target": "finance_models_period",
-      "confidence_score": 0.5
+      "target": "finance_models_period"
     },
     {
       "relation": "uses",
@@ -27078,9 +27178,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_sharedexpenselistview",
-      "target": "finance_models_period",
-      "confidence_score": 0.5
+      "target": "finance_models_period"
     },
     {
       "relation": "uses",
@@ -27168,9 +27268,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_transactionsplitview",
-      "target": "finance_models_period",
-      "confidence_score": 0.5
+      "target": "finance_models_period"
     },
     {
       "relation": "uses",
@@ -27208,9 +27308,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_usermanualview",
-      "target": "finance_models_period",
-      "confidence_score": 0.5
+      "target": "finance_models_period"
     },
     {
       "relation": "uses",
@@ -27472,9 +27572,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_budgetvelocityalertsview",
-      "target": "finance_models_account",
-      "confidence_score": 0.5
+      "target": "finance_models_account"
     },
     {
       "relation": "uses",
@@ -27502,9 +27602,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_cashflowforecastview",
-      "target": "finance_models_account",
-      "confidence_score": 0.5
+      "target": "finance_models_account"
     },
     {
       "relation": "uses",
@@ -27752,9 +27852,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_sharedexpenselistview",
-      "target": "finance_models_account",
-      "confidence_score": 0.5
+      "target": "finance_models_account"
     },
     {
       "relation": "uses",
@@ -27842,9 +27942,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_transactionsplitview",
-      "target": "finance_models_account",
-      "confidence_score": 0.5
+      "target": "finance_models_account"
     },
     {
       "relation": "uses",
@@ -27882,9 +27982,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_usermanualview",
-      "target": "finance_models_account",
-      "confidence_score": 0.5
+      "target": "finance_models_account"
     },
     {
       "relation": "uses",
@@ -27923,9 +28023,9 @@
       "source_file": "finance/tests/test_services.py",
       "source_location": "L9",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_test_services",
-      "target": "finance_models_account",
-      "confidence_score": 1.0
+      "target": "finance_models_account"
     },
     {
       "relation": "uses",
@@ -27933,9 +28033,9 @@
       "source_file": "finance/tests/test_services.py",
       "source_location": "L9",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "tests_test_services_ledgerservicetests",
-      "target": "finance_models_account",
-      "confidence_score": 0.5
+      "target": "finance_models_account"
     },
     {
       "relation": "uses",
@@ -28105,9 +28205,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_budgetvelocityalertsview",
-      "target": "finance_models_category",
-      "confidence_score": 0.5
+      "target": "finance_models_category"
     },
     {
       "relation": "uses",
@@ -28135,9 +28235,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_cashflowforecastview",
-      "target": "finance_models_category",
-      "confidence_score": 0.5
+      "target": "finance_models_category"
     },
     {
       "relation": "uses",
@@ -28385,9 +28485,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_sharedexpenselistview",
-      "target": "finance_models_category",
-      "confidence_score": 0.5
+      "target": "finance_models_category"
     },
     {
       "relation": "uses",
@@ -28475,9 +28575,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_transactionsplitview",
-      "target": "finance_models_category",
-      "confidence_score": 0.5
+      "target": "finance_models_category"
     },
     {
       "relation": "uses",
@@ -28515,9 +28615,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_usermanualview",
-      "target": "finance_models_category",
-      "confidence_score": 0.5
+      "target": "finance_models_category"
     },
     {
       "relation": "uses",
@@ -28738,9 +28838,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_budgetvelocityalertsview",
-      "target": "finance_models_budgetitem",
-      "confidence_score": 0.5
+      "target": "finance_models_budgetitem"
     },
     {
       "relation": "uses",
@@ -28768,9 +28868,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_cashflowforecastview",
-      "target": "finance_models_budgetitem",
-      "confidence_score": 0.5
+      "target": "finance_models_budgetitem"
     },
     {
       "relation": "uses",
@@ -29018,9 +29118,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_sharedexpenselistview",
-      "target": "finance_models_budgetitem",
-      "confidence_score": 0.5
+      "target": "finance_models_budgetitem"
     },
     {
       "relation": "uses",
@@ -29108,9 +29208,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_transactionsplitview",
-      "target": "finance_models_budgetitem",
-      "confidence_score": 0.5
+      "target": "finance_models_budgetitem"
     },
     {
       "relation": "uses",
@@ -29148,9 +29248,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_usermanualview",
-      "target": "finance_models_budgetitem",
-      "confidence_score": 0.5
+      "target": "finance_models_budgetitem"
     },
     {
       "relation": "uses",
@@ -29360,9 +29460,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_budgetvelocityalertsview",
-      "target": "finance_models_transaction",
-      "confidence_score": 0.5
+      "target": "finance_models_transaction"
     },
     {
       "relation": "uses",
@@ -29390,9 +29490,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_cashflowforecastview",
-      "target": "finance_models_transaction",
-      "confidence_score": 0.5
+      "target": "finance_models_transaction"
     },
     {
       "relation": "uses",
@@ -29640,9 +29740,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_sharedexpenselistview",
-      "target": "finance_models_transaction",
-      "confidence_score": 0.5
+      "target": "finance_models_transaction"
     },
     {
       "relation": "uses",
@@ -29730,9 +29830,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_transactionsplitview",
-      "target": "finance_models_transaction",
-      "confidence_score": 0.5
+      "target": "finance_models_transaction"
     },
     {
       "relation": "uses",
@@ -29770,9 +29870,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_usermanualview",
-      "target": "finance_models_transaction",
-      "confidence_score": 0.5
+      "target": "finance_models_transaction"
     },
     {
       "relation": "uses",
@@ -29862,9 +29962,9 @@
       "source_file": "finance/services.py",
       "source_location": "L40",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "account",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -29872,9 +29972,9 @@
       "source_file": "finance/services.py",
       "source_location": "L40",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "budgetitem",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -29882,9 +29982,9 @@
       "source_file": "finance/services.py",
       "source_location": "L40",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "category",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -29892,9 +29992,9 @@
       "source_file": "finance/services.py",
       "source_location": "L40",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "date",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -29902,9 +30002,9 @@
       "source_file": "finance/services.py",
       "source_location": "L40",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "decimal",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "method",
@@ -29912,9 +30012,9 @@
       "source_file": "finance/models.py",
       "source_location": "L217",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "finance_models_transactionsplit",
-      "target": "finance_models_transactionsplit_str",
-      "confidence_score": 1.0
+      "target": "finance_models_transactionsplit_str"
     },
     {
       "relation": "imports",
@@ -29923,9 +30023,9 @@
       "source_file": "finance/services.py",
       "source_location": "L40",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "finance_services",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 1.0
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "imports",
@@ -29934,9 +30034,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "finance_views",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 1.0
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -29944,9 +30044,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_accountcreateview",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -29954,9 +30054,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_accountlistview",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -29964,9 +30064,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_accountupdateview",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -29974,9 +30074,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_budgetitemcreateview",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -29984,9 +30084,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_budgetitemdeleteview",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -29994,9 +30094,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_budgetitemupdateview",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -30004,9 +30104,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_budgetvelocityalertsview",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -30014,9 +30114,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_bundleexportview",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -30024,9 +30124,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_bundleimportview",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -30034,9 +30134,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_cashflowforecastview",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -30044,9 +30144,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_categorycreateview",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -30054,9 +30154,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_categorydeleteview",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -30064,9 +30164,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_categorylistview",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -30074,9 +30174,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_categoryupdateview",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -30084,9 +30184,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_ccstagingdeleteview",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -30094,9 +30194,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_ccstagingreviewview",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -30104,9 +30204,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_ccstatementuploadview",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -30114,9 +30214,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_dashboardpdfview",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -30124,9 +30224,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_dashboardview",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -30134,9 +30234,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_goalcreateview",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -30144,9 +30244,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_goallistview",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -30154,9 +30254,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_groupdashboardview",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -30164,9 +30264,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_installmentobligationlistview",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -30174,9 +30274,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_merchantrulecreateview",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -30184,9 +30284,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_merchantrulelistview",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -30194,9 +30294,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_periodcloseview",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -30204,9 +30304,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_periodcreateview",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -30214,9 +30314,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_perioddeleteview",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -30224,9 +30324,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_periodduplicatebudgetview",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -30234,9 +30334,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_periodlistview",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -30244,9 +30344,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_periodupdateview",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -30254,9 +30354,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_reconciliationcreateview",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -30264,9 +30364,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_recurringplancreateview",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -30274,9 +30374,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_recurringplanlistview",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -30284,9 +30384,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_sharedexpenselistview",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -30294,9 +30394,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_stagingdeleteview",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -30304,9 +30404,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_stagingreviewview",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -30314,9 +30414,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_statementuploadview",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -30324,9 +30424,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_transactioncreateview",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -30334,9 +30434,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_transactioncsvexportview",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -30344,9 +30444,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_transactiondeleteview",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -30354,9 +30454,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_transactionlistview",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -30364,9 +30464,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_transactionreverseview",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -30374,9 +30474,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_transactionsplitview",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -30384,9 +30484,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_transactionupdateview",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -30394,9 +30494,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_transfercreateview",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -30404,9 +30504,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_trendview",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -30414,9 +30514,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_usermanualview",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -30424,9 +30524,9 @@
       "source_file": "finance/services.py",
       "source_location": "L40",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "goal",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -30434,9 +30534,9 @@
       "source_file": "finance/services.py",
       "source_location": "L40",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "period",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -30444,9 +30544,9 @@
       "source_file": "finance/services.py",
       "source_location": "L40",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "reconciliation",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "imports",
@@ -30455,9 +30555,9 @@
       "source_file": "finance/tests/test_services.py",
       "source_location": "L9",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_test_services",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 1.0
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -30465,9 +30565,9 @@
       "source_file": "finance/tests/test_services.py",
       "source_location": "L9",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "tests_test_services_ledgerservicetests",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -30475,9 +30575,9 @@
       "source_file": "finance/services.py",
       "source_location": "L40",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "transaction",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -30485,9 +30585,9 @@
       "source_file": "finance/services.py",
       "source_location": "L40",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "transfer",
-      "target": "finance_models_transactionsplit",
-      "confidence_score": 0.5
+      "target": "finance_models_transactionsplit"
     },
     {
       "relation": "uses",
@@ -30869,9 +30969,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_budgetvelocityalertsview",
-      "target": "finance_models_merchantrule",
-      "confidence_score": 0.5
+      "target": "finance_models_merchantrule"
     },
     {
       "relation": "uses",
@@ -30899,9 +30999,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_cashflowforecastview",
-      "target": "finance_models_merchantrule",
-      "confidence_score": 0.5
+      "target": "finance_models_merchantrule"
     },
     {
       "relation": "uses",
@@ -31149,9 +31249,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_sharedexpenselistview",
-      "target": "finance_models_merchantrule",
-      "confidence_score": 0.5
+      "target": "finance_models_merchantrule"
     },
     {
       "relation": "uses",
@@ -31239,9 +31339,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_transactionsplitview",
-      "target": "finance_models_merchantrule",
-      "confidence_score": 0.5
+      "target": "finance_models_merchantrule"
     },
     {
       "relation": "uses",
@@ -31279,9 +31379,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_usermanualview",
-      "target": "finance_models_merchantrule",
-      "confidence_score": 0.5
+      "target": "finance_models_merchantrule"
     },
     {
       "relation": "uses",
@@ -31492,9 +31592,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_budgetvelocityalertsview",
-      "target": "finance_models_recurringplan",
-      "confidence_score": 0.5
+      "target": "finance_models_recurringplan"
     },
     {
       "relation": "uses",
@@ -31522,9 +31622,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_cashflowforecastview",
-      "target": "finance_models_recurringplan",
-      "confidence_score": 0.5
+      "target": "finance_models_recurringplan"
     },
     {
       "relation": "uses",
@@ -31772,9 +31872,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_sharedexpenselistview",
-      "target": "finance_models_recurringplan",
-      "confidence_score": 0.5
+      "target": "finance_models_recurringplan"
     },
     {
       "relation": "uses",
@@ -31862,9 +31962,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_transactionsplitview",
-      "target": "finance_models_recurringplan",
-      "confidence_score": 0.5
+      "target": "finance_models_recurringplan"
     },
     {
       "relation": "uses",
@@ -31902,9 +32002,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_usermanualview",
-      "target": "finance_models_recurringplan",
-      "confidence_score": 0.5
+      "target": "finance_models_recurringplan"
     },
     {
       "relation": "uses",
@@ -31943,9 +32043,9 @@
       "source_file": "finance/tests/test_services.py",
       "source_location": "L9",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_test_services",
-      "target": "finance_models_recurringplan",
-      "confidence_score": 1.0
+      "target": "finance_models_recurringplan"
     },
     {
       "relation": "uses",
@@ -31953,9 +32053,9 @@
       "source_file": "finance/tests/test_services.py",
       "source_location": "L9",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "tests_test_services_ledgerservicetests",
-      "target": "finance_models_recurringplan",
-      "confidence_score": 0.5
+      "target": "finance_models_recurringplan"
     },
     {
       "relation": "uses",
@@ -32125,9 +32225,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_budgetvelocityalertsview",
-      "target": "finance_models_goal",
-      "confidence_score": 0.5
+      "target": "finance_models_goal"
     },
     {
       "relation": "uses",
@@ -32155,9 +32255,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_cashflowforecastview",
-      "target": "finance_models_goal",
-      "confidence_score": 0.5
+      "target": "finance_models_goal"
     },
     {
       "relation": "uses",
@@ -32405,9 +32505,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_sharedexpenselistview",
-      "target": "finance_models_goal",
-      "confidence_score": 0.5
+      "target": "finance_models_goal"
     },
     {
       "relation": "uses",
@@ -32495,9 +32595,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_transactionsplitview",
-      "target": "finance_models_goal",
-      "confidence_score": 0.5
+      "target": "finance_models_goal"
     },
     {
       "relation": "uses",
@@ -32535,9 +32635,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_usermanualview",
-      "target": "finance_models_goal",
-      "confidence_score": 0.5
+      "target": "finance_models_goal"
     },
     {
       "relation": "uses",
@@ -32737,9 +32837,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_budgetvelocityalertsview",
-      "target": "finance_models_importbatch",
-      "confidence_score": 0.5
+      "target": "finance_models_importbatch"
     },
     {
       "relation": "uses",
@@ -32767,9 +32867,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_cashflowforecastview",
-      "target": "finance_models_importbatch",
-      "confidence_score": 0.5
+      "target": "finance_models_importbatch"
     },
     {
       "relation": "uses",
@@ -33017,9 +33117,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_sharedexpenselistview",
-      "target": "finance_models_importbatch",
-      "confidence_score": 0.5
+      "target": "finance_models_importbatch"
     },
     {
       "relation": "uses",
@@ -33107,9 +33207,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_transactionsplitview",
-      "target": "finance_models_importbatch",
-      "confidence_score": 0.5
+      "target": "finance_models_importbatch"
     },
     {
       "relation": "uses",
@@ -33147,9 +33247,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_usermanualview",
-      "target": "finance_models_importbatch",
-      "confidence_score": 0.5
+      "target": "finance_models_importbatch"
     },
     {
       "relation": "uses",
@@ -33360,9 +33460,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_budgetvelocityalertsview",
-      "target": "finance_models_stagingtransaction",
-      "confidence_score": 0.5
+      "target": "finance_models_stagingtransaction"
     },
     {
       "relation": "uses",
@@ -33390,9 +33490,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_cashflowforecastview",
-      "target": "finance_models_stagingtransaction",
-      "confidence_score": 0.5
+      "target": "finance_models_stagingtransaction"
     },
     {
       "relation": "uses",
@@ -33640,9 +33740,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_sharedexpenselistview",
-      "target": "finance_models_stagingtransaction",
-      "confidence_score": 0.5
+      "target": "finance_models_stagingtransaction"
     },
     {
       "relation": "uses",
@@ -33730,9 +33830,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_transactionsplitview",
-      "target": "finance_models_stagingtransaction",
-      "confidence_score": 0.5
+      "target": "finance_models_stagingtransaction"
     },
     {
       "relation": "uses",
@@ -33770,9 +33870,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_usermanualview",
-      "target": "finance_models_stagingtransaction",
-      "confidence_score": 0.5
+      "target": "finance_models_stagingtransaction"
     },
     {
       "relation": "uses",
@@ -34004,9 +34104,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_budgetvelocityalertsview",
-      "target": "finance_models_stagingcctransaction",
-      "confidence_score": 0.5
+      "target": "finance_models_stagingcctransaction"
     },
     {
       "relation": "uses",
@@ -34034,9 +34134,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_cashflowforecastview",
-      "target": "finance_models_stagingcctransaction",
-      "confidence_score": 0.5
+      "target": "finance_models_stagingcctransaction"
     },
     {
       "relation": "uses",
@@ -34284,9 +34384,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_sharedexpenselistview",
-      "target": "finance_models_stagingcctransaction",
-      "confidence_score": 0.5
+      "target": "finance_models_stagingcctransaction"
     },
     {
       "relation": "uses",
@@ -34374,9 +34474,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_transactionsplitview",
-      "target": "finance_models_stagingcctransaction",
-      "confidence_score": 0.5
+      "target": "finance_models_stagingcctransaction"
     },
     {
       "relation": "uses",
@@ -34414,9 +34514,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_usermanualview",
-      "target": "finance_models_stagingcctransaction",
-      "confidence_score": 0.5
+      "target": "finance_models_stagingcctransaction"
     },
     {
       "relation": "uses",
@@ -34545,9 +34645,9 @@
       "source_file": "finance/models.py",
       "source_location": "L399",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "finance_models_rationale_399",
-      "target": "finance_models_installmentobligation",
-      "confidence_score": 1.0
+      "target": "finance_models_installmentobligation"
     },
     {
       "relation": "imports",
@@ -34637,9 +34737,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_budgetvelocityalertsview",
-      "target": "finance_models_installmentobligation",
-      "confidence_score": 0.5
+      "target": "finance_models_installmentobligation"
     },
     {
       "relation": "uses",
@@ -34667,9 +34767,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_cashflowforecastview",
-      "target": "finance_models_installmentobligation",
-      "confidence_score": 0.5
+      "target": "finance_models_installmentobligation"
     },
     {
       "relation": "uses",
@@ -34917,9 +35017,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_sharedexpenselistview",
-      "target": "finance_models_installmentobligation",
-      "confidence_score": 0.5
+      "target": "finance_models_installmentobligation"
     },
     {
       "relation": "uses",
@@ -35007,9 +35107,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_transactionsplitview",
-      "target": "finance_models_installmentobligation",
-      "confidence_score": 0.5
+      "target": "finance_models_installmentobligation"
     },
     {
       "relation": "uses",
@@ -35047,9 +35147,9 @@
       "source_file": "finance/views.py",
       "source_location": "L22",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "finance_views_usermanualview",
-      "target": "finance_models_installmentobligation",
-      "confidence_score": 0.5
+      "target": "finance_models_installmentobligation"
     },
     {
       "relation": "uses",
@@ -35180,9 +35280,9 @@
       "source_file": "finance/services.py",
       "source_location": "L945",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "finance_services",
-      "target": "finance_services_build_cash_flow_forecast",
-      "confidence_score": 1.0
+      "target": "finance_services_build_cash_flow_forecast"
     },
     {
       "relation": "contains",
@@ -35250,9 +35350,9 @@
       "source_file": "finance/services.py",
       "source_location": "L811",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "finance_services",
-      "target": "finance_services_create_transaction_splits_service",
-      "confidence_score": 1.0
+      "target": "finance_services_create_transaction_splits_service"
     },
     {
       "relation": "contains",
@@ -35290,9 +35390,9 @@
       "source_file": "finance/services.py",
       "source_location": "L1053",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "finance_services",
-      "target": "finance_services_get_budget_velocity_alerts",
-      "confidence_score": 1.0
+      "target": "finance_services_get_budget_velocity_alerts"
     },
     {
       "relation": "contains",
@@ -35350,9 +35450,9 @@
       "source_file": "finance/services.py",
       "source_location": "L848",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "finance_services",
-      "target": "finance_services_get_shared_expenses_summary",
-      "confidence_score": 1.0
+      "target": "finance_services_get_shared_expenses_summary"
     },
     {
       "relation": "contains",
@@ -35647,9 +35747,9 @@
       "source_file": "finance/services.py",
       "source_location": "L951",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "finance_services_build_cash_flow_forecast",
-      "target": "decimal",
-      "confidence_score": 1.0
+      "target": "decimal"
     },
     {
       "relation": "references",
@@ -35702,9 +35802,9 @@
       "source_file": "finance/services.py",
       "source_location": "L817",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "finance_services_create_transaction_splits_service",
-      "target": "decimal",
-      "confidence_score": 1.0
+      "target": "decimal"
     },
     {
       "relation": "calls",
@@ -35724,9 +35824,9 @@
       "source_file": "finance/services.py",
       "source_location": "L1071",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "finance_services_get_budget_velocity_alerts",
-      "target": "decimal",
-      "confidence_score": 1.0
+      "target": "decimal"
     },
     {
       "relation": "calls",
@@ -35746,9 +35846,9 @@
       "source_file": "finance/services.py",
       "source_location": "L856",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "finance_services_get_shared_expenses_summary",
-      "target": "decimal",
-      "confidence_score": 1.0
+      "target": "decimal"
     },
     {
       "relation": "references",
@@ -36224,9 +36324,9 @@
       "source_file": "finance/services.py",
       "source_location": "L945",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "finance_services_build_cash_flow_forecast",
-      "target": "date",
-      "confidence_score": 1.0
+      "target": "date"
     },
     {
       "relation": "references",
@@ -36519,6 +36619,17 @@
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "finance_views",
+      "target": "finance_services_get_duplicate_staging_matches"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "finance/views.py",
+      "source_location": "L956",
+      "weight": 1.0,
+      "source": "finance_views_ccstagingreviewview_post",
       "target": "finance_services_get_duplicate_staging_matches"
     },
     {
@@ -36883,9 +36994,9 @@
       "source_file": "finance/services.py",
       "source_location": "L832",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "finance_services_create_transaction_splits_service",
-      "target": "finance_services_get_or_create_budget_item",
-      "confidence_score": 1.0
+      "target": "finance_services_get_or_create_budget_item"
     },
     {
       "relation": "references",
@@ -37421,11 +37532,11 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "finance/services.py",
-      "source_location": "L444",
+      "source_location": "L445",
       "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "finance_services_rationale_444",
-      "target": "finance_services_duplicate_period_budget_items"
+      "source": "finance_services_rationale_445",
+      "target": "finance_services_duplicate_period_budget_items",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports",
@@ -37599,9 +37710,9 @@
       "source_file": "finance/views.py",
       "source_location": "L23",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "finance_views",
-      "target": "finance_services_create_transaction_splits_service",
-      "confidence_score": 1.0
+      "target": "finance_services_create_transaction_splits_service"
     },
     {
       "relation": "calls",
@@ -37621,9 +37732,9 @@
       "source_file": "finance/tests/test_services.py",
       "source_location": "L10",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_test_services",
-      "target": "finance_services_create_transaction_splits_service",
-      "confidence_score": 1.0
+      "target": "finance_services_create_transaction_splits_service"
     },
     {
       "relation": "calls",
@@ -37665,9 +37776,9 @@
       "source_file": "finance/views.py",
       "source_location": "L23",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "finance_views",
-      "target": "finance_services_get_shared_expenses_summary",
-      "confidence_score": 1.0
+      "target": "finance_services_get_shared_expenses_summary"
     },
     {
       "relation": "calls",
@@ -37687,9 +37798,9 @@
       "source_file": "finance/tests/test_services.py",
       "source_location": "L10",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_test_services",
-      "target": "finance_services_get_shared_expenses_summary",
-      "confidence_score": 1.0
+      "target": "finance_services_get_shared_expenses_summary"
     },
     {
       "relation": "calls",
@@ -37742,9 +37853,9 @@
       "source_file": "finance/services.py",
       "source_location": "L953",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "finance_services_build_cash_flow_forecast",
-      "target": "finance_services_calculate_account_balance",
-      "confidence_score": 1.0
+      "target": "finance_services_calculate_account_balance"
     },
     {
       "relation": "calls",
@@ -37786,9 +37897,9 @@
       "source_file": "finance/views.py",
       "source_location": "L23",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "finance_views",
-      "target": "finance_services_build_cash_flow_forecast",
-      "confidence_score": 1.0
+      "target": "finance_services_build_cash_flow_forecast"
     },
     {
       "relation": "calls",
@@ -37808,9 +37919,9 @@
       "source_file": "finance/tests/test_services.py",
       "source_location": "L10",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_test_services",
-      "target": "finance_services_build_cash_flow_forecast",
-      "confidence_score": 1.0
+      "target": "finance_services_build_cash_flow_forecast"
     },
     {
       "relation": "calls",
@@ -37830,9 +37941,9 @@
       "source_file": "finance/views.py",
       "source_location": "L23",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "finance_views",
-      "target": "finance_services_get_budget_velocity_alerts",
-      "confidence_score": 1.0
+      "target": "finance_services_get_budget_velocity_alerts"
     },
     {
       "relation": "calls",
@@ -37863,9 +37974,9 @@
       "source_file": "finance/tests/test_services.py",
       "source_location": "L10",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_test_services",
-      "target": "finance_services_get_budget_velocity_alerts",
-      "confidence_score": 1.0
+      "target": "finance_services_get_budget_velocity_alerts"
     },
     {
       "relation": "calls",
@@ -37948,9 +38059,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "finance/services.py",
-      "source_location": "L1198",
+      "source_location": "L1203",
       "weight": 1.0,
-      "source": "finance_services_rationale_1198",
+      "source": "finance_services_rationale_1203",
       "target": "finance_services_materialize_recurring_plans",
       "confidence_score": 1.0
     },
@@ -38013,9 +38124,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "finance/services.py",
-      "source_location": "L1248",
+      "source_location": "L1253",
       "weight": 1.0,
-      "source": "finance_services_rationale_1248",
+      "source": "finance_services_rationale_1253",
       "target": "finance_services_export_finance_bundle",
       "confidence_score": 1.0
     },
@@ -38133,9 +38244,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "finance/services.py",
-      "source_location": "L1366",
+      "source_location": "L1371",
       "weight": 1.0,
-      "source": "finance_services_rationale_1366",
+      "source": "finance_services_rationale_1371",
       "target": "finance_services_clp",
       "confidence_score": 1.0
     },
@@ -38143,9 +38254,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "finance/services.py",
-      "source_location": "L1373",
+      "source_location": "L1378",
       "weight": 1.0,
-      "source": "finance_services_rationale_1373",
+      "source": "finance_services_rationale_1378",
       "target": "finance_services_generate_dashboard_pdf",
       "confidence_score": 1.0
     },
@@ -38399,9 +38510,9 @@
       "source_file": "finance/tests/test_services.py",
       "source_location": "L179",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_test_services_ledgerservicetests",
-      "target": "tests_test_services_ledgerservicetests_test_budget_velocity_alerts_view_returns_200",
-      "confidence_score": 1.0
+      "target": "tests_test_services_ledgerservicetests_test_budget_velocity_alerts_view_returns_200"
     },
     {
       "relation": "method",
@@ -38409,9 +38520,9 @@
       "source_file": "finance/tests/test_services.py",
       "source_location": "L93",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_test_services_ledgerservicetests",
-      "target": "tests_test_services_ledgerservicetests_test_cash_flow_forecast_calculates_monthly_inflows_and_outflows",
-      "confidence_score": 1.0
+      "target": "tests_test_services_ledgerservicetests_test_cash_flow_forecast_calculates_monthly_inflows_and_outflows"
     },
     {
       "relation": "method",
@@ -38419,9 +38530,9 @@
       "source_file": "finance/tests/test_services.py",
       "source_location": "L116",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_test_services_ledgerservicetests",
-      "target": "tests_test_services_ledgerservicetests_test_cash_flow_forecast_view_returns_200",
-      "confidence_score": 1.0
+      "target": "tests_test_services_ledgerservicetests_test_cash_flow_forecast_view_returns_200"
     },
     {
       "relation": "method",
@@ -38449,9 +38560,9 @@
       "source_file": "finance/tests/test_services.py",
       "source_location": "L166",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_test_services_ledgerservicetests",
-      "target": "tests_test_services_ledgerservicetests_test_get_budget_velocity_alerts_detects_overbudget_items",
-      "confidence_score": 1.0
+      "target": "tests_test_services_ledgerservicetests_test_get_budget_velocity_alerts_detects_overbudget_items"
     },
     {
       "relation": "method",
@@ -38499,9 +38610,9 @@
       "source_file": "finance/tests/test_services.py",
       "source_location": "L161",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_test_services_ledgerservicetests",
-      "target": "tests_test_services_ledgerservicetests_test_shared_expense_list_view_returns_200",
-      "confidence_score": 1.0
+      "target": "tests_test_services_ledgerservicetests_test_shared_expense_list_view_returns_200"
     },
     {
       "relation": "method",
@@ -38509,9 +38620,9 @@
       "source_file": "finance/tests/test_services.py",
       "source_location": "L146",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_test_services_ledgerservicetests",
-      "target": "tests_test_services_ledgerservicetests_test_shared_expenses_summary_aggregates_reimbursable_and_shared_items",
-      "confidence_score": 1.0
+      "target": "tests_test_services_ledgerservicetests_test_shared_expenses_summary_aggregates_reimbursable_and_shared_items"
     },
     {
       "relation": "method",
@@ -38529,9 +38640,9 @@
       "source_file": "finance/tests/test_services.py",
       "source_location": "L121",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_test_services_ledgerservicetests",
-      "target": "tests_test_services_ledgerservicetests_test_transaction_splits_service_creates_splits_when_totals_match",
-      "confidence_score": 1.0
+      "target": "tests_test_services_ledgerservicetests_test_transaction_splits_service_creates_splits_when_totals_match"
     },
     {
       "relation": "method",
@@ -38539,9 +38650,9 @@
       "source_file": "finance/tests/test_services.py",
       "source_location": "L135",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_test_services_ledgerservicetests",
-      "target": "tests_test_services_ledgerservicetests_test_transaction_splits_service_raises_error_when_totals_mismatch",
-      "confidence_score": 1.0
+      "target": "tests_test_services_ledgerservicetests_test_transaction_splits_service_raises_error_when_totals_mismatch"
     },
     {
       "relation": "imports_from",
@@ -38620,9 +38731,9 @@
       "source_file": "finance/views.py",
       "source_location": "L227",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "finance_views",
-      "target": "finance_views_budgetvelocityalertsview",
-      "confidence_score": 1.0
+      "target": "finance_views_budgetvelocityalertsview"
     },
     {
       "relation": "contains",
@@ -38650,9 +38761,9 @@
       "source_file": "finance/views.py",
       "source_location": "L210",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "finance_views",
-      "target": "finance_views_cashflowforecastview",
-      "confidence_score": 1.0
+      "target": "finance_views_cashflowforecastview"
     },
     {
       "relation": "contains",
@@ -38900,9 +39011,9 @@
       "source_file": "finance/views.py",
       "source_location": "L615",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "finance_views",
-      "target": "finance_views_sharedexpenselistview",
-      "confidence_score": 1.0
+      "target": "finance_views_sharedexpenselistview"
     },
     {
       "relation": "contains",
@@ -38990,9 +39101,9 @@
       "source_file": "finance/views.py",
       "source_location": "L559",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "finance_views",
-      "target": "finance_views_transactionsplitview",
-      "confidence_score": 1.0
+      "target": "finance_views_transactionsplitview"
     },
     {
       "relation": "contains",
@@ -39030,9 +39141,9 @@
       "source_file": "finance/views.py",
       "source_location": "L994",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "finance_views",
-      "target": "finance_views_usermanualview",
-      "confidence_score": 1.0
+      "target": "finance_views_usermanualview"
     },
     {
       "relation": "method",
@@ -39060,9 +39171,9 @@
       "source_file": "finance/views.py",
       "source_location": "L227",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "finance_views_budgetvelocityalertsview",
-      "target": "templateview",
-      "confidence_score": 1.0
+      "target": "templateview"
     },
     {
       "relation": "inherits",
@@ -39070,9 +39181,9 @@
       "source_file": "finance/views.py",
       "source_location": "L210",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "finance_views_cashflowforecastview",
-      "target": "templateview",
-      "confidence_score": 1.0
+      "target": "templateview"
     },
     {
       "relation": "inherits",
@@ -39100,9 +39211,9 @@
       "source_file": "finance/views.py",
       "source_location": "L615",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "finance_views_sharedexpenselistview",
-      "target": "templateview",
-      "confidence_score": 1.0
+      "target": "templateview"
     },
     {
       "relation": "inherits",
@@ -39130,9 +39241,9 @@
       "source_file": "finance/views.py",
       "source_location": "L994",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "finance_views_usermanualview",
-      "target": "templateview",
-      "confidence_score": 1.0
+      "target": "templateview"
     },
     {
       "relation": "calls",
@@ -39317,9 +39428,9 @@
       "source_file": "finance/views.py",
       "source_location": "L559",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "finance_views_transactionsplitview",
-      "target": "view",
-      "confidence_score": 1.0
+      "target": "view"
     },
     {
       "relation": "calls",
@@ -39468,9 +39579,9 @@
       "source_file": "finance/views.py",
       "source_location": "L213",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "finance_views_cashflowforecastview",
-      "target": "finance_views_cashflowforecastview_get_context_data",
-      "confidence_score": 1.0
+      "target": "finance_views_cashflowforecastview_get_context_data"
     },
     {
       "relation": "calls",
@@ -39479,9 +39590,9 @@
       "source_file": "finance/views.py",
       "source_location": "L214",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "finance_views_cashflowforecastview_get_context_data",
-      "target": "finance_views_ccstagingreviewview_get_context_data",
-      "confidence_score": 1.0
+      "target": "finance_views_ccstagingreviewview_get_context_data"
     },
     {
       "relation": "calls",
@@ -39490,9 +39601,9 @@
       "source_file": "finance/views.py",
       "source_location": "L216",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "finance_views_cashflowforecastview_get_context_data",
-      "target": "finance_views_transactioncsvexportview_get",
-      "confidence_score": 1.0
+      "target": "finance_views_transactioncsvexportview_get"
     },
     {
       "relation": "method",
@@ -39500,9 +39611,9 @@
       "source_file": "finance/views.py",
       "source_location": "L230",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "finance_views_budgetvelocityalertsview",
-      "target": "finance_views_budgetvelocityalertsview_get_context_data",
-      "confidence_score": 1.0
+      "target": "finance_views_budgetvelocityalertsview_get_context_data"
     },
     {
       "relation": "calls",
@@ -39511,9 +39622,9 @@
       "source_file": "finance/views.py",
       "source_location": "L231",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "finance_views_budgetvelocityalertsview_get_context_data",
-      "target": "finance_views_ccstagingreviewview_get_context_data",
-      "confidence_score": 1.0
+      "target": "finance_views_ccstagingreviewview_get_context_data"
     },
     {
       "relation": "calls",
@@ -39522,9 +39633,9 @@
       "source_file": "finance/views.py",
       "source_location": "L232",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "finance_views_budgetvelocityalertsview_get_context_data",
-      "target": "finance_views_transactioncsvexportview_get",
-      "confidence_score": 1.0
+      "target": "finance_views_transactioncsvexportview_get"
     },
     {
       "relation": "inherits",
@@ -39822,9 +39933,9 @@
       "source_file": "finance/views.py",
       "source_location": "L287",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "finance_views_rationale_287",
-      "target": "finance_views_periodduplicatebudgetview",
-      "confidence_score": 1.0
+      "target": "finance_views_periodduplicatebudgetview"
     },
     {
       "relation": "calls",
@@ -40193,9 +40304,9 @@
       "source_file": "finance/views.py",
       "source_location": "L560",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "finance_views_transactionsplitview",
-      "target": "finance_views_transactionsplitview_get",
-      "confidence_score": 1.0
+      "target": "finance_views_transactionsplitview_get"
     },
     {
       "relation": "method",
@@ -40203,9 +40314,9 @@
       "source_file": "finance/views.py",
       "source_location": "L572",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "finance_views_transactionsplitview",
-      "target": "finance_views_transactionsplitview_post",
-      "confidence_score": 1.0
+      "target": "finance_views_transactionsplitview_post"
     },
     {
       "relation": "method",
@@ -40213,9 +40324,9 @@
       "source_file": "finance/views.py",
       "source_location": "L618",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "finance_views_sharedexpenselistview",
-      "target": "finance_views_sharedexpenselistview_get_context_data",
-      "confidence_score": 1.0
+      "target": "finance_views_sharedexpenselistview_get_context_data"
     },
     {
       "relation": "calls",
@@ -40224,9 +40335,9 @@
       "source_file": "finance/views.py",
       "source_location": "L619",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "finance_views_sharedexpenselistview_get_context_data",
-      "target": "finance_views_ccstagingreviewview_get_context_data",
-      "confidence_score": 1.0
+      "target": "finance_views_ccstagingreviewview_get_context_data"
     },
     {
       "relation": "method",
@@ -40565,9 +40676,9 @@
       "source_file": "finance/views.py",
       "source_location": "L799",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "finance_views_rationale_799",
-      "target": "finance_views_stagingdeleteview",
-      "confidence_score": 1.0
+      "target": "finance_views_stagingdeleteview"
     },
     {
       "relation": "method",
@@ -40719,9 +40830,9 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "finance/views.py",
-      "source_location": "L966",
+      "source_location": "L967",
       "weight": 1.0,
-      "source": "finance_views_rationale_966",
+      "source": "finance_views_rationale_967",
       "target": "finance_views_ccstagingdeleteview",
       "confidence_score": 1.0
     },
@@ -41050,12 +41161,42 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": ".agents/AGENTS.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "agents_agents",
+      "target": "agents_agents_workspace_agent_rules",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/AGENTS.md",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "agents_agents_workspace_agent_rules",
+      "target": "agents_agents_communication_style",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": ".claude/CLAUDE.md",
       "source_location": "L1",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "claude_claude",
       "target": "claude_claude_graphify"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".claude/CLAUDE.md",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "claude_claude_graphify",
+      "target": "claude_claude_communication_style",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -41671,6 +41812,16 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AGENTS.md",
+      "source_location": "L47",
+      "weight": 1.0,
+      "source": "agents_repository_guidelines",
+      "target": "agents_communication_style",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AGENTS.md",
       "source_location": "L30",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -41706,6 +41857,16 @@
       "confidence_score": 1.0,
       "source": "agents_repository_guidelines",
       "target": "agents_testing_guidelines"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "CLAUDE.md",
+      "source_location": "L18",
+      "weight": 1.0,
+      "source": "claude",
+      "target": "claude_communication_style",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -41786,6 +41947,16 @@
       "confidence_score": 1.0,
       "source": "gemini_money_manager_workspace_instructions",
       "target": "gemini_agent_roles_delegation"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "GEMINI.md",
+      "source_location": "L42",
+      "weight": 1.0,
+      "source": "gemini_money_manager_workspace_instructions",
+      "target": "gemini_communication_style",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -42589,5 +42760,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "d16a0f3a58d77b773fee4140a2833c2f5f4a834a"
+  "built_at_commit": "078b3e1df0921307ce581cc05ebd3a1075400dec"
 }
