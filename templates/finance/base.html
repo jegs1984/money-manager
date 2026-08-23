@@ -102,9 +102,9 @@
 
   <!-- Main -->
   <div class="flex min-h-screen flex-1 flex-col md:pl-56">
-    <header class="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between border-b border-zinc-800 bg-zinc-950/90 px-5 pl-14 md:px-6">
-      <h1 class="text-sm font-medium text-zinc-300">{% block page_title %}{% endblock %}</h1>
-      <div class="flex items-center gap-4">
+    <header class="sticky top-0 z-30 flex min-h-14 shrink-0 flex-wrap items-center justify-between gap-2 border-b border-zinc-800 bg-zinc-950/90 py-2 px-4 pl-14 md:px-6">
+      <h1 class="text-sm font-medium text-zinc-300 truncate">{% block page_title %}{% endblock %}</h1>
+      <div class="flex flex-wrap items-center gap-2 max-w-full">
         {% if messages %}
           {% for msg in messages %}
             <span class="font-mono text-xs {% if msg.tags == 'error' %}text-red-400{% elif msg.tags == 'warning' %}text-amber-400{% else %}text-emerald-400{% endif %}">
@@ -112,7 +112,9 @@
             </span>
           {% endfor %}
         {% endif %}
-        {% block header_actions %}{% endblock %}
+        <div class="flex flex-wrap items-center gap-1.5">
+          {% block header_actions %}{% endblock %}
+        </div>
         <div class="flex items-center rounded-md border border-zinc-800 bg-zinc-900 p-0.5 text-xs font-mono">
           <button type="button" id="lang-btn-es" onclick="setAppLanguage('es')" class="px-2 py-1 rounded text-zinc-400 hover:text-zinc-100 transition-colors">ES</button>
           <button type="button" id="lang-btn-en" onclick="setAppLanguage('en')" class="px-2 py-1 rounded text-zinc-400 hover:text-zinc-100 transition-colors">EN</button>
