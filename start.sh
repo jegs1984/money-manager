@@ -6,6 +6,9 @@
 set -euo pipefail
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ "$(uname -s)" != "Darwin" ]]; then
+    exec "$PROJECT_ROOT/installer/run-linux.sh" "$@"
+fi
 VENV_PYTHON="$PROJECT_ROOT/venv/bin/python"
 ENV_FILE="$PROJECT_ROOT/.env"
 APP_PORT=8765

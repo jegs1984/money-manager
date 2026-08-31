@@ -65,6 +65,23 @@ For a manual install:
 adb install app/build/outputs/apk/debug/app-debug.apk
 ```
 
+### Build from Termux without AndroidIDE
+
+Termux can trigger the repository's GitHub Actions Android build without
+installing the full Android SDK locally. Commit and push the project from
+Termux, then open the completed **CI** run on GitHub and download the
+`money-manager-debug-apk` artifact. Extract `app-debug.apk` and tap it on the
+phone to install it.
+
+```bash
+git add .github/workflows/ci.yml android/README.md
+git commit -m "Build Android APK"
+git push
+```
+
+The repository must be hosted on GitHub, and Actions must be enabled. The
+workflow builds with Java 17 and uploads the debug APK after tests pass.
+
 Use `adb devices` first to confirm that the target device is connected.
 
 ## Using the app

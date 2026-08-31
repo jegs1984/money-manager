@@ -11,6 +11,9 @@ set -euo pipefail
 # ── Resolve project root (works whether called from root or installer/) ───────
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+if [[ "$(uname -s)" != "Darwin" ]]; then
+    exec "$SCRIPT_DIR/setup-linux.sh" "$@"
+fi
 APP_PORT=8765
 DB_NAME="money_manager"
 DB_USER="money_manager_user"

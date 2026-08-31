@@ -1,4 +1,25 @@
-# macOS installer
+# Installers
+
+## Linux and Termux
+
+The Linux installer uses SQLite by default, so PostgreSQL is not required on a
+Linux workstation or in Termux. It installs the project into the local `venv`
+directory and keeps the database in `db.sqlite3`.
+
+```bash
+bash installer/setup-linux.sh
+bash installer/run-linux.sh
+```
+
+Open `http://127.0.0.1:8765` if Termux cannot launch a browser automatically.
+For Termux, install the repository under `$HOME` rather than shared storage so
+Python can execute files and create the virtual environment reliably.
+
+The Linux installer does not install PostgreSQL. Existing PostgreSQL setups can
+continue using the macOS-oriented installer below or set `DB_ENGINE=postgresql`
+and the normal `DB_*` variables in `.env`.
+
+## macOS
 
 `setup.sh` prepares a native macOS development installation and creates a
 desktop launcher. It is for local use, not a production deployment.
