@@ -22,6 +22,7 @@ jobs:
       DJANGO_SECRET_KEY: ci-only-secret
       DJANGO_DEBUG: 'False'
       DJANGO_REQUIRE_LOGIN: 'False'
+      SECURE_SSL_REDIRECT: 'False'
       DB_NAME: money_manager
       DB_USER: postgres
       DB_PASSWORD: postgres
