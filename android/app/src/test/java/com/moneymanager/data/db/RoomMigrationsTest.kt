@@ -10,6 +10,6 @@ class RoomMigrationsTest {
         val migrations = RoomMigrations.all
         assertEquals(1, migrations.first().startVersion)
         assertEquals(AppDatabase::class.java.getAnnotation(androidx.room.Database::class.java).version, migrations.last().endVersion)
-        assertTrue(migrations.zipWithNext().all { (first, second) -> first.endVersion == second.startVersion })
+        assertTrue(migrations.asList().zipWithNext().all { (first, second) -> first.endVersion == second.startVersion })
     }
 }
