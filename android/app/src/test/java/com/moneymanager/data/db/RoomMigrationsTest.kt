@@ -9,10 +9,7 @@ class RoomMigrationsTest {
     fun `migrations form a continuous non-destructive upgrade path`() {
         val migrations = RoomMigrations.all
         assertEquals(1, migrations.first().startVersion)
-        val database = requireNotNull(
-            AppDatabase::class.java.getAnnotation(androidx.room.Database::class.java)
-        )
-        assertEquals(database.version, migrations.last().endVersion)
+        assertEquals(AppDatabase.DATABASE_VERSION, migrations.last().endVersion)
         assertTrue(migrations.asList().zipWithNext().all { (first, second) -> first.endVersion == second.startVersion })
     }
 }
