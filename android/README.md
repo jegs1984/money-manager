@@ -51,7 +51,7 @@ java -version
 From this directory:
 
 ```bash
-./gradlew test --no-daemon
+./gradlew :app:testDebugUnitTest --no-daemon
 ./gradlew assembleDebug
 ```
 
